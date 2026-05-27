@@ -417,15 +417,11 @@
 
     .canvas-wrap {
       position: relative;
-      height: 320px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      overflow: hidden;
-      background:
-        linear-gradient(180deg, rgba(15, 139, 125, 0.11), transparent),
-        linear-gradient(135deg, rgba(49, 92, 157, 0.10), transparent 60%),
-        #fffaf0;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      aspect-ratio: 2.2;
+      min-height: 260px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfaf6;
+      cursor: pointer;
     }
 
     canvas {
@@ -441,8 +437,35 @@
       width: 2px;
       background: var(--accent-2);
       box-shadow: 0 0 18px rgba(211, 93, 53, 0.48);
-      transform: translateX(-100px);
+      transform: translateX(-10px);
       pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.15s;
+    }
+
+    .playhead.visible {
+      opacity: 1;
+    }
+
+    .time-tooltip {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      transform: translateX(-50%);
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(25, 27, 31, 0.82);
+      color: #fffaf0;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+
+    .time-tooltip.visible {
+      opacity: 1;
     }
 
     .legend {
@@ -747,6 +770,7 @@
         <section class="panel visual">
           <div class="canvas-wrap">
             <canvas id="waveCanvas" width="1200" height="540"></canvas>
+            <div class="time-tooltip" id="timeTooltip">0:00</div>
             <div class="playhead" id="playhead"></div>
           </div>
           <div class="legend">
@@ -837,6 +861,7 @@
       status: document.getElementById("status"),
       waveCanvas: document.getElementById("waveCanvas"),
       playhead: document.getElementById("playhead"),
+      timeTooltip: document.getElementById("timeTooltip"),
       windowRange: document.getElementById("windowRange"),
       windowValue: document.getElementById("windowValue"),
       smoothRange: document.getElementById("smoothRange"),
@@ -902,6 +927,39 @@
     els.micModeBtn.addEventListener("click", () => setInputMode("mic"));
 
     window.addEventListener("resize", drawWaveform);
+
+    els.waveCanvas.addEventListener("click", (event) => {
+      if (!state.buffer) return;
+      const rect = els.waveCanvas.getBoundingClientRect();
+      const ratio = (event.clientX - rect.left) / rect.width;
+      const time = Math.max(0, Math.min(state.buffer.duration, ratio * state.buffer.duration));
+      if (state.playing) {
+        stopPlayback(false);
+        state.pausedAt = time;
+        updatePlayhead(time);
+        renderResults();
+      } else {
+        state.pausedAt = time;
+        updatePlayhead(time);
+        renderResults();
+      }
+      els.nowChord.textContent = "-";
+      els.nowNote.textContent = "-";
+    });
+
+    els.waveCanvas.addEventListener("mousemove", (event) => {
+      if (!state.buffer) return;
+      const rect = els.waveCanvas.getBoundingClientRect();
+      const ratio = (event.clientX - rect.left) / rect.width;
+      const time = Math.max(0, Math.min(state.buffer.duration, ratio * state.buffer.duration));
+      els.timeTooltip.textContent = formatTime(time);
+      els.timeTooltip.style.left = `${event.clientX - rect.left}px`;
+      els.timeTooltip.classList.add("visible");
+    });
+
+    els.waveCanvas.addEventListener("mouseleave", () => {
+      els.timeTooltip.classList.remove("visible");
+    });
 
     function setInputMode(mode) {
       state.inputMode = mode;
@@ -1508,10 +1566,15 @@
     }
 
     function renderResults() {
+      const vt = visibleTime();
+      // At initial state (time 0), show everything. Once seeked or playing, filter.
+      const filtered = vt > 0 ? state.results.filter(s => s.start <= vt) : state.results;
       els.resultBody.innerHTML = "";
-      els.resultCount.textContent = `${state.results.length} 段`;
+      els.resultCount.textContent = vt > 0
+        ? `${filtered.length} / ${state.results.length} 段`
+        : `${state.results.length} 段`;
       els.emptyState.style.display = state.results.length ? "none" : "block";
-      [...state.results].reverse().forEach(segment => {
+      [...filtered].reverse().forEach(segment => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${formatTime(segment.start)} - ${formatTime(segment.end)}</td>
@@ -1590,6 +1653,20 @@
         ctx.lineTo(x, h / 2 + max * amp);
       }
       ctx.stroke();
+
+      // Draw playhead line
+      const vt = visibleTime();
+      if (state.buffer && vt > 0) {
+        const px = vt / state.buffer.duration * w;
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(211, 93, 53, 0.7)";
+        ctx.lineWidth = 2 * scale;
+        ctx.setLineDash([6 * scale, 4 * scale]);
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, h);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
 
     function drawLiveFrame(ctx, w, h, scale) {
@@ -1665,8 +1742,9 @@
       setPlayIcon(true);
       source.onended = () => {
         if (state.playing && getCurrentTime() >= state.buffer.duration - 0.05) {
-          state.pausedAt = 0;
+          state.pausedAt = state.buffer.duration;
           stopPlayback(false);
+          renderResults();
         }
       };
       source.start(0, offset);
@@ -1690,17 +1768,20 @@
       const current = getCurrentTime();
       updatePlayhead(current);
       updateNow(current);
+      renderResults();
       if (state.playing) state.raf = requestAnimationFrame(tickPlayback);
     }
 
     function updatePlayhead(time) {
       if (!state.buffer) {
-        els.playhead.style.transform = "translateX(-100px)";
+        els.playhead.style.transform = "translateX(-10px)";
+        els.playhead.classList.remove("visible");
         return;
       }
       const rect = els.waveCanvas.getBoundingClientRect();
       const x = time / state.buffer.duration * rect.width;
       els.playhead.style.transform = `translateX(${x}px)`;
+      els.playhead.classList.add("visible");
     }
 
     function updateNow(time = state.pausedAt || 0) {
@@ -1712,6 +1793,14 @@
     function getCurrentTime() {
       if (!state.audioContext || !state.playing) return state.pausedAt || 0;
       return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
+    }
+
+    function visibleTime() {
+      if (!state.buffer) return 0;
+      if (state.playing && state.audioContext) {
+        return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
+      }
+      return state.pausedAt || 0;
     }
 
     function setPlayIcon(isPlaying) {
