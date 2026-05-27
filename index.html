@@ -1229,6 +1229,9 @@
           if (isSuspendedChord(tpl.suffix)) {
             score = gateSuspendedChord(chroma, root, tpl, score);
           }
+          if (tpl.suffix === "aug") {
+            score = gateAugmentedChord(chroma, root, tpl, score);
+          }
           if (score > best.score) best = { root, suffix: tpl.suffix, score, confidence: clamp(score, 0, 1) };
         }
       }
@@ -1310,14 +1313,28 @@
       const triadScore = scoreChordTemplate(chroma, root, triad);
       const extensionInterval = tpl.suffix === "maj7" ? 11 : 10;
       const extensionStrength = chroma[(root + extensionInterval) % 12];
+      const isDominant = tpl.suffix === "7";
+      const extensionMin = isDominant ? Math.min(sensitivity.extensionMin, 0.36) : sensitivity.extensionMin;
+      const extensionRatio = isDominant ? Math.min(sensitivity.extensionRatio, 0.58) : sensitivity.extensionRatio;
+      const extensionScoreGap = isDominant ? Math.min(sensitivity.extensionScoreGap, -0.015) : sensitivity.extensionScoreGap;
       const triadStrength = Math.min(
         chroma[root],
         chroma[(root + triad.intervals[1]) % 12],
         chroma[(root + 7) % 12]
       );
-      const strongEnough = extensionStrength > sensitivity.extensionMin && extensionStrength > triadStrength * sensitivity.extensionRatio;
-      const clearlyBetter = score > triadScore + sensitivity.extensionScoreGap;
+      const strongEnough = extensionStrength > extensionMin && extensionStrength > triadStrength * extensionRatio;
+      const clearlyBetter = score > triadScore + extensionScoreGap;
       return strongEnough && clearlyBetter ? score : score - sensitivity.extensionPenalty;
+    }
+
+    function gateAugmentedChord(chroma, root, tpl, score) {
+      const majorThird = chroma[(root + 4) % 12];
+      const augmentedFifth = chroma[(root + 8) % 12];
+      const perfectFifth = chroma[(root + 7) % 12];
+      const rootStrength = chroma[root];
+      const augmentedEvidence = Math.min(rootStrength, majorThird, augmentedFifth);
+      const augmentedIsClear = augmentedEvidence > 0.32 && augmentedFifth > perfectFifth * 1.25;
+      return augmentedIsClear ? score : score - 0.24;
     }
 
     function gateSuspendedChord(chroma, root, tpl, score) {
