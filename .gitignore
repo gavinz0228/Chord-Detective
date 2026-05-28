@@ -1,3 +1,10 @@
 .npm-cache/
 test_audio/real_song.*
 test_audio/yujian.*
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
