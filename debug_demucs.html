@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Demucs Debug</title></head>
+<body>
+<pre id="log"></pre>
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.all.min.mjs",
+    "demucs-web": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/index.js",
+    "demucs-web/processor": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/processor.js",
+    "demucs-web/fft": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/fft.js",
+    "demucs-web/constants": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/constants.js"
+  }
+}
+</script>
+<script type="module">
+import * as ort from 'onnxruntime-web';
+import { DemucsProcessor, CONSTANTS } from 'demucs-web';
+
+const log = document.getElementById('log');
+function L(msg) { log.textContent += msg + '\n'; console.log(msg); }
+
+async function main() {
+  L('Step 1: Loading model from HuggingFace...');
+  const processor = new DemucsProcessor({
+    ort,
+    onLog: (phase, msg) => L(`  [${phase}] ${msg}`),
+    onProgress: (p) => { if (p.progress) L(`  Progress: ${Math.round(p.progress*100)}%`); }
+  });
+
+  try {
+    await processor.loadModel(CONSTANTS.DEFAULT_MODEL_URL);
+    L('Model loaded! Input names: ' + (processor.session?.inputNames?.join(', ') || 'unknown'));
+    L('Output names: ' + (processor.session?.outputNames?.join(', ') || 'unknown'));
+  } catch(e) {
+    L('MODEL LOAD FAILED: ' + e.message);
+    return;
+  }
+
+  L('\nStep 2: Loading test audio...');
+  const resp = await fetch('/test_audio/debug_1seg.wav');
+  const buf = await resp.arrayBuffer();
+  const ctx = new AudioContext();
+  const audioBuf = await ctx.decodeAudioData(buf);
+  L(`Audio: ${audioBuf.duration.toFixed(1)}s, ${audioBuf.sampleRate}Hz, ${audioBuf.numberOfChannels}ch`);
+
+  const left = audioBuf.getChannelData(0);
+  const right = audioBuf.numberOfChannels > 1 ? audioBuf.getChannelData(1) : left;
+
+  L(`Left len: ${left.length}, Right len: ${right.length}`);
+  let lp = 0, rp = 0;
+  for (let i = 0; i < left.length; i++) { lp = Math.max(lp, Math.abs(left[i])); rp = Math.max(rp, Math.abs(right[i])); }
+  L(`Left peak: ${lp.toFixed(4)}`);
+  L(`Right peak: ${rp.toFixed(4)}`);
+
+  // CRITICAL: Demucs expects exactly 44100Hz. Resample if needed.
+  if (audioBuf.sampleRate !== 44100) {
+    L(`Resampling from ${audioBuf.sampleRate}Hz to 44100Hz...`);
+    const oc = new OfflineAudioContext(audioBuf.numberOfChannels, Math.ceil(audioBuf.duration * 44100), 44100);
+    const src = oc.createBufferSource();
+    src.buffer = audioBuf;
+    src.connect(oc.destination);
+    src.start();
+    const rb = await oc.startRendering();
+    const newLeft = rb.getChannelData(0);
+    const newRight = rb.numberOfChannels > 1 ? rb.getChannelData(1) : newLeft;
+    L(`After resample: ${newLeft.length} samples @ ${rb.sampleRate}Hz`);
+    // Feed resampled audio
+    await runSeparation(processor, newLeft, newRight);
+  } else {
+    await runSeparation(processor, left, right);
+  }
+}
+
+async function runSeparation(processor, left, right) {
+  L('\nStep 3: Separating...');
+  const t0 = Date.now();
+  let result;
+  try {
+    result = await processor.separate(left, right);
+  } catch(e) {
+    L('SEPARATION FAILED: ' + e.message);
+    return;
+  }
+  L(`Done in ${((Date.now()-t0)/1000).toFixed(1)}s`);
+
+  L('\nStep 4: Track statistics...');
+  const tracks = ['drums', 'bass', 'other', 'vocals'];
+  for (const t of tracks) {
+    const tr = result[t];
+    let sum = 0, peak = 0;
+    for (let i = 0; i < tr.left.length; i++) {
+      sum += Math.abs(tr.left[i]);
+      peak = Math.max(peak, Math.abs(tr.left[i]));
+    }
+    L(`  ${t.padEnd(8)}: rms=${(sum/tr.left.length).toFixed(6)}  peak=${peak.toFixed(4)}`);
+  }
+
+  L('\nStep 5: Cross-track similarity (first 1000 samples)...');
+  for (let i = 0; i < tracks.length; i++) {
+    for (let j = i+1; j < tracks.length; j++) {
+      const a = result[tracks[i]].left;
+      const b = result[tracks[j]].left;
+      let same = 0;
+      for (let k = 0; k < 1000; k++) {
+        if (Math.abs(a[k] - b[k]) < 0.0001) same++;
+      }
+      L(`  ${tracks[i]} vs ${tracks[j]}: ${(same/10).toFixed(1)}% identical`);
+    }
+  }
+
+  L('\n=== DIAGNOSIS ===');
+  const ab = result.drums.left;
+  const bb = result.bass.left;
+  let diffCount = 0;
+  for (let k = 0; k < ab.length; k++) {
+    if (Math.abs(ab[k] - bb[k]) > 0.001) diffCount++;
+  }
+  L(`Drums vs Bass: ${diffCount}/${ab.length} samples differ by >0.001`);
+  L(diffCount > ab.length * 0.1 ? '✅ TRACKS ARE DIFFERENT - model working!' : '❌ TRACKS IDENTICAL - model not separating!');
+}
+
+main().catch(e => { L('FATAL: ' + e.message); L(e.stack); });
+</script>
+</body>
+</html>
