@@ -6,7 +6,7 @@ export default {
 
     // Root → redirect to index_demucs.html
     if (url.pathname === "/" || url.pathname === "") {
-      return Response.redirect(url.origin + "/index_demucs.html", 302);
+      return Response.redirect(url.origin + "/index.html", 302);
     }
 
     // Serve static asset

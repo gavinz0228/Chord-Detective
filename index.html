@@ -1,1901 +1,864 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ChordDetective / 和弦侦查员</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #11120f;
-      --surface: #f7f4ea;
-      --ink: #191b1f;
-      --muted: #687078;
-      --line: rgba(37, 41, 46, 0.14);
-      --panel: rgba(255, 252, 244, 0.92);
-      --panel-2: #ece5d5;
-      --accent: #0f8b7d;
-      --accent-2: #d35d35;
-      --accent-3: #315c9d;
-      --gold: #d8a431;
-      --shadow: 0 24px 70px rgba(8, 10, 12, 0.18);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        linear-gradient(180deg, rgba(17, 18, 15, 0.84) 0 240px, transparent 240px),
-        linear-gradient(135deg, rgba(15, 139, 125, 0.18), transparent 38%),
-        linear-gradient(315deg, rgba(211, 93, 53, 0.12), transparent 42%),
-        repeating-linear-gradient(90deg, rgba(25, 27, 31, 0.04) 0 1px, transparent 1px 44px),
-        var(--surface);
-      color: var(--ink);
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    .app {
-      width: min(1280px, calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 30px 0 42px;
-    }
-
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 20px;
-      align-items: end;
-      padding: 8px 0 26px;
-      color: #fffaf0;
-    }
-
-    .brandline {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin-bottom: 14px;
-      color: rgba(255, 250, 240, 0.74);
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .brandline::before {
-      content: "";
-      width: 30px;
-      height: 2px;
-      border-radius: 99px;
-      background: var(--gold);
-    }
-
-    h1 {
-      margin: 0;
-      max-width: 780px;
-      font-size: clamp(34px, 5.8vw, 68px);
-      line-height: 0.93;
-      letter-spacing: 0;
-    }
-
-    .subhead {
-      max-width: 720px;
-      margin: 14px 0 0;
-      color: rgba(255, 250, 240, 0.72);
-      font-size: 16px;
-      line-height: 1.6;
-    }
-
-    .status-pill {
-      justify-self: end;
-      min-width: 180px;
-      padding: 12px 14px;
-      border: 1px solid rgba(255, 250, 240, 0.18);
-      border-radius: 8px;
-      background: rgba(255, 250, 240, 0.1);
-      color: #fffaf0;
-      text-align: center;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
-      backdrop-filter: blur(16px);
-    }
-
-    main {
-      display: grid;
-      grid-template-columns: 410px minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid rgba(255, 255, 255, 0.58);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .controls {
-      position: sticky;
-      top: 18px;
-      overflow: hidden;
-    }
-
-    .mode-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding: 10px 12px 14px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(25, 27, 31, 0.04);
-    }
-
-    .mode-label {
-      grid-column: 1 / -1;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--muted);
-      margin: 0 2px 4px;
-    }
-
-    .mode-tab {
-      min-height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      color: var(--ink);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-weight: 600;
-      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-    }
-
-    .mode-tab:hover:not(.active) {
-      background: #ece5d5;
-      border-color: #c5b99e;
-    }
-
-    .mode-tab.active {
-      background: #191b1f;
-      border-color: #191b1f;
-      color: #fffaf0;
-      box-shadow: 0 10px 24px rgba(25, 27, 31, 0.22);
-    }
-
-    .mode-tab svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .input-panel {
-      display: none;
-    }
-
-    .input-panel.active {
-      display: block;
-    }
-
-    .drop {
-      min-height: 210px;
-      display: grid;
-      place-items: center;
-      padding: 26px;
-      border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(135deg, rgba(15, 139, 125, 0.18), transparent 56%),
-        repeating-linear-gradient(90deg, rgba(25, 27, 31, 0.08) 0 1px, transparent 1px 22px),
-        #eee7d8;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    .mic-panel {
-      min-height: 210px;
-      padding: 22px;
-      border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(135deg, rgba(211, 93, 53, 0.16), transparent 58%),
-        repeating-linear-gradient(90deg, rgba(25, 27, 31, 0.08) 0 1px, transparent 1px 22px),
-        #eee7d8;
-    }
-
-    .mic-copy {
-      margin: 0 0 16px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .mic-action {
-      width: 100%;
-      margin-top: 8px;
-    }
-
-    .drop.dragging {
-      outline: 3px solid rgba(14, 124, 123, 0.28);
-      outline-offset: -8px;
-    }
-
-    .upload-icon {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 18px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      color: #fff;
-      background:
-        linear-gradient(145deg, var(--accent), #315c9d);
-      box-shadow: 0 18px 38px rgba(15, 139, 125, 0.28);
-    }
-
-    .upload-icon svg {
-      width: 30px;
-      height: 30px;
-    }
-
-    .drop strong {
-      display: block;
-      font-size: 19px;
-      margin-bottom: 8px;
-    }
-
-    .drop span {
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    #fileInput {
-      display: none;
-    }
-
-    .control-body {
-      padding: 18px;
-    }
-
-    .file-meta {
-      min-height: 52px;
-      display: grid;
-      align-content: center;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(236, 229, 213, 0.88));
-      color: var(--muted);
-      overflow: hidden;
-    }
-
-    .file-meta strong {
-      color: var(--ink);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .field {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .field-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
-
-    select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 11px 12px;
-      background: rgba(255, 255, 255, 0.76);
-      color: var(--ink);
-    }
-
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr 46px;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 8px;
-      min-height: 46px;
-      padding: 0 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: white;
-      background:
-        linear-gradient(135deg, var(--accent), #136d7e);
-      cursor: pointer;
-      box-shadow: 0 14px 28px rgba(15, 139, 125, 0.24);
-      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      filter: brightness(0.96);
-    }
-
-    .btn:disabled {
-      cursor: not-allowed;
-      opacity: 0.48;
-      transform: none;
-    }
-
-    .icon-btn {
-      padding: 0;
-      background: linear-gradient(135deg, #191b1f, #30343a);
-      box-shadow: 0 14px 28px rgba(25, 27, 31, 0.18);
-    }
-
-    .mic-btn.listening,
-    .mic-action.listening {
-      background: linear-gradient(135deg, var(--accent-2), #a83f29);
-    }
-
-    .icon-btn svg,
-    .btn svg {
-      width: 19px;
-      height: 19px;
-      flex: none;
-    }
-
-    .readout {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .metric {
-      min-height: 86px;
-      padding: 13px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.74);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
-    }
-
-    .metric:first-child {
-      background:
-        linear-gradient(135deg, rgba(15, 139, 125, 0.16), rgba(216, 164, 49, 0.12)),
-        rgba(255, 255, 255, 0.78);
-    }
-
-    .metric span {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .metric strong {
-      display: block;
-      font-size: 24px;
-      line-height: 1.1;
-      overflow-wrap: anywhere;
-    }
-
-    .metric:first-child strong {
-      font-size: 34px;
-    }
-
-    .workspace {
-      display: grid;
-      gap: 18px;
-    }
-
-    .visual {
-      padding: 14px;
-    }
-
-    .canvas-wrap {
-      position: relative;
-      aspect-ratio: 2.2;
-      min-height: 260px;
-      border-bottom: 1px solid var(--line);
-      background: #fbfaf6;
-      cursor: pointer;
-    }
-
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .playhead {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background: var(--accent-2);
-      box-shadow: 0 0 18px rgba(211, 93, 53, 0.48);
-      transform: translateX(-10px);
-      pointer-events: none;
-      z-index: 2;
-      transition: opacity 0.15s;
-    }
-
-    .playhead.visible {
-      opacity: 1;
-    }
-
-    .time-tooltip {
-      position: absolute;
-      top: 10px;
-      left: 0;
-      transform: translateX(-50%);
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: rgba(25, 27, 31, 0.82);
-      color: #fffaf0;
-      font-size: 12px;
-      font-weight: 600;
-      pointer-events: none;
-      z-index: 3;
-      opacity: 0;
-      transition: opacity 0.12s;
-    }
-
-    .time-tooltip.visible {
-      opacity: 1;
-    }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .legend span {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .swatch {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      display: inline-block;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-      padding: 18px 18px 0;
-    }
-
-    .section-head h2 {
-      margin: 0;
-      font-size: 19px;
-    }
-
-    .section-head span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .results {
-      overflow: hidden;
-    }
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    .table th,
-    .table td {
-      padding: 13px 14px;
-      border-top: 1px solid var(--line);
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    .table th {
-      color: var(--muted);
-      font-weight: 600;
-      background: rgba(25, 27, 31, 0.05);
-    }
-
-    .table tr {
-      cursor: pointer;
-    }
-
-    .table tr:hover td {
-      background: rgba(15, 139, 125, 0.08);
-    }
-
-    .chord {
-      display: inline-flex;
-      min-width: 68px;
-      justify-content: center;
-      padding: 7px 10px;
-      border-radius: 8px;
-      background: rgba(15, 139, 125, 0.14);
-      color: #08675d;
-      font-weight: 700;
-    }
-
-    .notes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .note {
-      padding: 5px 7px;
-      border-radius: 6px;
-      background: rgba(49, 92, 157, 0.1);
-      color: #273f68;
-      font-size: 13px;
-    }
-
-    .confidence {
-      width: 120px;
-      height: 8px;
-      border-radius: 99px;
-      background: #ddd5c4;
-      overflow: hidden;
-    }
-
-    .confidence div {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-3), var(--accent));
-    }
-
-    .empty {
-      padding: 42px 18px;
-      color: var(--muted);
-      text-align: center;
-      border-top: 1px solid var(--line);
-    }
-
-    .disclaimer {
-      margin-top: 14px;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 13px;
-    }
-
-    @media (max-width: 920px) {
-      header,
-      main {
-        grid-template-columns: 1fr;
-      }
-
-      .status-pill {
-        justify-self: stretch;
-      }
-
-      .controls {
-        position: static;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .app {
-        width: min(100vw - 20px, 1240px);
-        padding-top: 16px;
-      }
-
-      .readout {
-        grid-template-columns: 1fr;
-      }
-
-      .canvas-wrap {
-        height: 220px;
-      }
-
-      .table {
-        min-width: 680px;
-      }
-
-      .table-scroll {
-        overflow-x: auto;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChordDetective / 和弦侦查员</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #11120f; --surface: #f7f4ea; --ink: #191b1f; --muted: #687078;
+  --line: rgba(37,41,46,0.14); --panel: rgba(255,252,244,0.92); --panel-2: #ece5d5;
+  --accent: #0f8b7d; --accent-2: #d35d35; --accent-3: #315c9d; --gold: #d8a431;
+  --shadow: 0 24px 70px rgba(8,10,12,0.18);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  background: linear-gradient(180deg, rgba(17,18,15,0.84) 0 240px, transparent 240px),
+              linear-gradient(135deg, rgba(15,139,125,0.18), transparent 38%),
+              linear-gradient(315deg, rgba(211,93,53,0.12), transparent 42%),
+              repeating-linear-gradient(90deg, rgba(25,27,31,0.04) 0 1px, transparent 1px 44px), var(--surface);
+  color: var(--ink);
+}
+button,input,select { font: inherit; }
+
+.app { width: min(1400px, calc(100vw - 32px)); margin: 0 auto; padding: 30px 0 42px; }
+
+header { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding: 8px 0 26px; color: #fffaf0; }
+.brandline { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 14px; color: rgba(255,250,240,0.74); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.brandline::before { content: ""; width: 30px; height: 2px; border-radius: 99px; background: var(--gold); }
+h1 { margin: 0; max-width: 780px; font-size: clamp(34px,5.8vw,68px); line-height: 0.93; }
+.subhead { max-width: 720px; margin: 14px 0 0; color: rgba(255,250,240,0.72); font-size: 16px; line-height: 1.6; }
+.status-pill { justify-self: end; min-width: 180px; padding: 12px 14px; border: 1px solid rgba(255,250,240,0.18); border-radius: 8px; background: rgba(255,250,240,0.1); color: #fffaf0; text-align: center; box-shadow: 0 16px 36px rgba(0,0,0,0.18); backdrop-filter: blur(16px); }
+
+main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; align-items: start; }
+.panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.58); border-radius: 8px; box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+.controls { position: sticky; top: 18px; overflow: hidden; }
+
+.panel-section { padding: 18px; }
+.panel-section + .panel-section { border-top: 1px solid var(--line); }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 10px; }
+
+.drop { min-height: 140px; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, rgba(15,139,125,0.16), transparent 56%), repeating-linear-gradient(90deg, rgba(25,27,31,0.08) 0 1px, transparent 1px 22px), #eee7d8; text-align: center; cursor: pointer; border-radius: 6px; }
+.drop.dragging { outline: 3px solid rgba(14,124,123,0.28); outline-offset: -8px; }
+.drop strong { display: block; font-size: 17px; margin-bottom: 6px; }
+.drop span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+#fileInput { display: none; }
+.file-info { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(135deg, rgba(255,255,255,0.62), rgba(236,229,213,0.88)); font-size: 14px; }
+.file-info strong { display: block; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-info span { color: var(--muted); }
+
+.btn { border: 0; border-radius: 8px; min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: white; background: linear-gradient(135deg, var(--accent), #136d7e); cursor: pointer; box-shadow: 0 14px 28px rgba(15,139,125,0.24); transition: transform 0.16s, filter 0.16s, opacity 0.16s; font-size: 14px; font-weight: 600; }
+.btn:hover { transform: translateY(-1px); filter: brightness(0.96); }
+.btn:disabled { cursor: not-allowed; opacity: 0.48; transform: none; }
+.btn-full { width: 100%; margin-top: 0; }
+.btn-analyze { background: linear-gradient(135deg, var(--accent-2), #a83f29); box-shadow: 0 14px 28px rgba(211,93,53,0.28); }
+
+.progress-bar { width: 100%; height: 8px; border-radius: 99px; background: #ddd5c4; overflow: hidden; margin-top: 8px; }
+.progress-bar div { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent)); transition: width 0.3s; border-radius: 99px; }
+.progress-text { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+
+/* Waveform + results */
+.canvas-wrap { position: relative; aspect-ratio: 2.2; min-height: 260px; border-bottom: 1px solid var(--line); background: #fbfaf6; cursor: pointer; }
+canvas { width: 100%; height: 100%; display: block; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent-2); box-shadow: 0 0 18px rgba(211,93,53,0.48); transform: translateX(-10px); pointer-events: none; z-index: 2; transition: opacity 0.15s; }
+.time-tooltip { position: absolute; top: 10px; transform: translateX(-50%); padding: 3px 8px; border-radius: 4px; background: rgba(25,27,31,0.82); color: #fffaf0; font-size: 12px; font-weight: 600; pointer-events: none; z-index: 3; opacity: 0; transition: opacity 0.12s; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 0 14px 14px; color: var(--muted); font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 18px 18px 0; }
+.section-head h2 { margin: 0; font-size: 19px; }
+.section-head span { color: var(--muted); font-size: 13px; }
+
+.table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.table th, .table td { padding: 13px 14px; border-top: 1px solid var(--line); text-align: left; }
+.table th { color: var(--muted); font-weight: 600; background: rgba(25,27,31,0.05); }
+.table tr { cursor: pointer; }
+.table tr:hover td { background: rgba(15,139,125,0.08); }
+.chord-tag { display: inline-flex; min-width: 68px; justify-content: center; padding: 7px 10px; border-radius: 8px; background: rgba(15,139,125,0.14); color: #08675d; font-weight: 700; }
+.notes { display: flex; flex-wrap: wrap; gap: 6px; }
+.note { padding: 5px 7px; border-radius: 6px; background: rgba(49,92,157,0.1); color: #273f68; font-size: 13px; }
+.confidence { width: 120px; height: 8px; border-radius: 99px; background: #ddd5c4; overflow: hidden; }
+.confidence div { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent)); }
+.empty { padding: 42px 18px; color: var(--muted); text-align: center; border-top: 1px solid var(--line); }
+
+.readout { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 10px; }
+.metric { min-height: 86px; padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,0.74); }
+.metric:first-child { background: linear-gradient(135deg, rgba(15,139,125,0.16), rgba(216,164,49,0.12)), rgba(255,255,255,0.78); }
+.metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.metric strong { display: block; font-size: 24px; line-height: 1.1; overflow-wrap: anywhere; }
+.metric:first-child strong { font-size: 34px; }
+
+.disclaimer { margin-top: 14px; color: var(--muted); line-height: 1.55; font-size: 13px; }
+.button-row { display: grid; grid-template-columns: 1fr 46px; gap: 10px; margin-top: 10px; }
+.icon-btn { padding: 0; background: linear-gradient(135deg, #191b1f, #30343a); box-shadow: 0 14px 28px rgba(25,27,31,0.18); }
+
+.model-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: rgba(40,167,69,0.12); color: #1a7f34; font-size: 13px; font-weight: 600; }
+.model-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #28a745; }
+
+@media (max-width: 1000px) { header, main { grid-template-columns: 1fr; } .controls { position: static; } }
+@media (max-width: 640px) { .app { width: min(100vw - 20px, 1400px); padding-top: 16px; } .readout { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div>
-        <div class="brandline">ChordDetective</div>
-        <h1>和弦侦查员</h1>
-        <p class="subhead">上传歌曲、伴奏或录音，也可以直接监听麦克风。浏览器会分析主音名、低音和可能的和弦，并画出波形与和弦段落。</p>
+<div class="app">
+  <header>
+    <div>
+      <div class="brandline">ChordDetective v2 · Spotify Basic Pitch</div>
+      <h1>和弦侦查员</h1>
+      <p class="subhead">上传歌曲 → AI 多音高检测 → 浏览器端和弦分析。基于 Spotify Basic Pitch（ICASSP 2022），模型仅 725KB，无需音轨分离。</p>
+    </div>
+    <div class="status-pill" id="status">等待上传</div>
+  </header>
+
+  <main>
+    <!-- LEFT -->
+    <aside class="panel controls">
+      <!-- Upload -->
+      <div class="panel-section">
+        <div class="section-label">1. 上传音频</div>
+        <label class="drop" id="dropZone" for="fileInput">
+          <input id="fileInput" type="file" accept="audio/*">
+          <span><strong>选择或拖入音频</strong><span>mp3 / wav / m4a / flac</span></span>
+        </label>
+        <div class="file-info" id="fileInfo"><strong>未载入</strong><span>上传一首歌曲开始</span></div>
       </div>
-      <div class="status-pill" id="status">麦克风模式</div>
-    </header>
 
-    <main>
-      <aside class="panel controls">
-        <div class="mode-tabs" role="tablist" aria-label="音频输入方式">
-          <span class="mode-label">选择输入方式</span>
-          <button class="mode-tab" id="uploadModeBtn" type="button" role="tab" aria-selected="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 3v12"></path>
-              <path d="m7 8 5-5 5 5"></path>
-              <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"></path>
-            </svg>
-            上传音频
+      <!-- Load Model -->
+      <div class="panel-section">
+        <div class="section-label">2. 加载 AI 模型</div>
+        <button class="btn btn-full" id="loadModelBtn">加载 Basic Pitch 模型 (725KB)</button>
+        <div class="progress-bar" id="modelProgressBar" style="display:none"><div style="width:0%"></div></div>
+        <div class="progress-text" id="modelProgressText"></div>
+        <div class="model-badge" id="modelBadge" style="display:none">模型已就绪 · Spotify Basic Pitch</div>
+      </div>
+
+      <!-- Analyze -->
+      <div class="panel-section">
+        <div class="section-label">3. 分析和弦</div>
+        <div class="button-row">
+          <button class="btn btn-full btn-analyze" id="analyzeBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12h4l3 8 4-16 3 8h4"></path></svg>
+            检测和弦
           </button>
-          <button class="mode-tab active" id="micModeBtn" type="button" role="tab" aria-selected="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <path d="M12 19v3"></path>
-            </svg>
-            麦克风
+          <button class="btn icon-btn" id="playBtn" disabled title="播放/暂停">
+            <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
           </button>
         </div>
+        <div class="progress-bar" id="analyzeProgressBar" style="display:none"><div style="width:0%"></div></div>
+        <div class="progress-text" id="analyzeProgressText"></div>
+      </div>
 
-        <div class="input-panel" id="uploadPanel">
-          <label class="drop" id="dropZone" for="fileInput">
-            <input id="fileInput" type="file" accept="audio/*">
-            <span>
-              <span class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 3v12"></path>
-                  <path d="m7 8 5-5 5 5"></path>
-                  <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"></path>
-                </svg>
-              </span>
-              <strong>选择或拖入音频</strong>
-              <span>支持浏览器能解码的 mp3、wav、m4a、flac 等格式</span>
-            </span>
-          </label>
+      <!-- Live readout -->
+      <div class="panel-section">
+        <div class="readout">
+          <div class="metric"><span>当前和弦</span><strong id="nowChord">-</strong></div>
+          <div class="metric"><span>检测音符数</span><strong id="nowNoteCount">-</strong></div>
+          <div class="metric"><span>调性感</span><strong id="keyGuess">-</strong></div>
         </div>
+        <p class="disclaimer">基于 Spotify Basic Pitch (ICASSP 2022) 多音高检测模型。模型 725KB，加载 < 2 秒。无需音轨分离，直接分析混合音频。准确度远超传统 chroma 方案。</p>
+      </div>
+    </aside>
 
-        <div class="input-panel active" id="micPanel">
-          <div class="mic-panel">
-            <span class="upload-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <path d="M12 19v3"></path>
-              </svg>
-            </span>
-            <p class="mic-copy">实时监听你的吉他、键盘或外放声音。为了减少误判，结果会在连续几次识别稳定后才写入表格。</p>
-            <button class="btn mic-action" id="micBtn" type="button">
-              <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <path d="M12 19v3"></path>
-              </svg>
-              <span id="micBtnText">开始监听</span>
-            </button>
-          </div>
+    <!-- RIGHT -->
+    <section class="workspace">
+      <section class="panel">
+        <div class="canvas-wrap">
+          <canvas id="waveCanvas" width="1200" height="540"></canvas>
+          <div class="time-tooltip" id="timeTooltip">0:00</div>
+          <div class="playhead" id="playhead"></div>
         </div>
-
-        <div class="control-body">
-          <div class="file-meta" id="fileMeta"><strong>麦克风模式</strong><span>点击“开始监听”后弹奏一个和弦</span></div>
-
-          <label class="field">
-            <span class="field-row"><span>时间片长度</span><strong id="windowValue">1.5 秒</strong></span>
-            <input id="windowRange" type="range" min="0.75" max="4" step="0.25" value="1.5">
-          </label>
-
-          <label class="field">
-            <span class="field-row"><span>和弦稳定度</span><strong id="smoothValue">中</strong></span>
-            <input id="smoothRange" type="range" min="0" max="2" step="1" value="1">
-          </label>
-
-          <label class="field">
-            <span class="field-row"><span>非三和弦敏感度</span></span>
-            <select id="extensionSensitivitySelect">
-              <option value="low">低：优先普通三和弦</option>
-              <option value="medium" selected>中：平衡识别</option>
-              <option value="high">高：更容易识别 sus/7</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="field-row"><span>音名显示</span></span>
-            <select id="notationSelect">
-              <option value="sharp">升号：C, C#, D...</option>
-              <option value="flat">降号：C, Db, D...</option>
-            </select>
-          </label>
-
-          <div class="button-row">
-            <button class="btn" id="analyzeBtn" disabled>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 12h4l3 8 4-16 3 8h4"></path>
-              </svg>
-              开始识别
-            </button>
-            <button class="btn icon-btn" id="playBtn" disabled title="播放 / 暂停" aria-label="播放 / 暂停">
-              <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8 5v14l11-7z"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div class="readout">
-            <div class="metric">
-              <span>当前和弦</span>
-              <strong id="nowChord">-</strong>
-            </div>
-            <div class="metric">
-              <span>主音名</span>
-              <strong id="nowNote">-</strong>
-            </div>
-            <div class="metric">
-              <span>调性感</span>
-              <strong id="keyGuess">-</strong>
-            </div>
-          </div>
-
-          <p class="disclaimer">这是前端实时分析工具，适合扒谱和快速定位。人声、鼓组、混响很重或复杂转位会降低准确率，最终编配仍建议用耳朵复核。麦克风监听需要浏览器授权，并且通常只在 localhost 或 HTTPS 页面可用。</p>
+        <div class="legend">
+          <span><i class="swatch" style="background:#0e7c7b"></i>波形</span>
+          <span><i class="swatch" style="background:#d35d35"></i>播放位置</span>
+          <span><i class="swatch" style="background:#2d5f9a"></i>和弦段落</span>
         </div>
-      </aside>
-
-      <section class="workspace">
-        <section class="panel visual">
-          <div class="canvas-wrap">
-            <canvas id="waveCanvas" width="1200" height="540"></canvas>
-            <div class="time-tooltip" id="timeTooltip">0:00</div>
-            <div class="playhead" id="playhead"></div>
-          </div>
-          <div class="legend">
-            <span><i class="swatch" style="background:#0e7c7b"></i>波形</span>
-            <span><i class="swatch" style="background:#c84f31"></i>当前播放位置</span>
-            <span><i class="swatch" style="background:#2d5f9a"></i>和弦段落</span>
-          </div>
-        </section>
-
-        <section class="panel results">
-          <div class="section-head">
-            <h2>识别结果</h2>
-            <span id="resultCount">0 段</span>
-          </div>
-          <div class="table-scroll">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>时间</th>
-                  <th>和弦</th>
-                  <th>低音</th>
-                  <th>主音名</th>
-                  <th>可能音</th>
-                  <th>可信度</th>
-                </tr>
-              </thead>
-              <tbody id="resultBody"></tbody>
-            </table>
-          </div>
-          <div class="empty" id="emptyState">点击“开始监听”，稳定识别到的和弦会出现在这里。</div>
-        </section>
       </section>
-    </main>
-  </div>
+      <section class="panel">
+        <div class="section-head"><h2>识别结果</h2><span id="resultCount">0 段</span></div>
+        <div style="overflow-x:auto">
+          <table class="table">
+            <thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>检测音</th><th>可信度</th></tr></thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="emptyState">上传音频 → 加载模型 → 检测和弦</div>
+      </section>
+    </section>
+  </main>
+</div>
 
-  <script>
-    const NOTE_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const NOTE_FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-    const CHORD_TEMPLATES = [
-      { suffix: "", intervals: [0, 4, 7], weight: [1, 0.9, 0.82] },
-      { suffix: "m", intervals: [0, 3, 7], weight: [1, 0.9, 0.82] },
-      { suffix: "dim", intervals: [0, 3, 6], weight: [1, 0.86, 0.7] },
-      { suffix: "aug", intervals: [0, 4, 8], weight: [1, 0.82, 0.72] },
-      { suffix: "sus2", intervals: [0, 2, 7], weight: [1, 0.72, 0.82] },
-      { suffix: "sus4", intervals: [0, 5, 7], weight: [1, 0.78, 0.82] },
-      { suffix: "7", intervals: [0, 4, 7, 10], weight: [1, 0.82, 0.78, 0.64] },
-      { suffix: "m7", intervals: [0, 3, 7, 10], weight: [1, 0.82, 0.78, 0.64] },
-      { suffix: "maj7", intervals: [0, 4, 7, 11], weight: [1, 0.82, 0.78, 0.6] }
-    ];
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
 
-    const state = {
-      audioContext: null,
-      buffer: null,
-      fileName: "",
-      source: null,
-      startedAt: 0,
-      pausedAt: 0,
-      playing: false,
-      results: [],
-      raf: null,
-      micStream: null,
-      micSource: null,
-      micAnalyser: null,
-      micSilentGain: null,
-      micTimer: null,
-      micListening: false,
-      micStartedAt: 0,
-      micFrame: null,
-      micCandidates: [],
-      micStable: null,
-      inputMode: "mic"
-    };
+<script>
+// ============================================================
+// Constants
+// ============================================================
+const NOTE_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTE_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const BP_MODEL_URL = "https://cdn.jsdelivr.net/npm/@spotify/basic-pitch/model/model.json";
+const AUDIO_SAMPLE_RATE = 22050;
+const ANNOTATIONS_FPS = Math.floor(22050 / 256); // 86
+const MIDI_OFFSET = 21;
 
-    const els = {
-      uploadModeBtn: document.getElementById("uploadModeBtn"),
-      micModeBtn: document.getElementById("micModeBtn"),
-      uploadPanel: document.getElementById("uploadPanel"),
-      micPanel: document.getElementById("micPanel"),
-      fileInput: document.getElementById("fileInput"),
-      dropZone: document.getElementById("dropZone"),
-      fileMeta: document.getElementById("fileMeta"),
-      analyzeBtn: document.getElementById("analyzeBtn"),
-      playBtn: document.getElementById("playBtn"),
-      playIcon: document.getElementById("playIcon"),
-      micBtn: document.getElementById("micBtn"),
-      micIcon: document.getElementById("micIcon"),
-      micBtnText: document.getElementById("micBtnText"),
-      status: document.getElementById("status"),
-      waveCanvas: document.getElementById("waveCanvas"),
-      playhead: document.getElementById("playhead"),
-      timeTooltip: document.getElementById("timeTooltip"),
-      windowRange: document.getElementById("windowRange"),
-      windowValue: document.getElementById("windowValue"),
-      smoothRange: document.getElementById("smoothRange"),
-      smoothValue: document.getElementById("smoothValue"),
-      extensionSensitivitySelect: document.getElementById("extensionSensitivitySelect"),
-      notationSelect: document.getElementById("notationSelect"),
-      resultBody: document.getElementById("resultBody"),
-      emptyState: document.getElementById("emptyState"),
-      resultCount: document.getElementById("resultCount"),
-      nowChord: document.getElementById("nowChord"),
-      nowNote: document.getElementById("nowNote"),
-      keyGuess: document.getElementById("keyGuess")
-    };
+// Chord templates: intervals from root (semitones)
+const CHORD_TEMPLATES = [
+  { name: "", intervals: [0,4,7] },
+  { name: "m", intervals: [0,3,7] },
+  { name: "dim", intervals: [0,3,6] },
+  { name: "aug", intervals: [0,4,8] },
+  { name: "sus2", intervals: [0,2,7] },
+  { name: "sus4", intervals: [0,5,7] },
+  { name: "7", intervals: [0,4,7,10] },
+  { name: "m7", intervals: [0,3,7,10] },
+  { name: "maj7", intervals: [0,4,7,11] },
+  { name: "dim7", intervals: [0,3,6,9] },
+  { name: "m7b5", intervals: [0,3,6,10] },
+];
 
-    els.fileInput.addEventListener("change", event => {
-      if (event.target.files[0]) loadFile(event.target.files[0]);
+function $(id) { return document.getElementById(id); }
+function freqToMidi(freq) { return 69 + 12 * Math.log2(freq / 440); }
+function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+function formatTime(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ============================================================
+// State
+// ============================================================
+const state = {
+  audioCtx: null,
+  buffer: null, fileName: "",
+  model: null, modelLoaded: false,
+  results: [],
+  playing: false, startedAt: 0, pausedAt: 0, raf: null,
+  source: null
+};
+
+// ============================================================
+// Basic Pitch — outputToNotesPoly (bundled from @spotify/basic-pitch)
+// ============================================================
+function argMax(arr) {
+  return arr.reduce((mi, v, i) => arr[mi] > v ? mi : i, -1);
+}
+
+function globalMax(arr2d) {
+  return arr2d.reduce((prev, row) => Math.max(prev, ...row), 0);
+}
+
+function meanStdDev(arr2d) {
+  let sum = 0, sumSq = 0, count = 0;
+  for (const row of arr2d) {
+    for (const v of row) { sum += v; sumSq += v * v; count++; }
+  }
+  const mean = sum / count;
+  const std = Math.sqrt((1 / (count - 1)) * (sumSq - (sum * sum) / count));
+  return [mean, std];
+}
+
+function whereGreater(arr2d, thresh) {
+  const xs = [], ys = [];
+  for (let i = 0; i < arr2d.length; i++)
+    for (let j = 0; j < arr2d[i].length; j++)
+      if (arr2d[i][j] > thresh) { xs.push(i); ys.push(j); }
+  return [xs, ys];
+}
+
+function argRelMax(arr2d, order = 1) {
+  const result = [];
+  for (let col = 0; col < arr2d[0].length; col++)
+    for (let row = 0; row < arr2d.length; row++) {
+      let ok = true;
+      for (let r = Math.max(0, row - order); ok && r <= Math.min(arr2d.length - 1, row + order); r++)
+        if (r !== row) ok = ok && arr2d[row][col] > arr2d[r][col];
+      if (ok) result.push([row, col]);
+    }
+  return result;
+}
+
+function min3dAxis0(arr3d) {
+  const minArr = arr3d[0].map(r => [...r]);
+  for (let x = 1; x < arr3d.length; x++)
+    for (let y = 0; y < minArr.length; y++)
+      for (let z = 0; z < minArr[0].length; z++)
+        minArr[y][z] = Math.min(minArr[y][z], arr3d[x][y][z]);
+  return minArr;
+}
+
+function max3dAxis0(arr3d) {
+  const maxArr = arr3d[0].map(r => [...r]);
+  for (let x = 1; x < arr3d.length; x++)
+    for (let y = 0; y < maxArr.length; y++)
+      for (let z = 0; z < maxArr[0].length; z++)
+        maxArr[y][z] = Math.max(maxArr[y][z], arr3d[x][y][z]);
+  return maxArr;
+}
+
+function outputToNotesPoly(frames, onsets, onsetThresh = 0.5, frameThresh = 0.3, minNoteLen = 5, inferOnsets = true) {
+  const [mean, std] = meanStdDev(frames);
+  const inferredFrameThresh = frameThresh !== null ? frameThresh : mean + std;
+
+  // Infer onsets from frame diffs
+  let inferredOnsets = onsets;
+  if (inferOnsets) {
+    const nDiff = 2;
+    const diffs = [1, 2].map(n => {
+      const padded = Array(n).fill(null).map(() => Array(frames[0].length).fill(0)).concat(frames);
+      const nPlus = padded.slice(n);
+      const minusN = padded.slice(0, -n);
+      return nPlus.map((row, r) => row.map((v, c) => v - minusN[r][c]));
     });
+    let frameDiff = min3dAxis0(diffs);
+    frameDiff = frameDiff.map(row => row.map(v => Math.max(v, 0)));
+    frameDiff = frameDiff.map((row, r) => r < nDiff ? row.fill(0) : row);
+    const onsetMax = globalMax(onsets);
+    const frameDiffMax = globalMax(frameDiff) || 1;
+    frameDiff = frameDiff.map(row => row.map(v => (onsetMax * v) / frameDiffMax));
+    inferredOnsets = max3dAxis0([onsets, frameDiff]);
+  }
 
-    ["dragenter", "dragover"].forEach(type => {
-      els.dropZone.addEventListener(type, event => {
-        event.preventDefault();
-        els.dropZone.classList.add("dragging");
-      });
+  const peakMatrix = inferredOnsets.map(o => o.map(() => 0));
+  argRelMax(inferredOnsets).forEach(([row, col]) => {
+    peakMatrix[row][col] = inferredOnsets[row][col];
+  });
+
+  const [noteStarts, freqIdxs] = whereGreater(peakMatrix, onsetThresh);
+  noteStarts.reverse(); freqIdxs.reverse();
+
+  const remainingEnergy = frames.map(f => [...f]);
+  const noteEvents = [];
+
+  noteStarts.forEach((startIdx, idx) => {
+    const freqIdx = freqIdxs[idx];
+    if (startIdx >= frames.length - 1) return;
+
+    let i = startIdx + 1, k = 0;
+    while (i < frames.length - 1 && k < 11) {
+      if (remainingEnergy[i][freqIdx] < inferredFrameThresh) k++; else k = 0;
+      i++;
+    }
+    i -= k;
+    if (i - startIdx <= minNoteLen) return;
+
+    // Zero out energy for this note
+    for (let j = startIdx; j < i; j++) {
+      remainingEnergy[j][freqIdx] = 0;
+      if (freqIdx < 87) remainingEnergy[j][freqIdx + 1] = 0;
+      if (freqIdx > 0) remainingEnergy[j][freqIdx - 1] = 0;
+    }
+
+    const amp = frames.slice(startIdx, i).reduce((s, row) => s + row[freqIdx], 0) / (i - startIdx);
+    noteEvents.push({
+      startFrame: startIdx, durationFrames: i - startIdx,
+      pitchMidi: freqIdx + MIDI_OFFSET, amplitude: amp
     });
+  });
 
-    ["dragleave", "drop"].forEach(type => {
-      els.dropZone.addEventListener(type, event => {
-        event.preventDefault();
-        els.dropZone.classList.remove("dragging");
-      });
+  // Melodia trick: find remaining strong energy
+  while (globalMax(remainingEnergy) > inferredFrameThresh) {
+    let bestR = 0, bestC = 0, bestV = 0;
+    for (let r = 0; r < remainingEnergy.length; r++)
+      for (let c = 0; c < remainingEnergy[r].length; c++)
+        if (remainingEnergy[r][c] > bestV) { bestV = remainingEnergy[r][c]; bestR = r; bestC = c; }
+
+    remainingEnergy[bestR][bestC] = 0;
+
+    let i = bestR + 1, k = 0;
+    while (i < frames.length - 1 && k < 11) {
+      if (remainingEnergy[i][bestC] < inferredFrameThresh) k++; else k = 0;
+      remainingEnergy[i][bestC] = 0;
+      if (bestC < 87) remainingEnergy[i][bestC + 1] = 0;
+      if (bestC > 0) remainingEnergy[i][bestC - 1] = 0;
+      i++;
+    }
+    const iEnd = i - 1 - k;
+
+    i = bestR - 1; k = 0;
+    while (i > 0 && k < 11) {
+      if (remainingEnergy[i][bestC] < inferredFrameThresh) k++; else k = 0;
+      remainingEnergy[i][bestC] = 0;
+      if (bestC < 87) remainingEnergy[i][bestC + 1] = 0;
+      if (bestC > 0) remainingEnergy[i][bestC - 1] = 0;
+      i--;
+    }
+    const iStart = i + 1 + k;
+    if (iStart < 0 || iEnd >= frames.length) continue;
+    if (iEnd - iStart <= minNoteLen) continue;
+
+    const amp = frames.slice(iStart, iEnd).reduce((s, row) => s + row[bestC], 0) / (iEnd - iStart);
+    noteEvents.push({
+      startFrame: iStart, durationFrames: iEnd - iStart,
+      pitchMidi: bestC + MIDI_OFFSET, amplitude: amp
     });
+  }
 
-    els.dropZone.addEventListener("drop", event => {
-      const file = event.dataTransfer.files[0];
-      if (file && file.type.startsWith("audio/")) loadFile(file);
-    });
+  return noteEvents;
+}
 
-    els.windowRange.addEventListener("input", () => {
-      els.windowValue.textContent = `${Number(els.windowRange.value).toFixed(2).replace(/\.00$/, "")} 秒`;
-    });
+// Frame to time conversion
+function modelFrameToTime(frame) {
+  const WINDOW_OFFSET = (256 / AUDIO_SAMPLE_RATE) * (172 - (AUDIO_SAMPLE_RATE * 2 - 256) / 256) + 0.0018;
+  return (frame * 256) / AUDIO_SAMPLE_RATE - WINDOW_OFFSET * Math.floor(frame / 172);
+}
 
-    els.smoothRange.addEventListener("input", () => {
-      els.smoothValue.textContent = ["低", "中", "高"][Number(els.smoothRange.value)];
-    });
+function notesToTimeEvents(notes) {
+  return notes.map(n => {
+    const start = modelFrameToTime(n.startFrame);
+    const end = modelFrameToTime(n.startFrame + n.durationFrames);
+    return { ...n, startTimeSeconds: start, durationSeconds: end - start };
+  });
+}
 
-    els.extensionSensitivitySelect.addEventListener("change", () => {
-      if (state.micListening) {
-        state.micCandidates = [];
-        state.micStable = null;
-      }
-    });
+// ============================================================
+// Chord detection from active notes
+// ============================================================
+function detectChordFromPitchClasses(activePCs) {
+  // activePCs: Set of pitch classes (0-11) from all active notes in time window
+  if (activePCs.size === 0) return { root: 0, suffix: "", confidence: 0, detectedNotes: [] };
 
-    els.notationSelect.addEventListener("change", () => {
-      renderResults();
-      drawWaveform();
-      updateNow();
-    });
+  let best = { root: 0, suffix: "", confidence: -Infinity, detectedNotes: [] };
 
-    els.analyzeBtn.addEventListener("click", analyze);
-    els.playBtn.addEventListener("click", togglePlay);
-    els.micBtn.addEventListener("click", toggleMic);
-    els.uploadModeBtn.addEventListener("click", () => setInputMode("upload"));
-    els.micModeBtn.addEventListener("click", () => setInputMode("mic"));
+  for (let root = 0; root < 12; root++) {
+    for (const tpl of CHORD_TEMPLATES) {
+      const tplPCs = new Set(tpl.intervals.map(iv => (root + iv) % 12));
+      let match = 0, extra = 0;
 
-    window.addEventListener("resize", drawWaveform);
-
-    els.waveCanvas.addEventListener("click", (event) => {
-      if (!state.buffer) return;
-      const rect = els.waveCanvas.getBoundingClientRect();
-      const ratio = (event.clientX - rect.left) / rect.width;
-      const time = Math.max(0, Math.min(state.buffer.duration, ratio * state.buffer.duration));
-      if (state.playing) {
-        stopPlayback(false);
-        state.pausedAt = time;
-        updatePlayhead(time);
-        renderResults();
-      } else {
-        state.pausedAt = time;
-        updatePlayhead(time);
-        renderResults();
-      }
-      els.nowChord.textContent = "-";
-      els.nowNote.textContent = "-";
-    });
-
-    els.waveCanvas.addEventListener("mousemove", (event) => {
-      if (!state.buffer) return;
-      const rect = els.waveCanvas.getBoundingClientRect();
-      const ratio = (event.clientX - rect.left) / rect.width;
-      const time = Math.max(0, Math.min(state.buffer.duration, ratio * state.buffer.duration));
-      els.timeTooltip.textContent = formatTime(time);
-      els.timeTooltip.style.left = `${event.clientX - rect.left}px`;
-      els.timeTooltip.classList.add("visible");
-    });
-
-    els.waveCanvas.addEventListener("mouseleave", () => {
-      els.timeTooltip.classList.remove("visible");
-    });
-
-    function setInputMode(mode) {
-      state.inputMode = mode;
-      const isMic = mode === "mic";
-      els.uploadModeBtn.classList.toggle("active", !isMic);
-      els.micModeBtn.classList.toggle("active", isMic);
-      els.uploadModeBtn.setAttribute("aria-selected", String(!isMic));
-      els.micModeBtn.setAttribute("aria-selected", String(isMic));
-      els.uploadPanel.classList.toggle("active", !isMic);
-      els.micPanel.classList.toggle("active", isMic);
-      if (isMic) {
-        stopPlayback();
-        if (!state.micListening) {
-          els.fileMeta.innerHTML = "<strong>麦克风模式</strong><span>点击“开始监听”后弹奏一个和弦</span>";
-          els.emptyState.textContent = "点击“开始监听”，稳定识别到的和弦会出现在这里。";
-        }
-        setStatus(state.micListening ? "正在监听" : "麦克风模式");
-      } else {
-        stopMic();
-        els.emptyState.textContent = "上传音频后点击“开始识别”。";
-        if (!state.buffer) els.fileMeta.textContent = "还没有载入音频";
-        setStatus(state.buffer ? "已载入" : "等待音频");
-      }
-    }
-
-    async function loadFile(file) {
-      setInputMode("upload");
-      stopMic();
-      stopPlayback();
-      setStatus("正在解码");
-      state.fileName = file.name;
-      state.results = [];
-      renderResults();
-      const arrayBuffer = await file.arrayBuffer();
-      state.audioContext = state.audioContext || new AudioContext();
-      state.buffer = await state.audioContext.decodeAudioData(arrayBuffer);
-      els.fileMeta.innerHTML = `<strong>${escapeHtml(file.name)}</strong><span>${formatTime(state.buffer.duration)} · ${Math.round(file.size / 1024 / 1024 * 10) / 10} MB</span>`;
-      els.analyzeBtn.disabled = false;
-      els.playBtn.disabled = false;
-      els.nowChord.textContent = "-";
-      els.nowNote.textContent = "-";
-      els.keyGuess.textContent = "-";
-      setStatus("已载入");
-      drawWaveform();
-    }
-
-    async function toggleMic() {
-      if (state.micListening) {
-        stopMic();
-        return;
-      }
-      try {
-        const micProblem = getMicAvailabilityProblem();
-        if (micProblem) {
-          showMicError(micProblem);
-          return;
-        }
-        stopPlayback();
-        state.audioContext = state.audioContext || new AudioContext();
-        if (state.audioContext.state === "suspended") await state.audioContext.resume();
-        state.micStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          }
-        });
-        state.micSource = state.audioContext.createMediaStreamSource(state.micStream);
-        state.micAnalyser = state.audioContext.createAnalyser();
-        state.micAnalyser.fftSize = 32768;
-        state.micAnalyser.smoothingTimeConstant = 0.18;
-        state.micSilentGain = state.audioContext.createGain();
-        state.micSilentGain.gain.value = 0;
-        state.micSource.connect(state.micAnalyser);
-        state.micAnalyser.connect(state.micSilentGain);
-        state.micSilentGain.connect(state.audioContext.destination);
-        state.micFrame = new Float32Array(state.micAnalyser.fftSize);
-        state.micStartedAt = performance.now();
-        state.micListening = true;
-        state.micCandidates = [];
-        state.micStable = null;
-        state.results = [];
-        state.buffer = null;
-        els.fileMeta.innerHTML = "<strong>麦克风监听中</strong><span>请弹奏或播放清晰的和弦声音</span>";
-        els.emptyState.textContent = "等待稳定的麦克风和弦输入。";
-        els.analyzeBtn.disabled = true;
-        els.playBtn.disabled = true;
-        els.keyGuess.textContent = "-";
-        renderResults();
-        setMicIcon(true);
-        setStatus("正在监听");
-        listenMicFrame();
-        state.micTimer = window.setInterval(listenMicFrame, 450);
-      } catch (error) {
-        stopMic();
-        showMicError(getMicErrorMessage(error));
-      }
-    }
-
-    function getMicAvailabilityProblem() {
-      const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
-      if (!window.isSecureContext && !isLocalhost) {
-        return "当前页面不是安全来源。请在本机用 http://127.0.0.1:8080 打开，或改用 HTTPS；局域网 HTTP 地址通常不能使用麦克风。";
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        return "这个浏览器没有开放麦克风 API。请换用 Chrome、Edge 或 Safari 的较新版本，并确认页面使用 localhost 或 HTTPS。";
-      }
-      return "";
-    }
-
-    function getMicErrorMessage(error) {
-      if (!error) return "浏览器没有返回具体原因。请检查麦克风权限、系统隐私设置和页面访问方式。";
-      if (error.name === "NotAllowedError") return "浏览器或系统拒绝了麦克风权限。请在地址栏权限设置和系统隐私设置里允许浏览器使用麦克风。";
-      if (error.name === "NotFoundError") return "没有找到可用的麦克风输入设备。";
-      if (error.name === "NotReadableError") return "麦克风正在被其他应用占用，或系统暂时无法读取输入。";
-      if (error.name === "OverconstrainedError") return "当前麦克风不支持请求的录音参数。";
-      if (error.name === "SecurityError") return "浏览器安全策略阻止了麦克风。请使用 localhost 或 HTTPS 打开页面。";
-      return error.message || "无法打开麦克风。请检查浏览器权限或 HTTPS/localhost 访问方式。";
-    }
-
-    function showMicError(message) {
-      setStatus("麦克风不可用");
-      els.fileMeta.innerHTML = `<strong>无法打开麦克风</strong><span>${escapeHtml(message)}</span>`;
-    }
-
-    function listenMicFrame() {
-      if (!state.micListening || !state.micAnalyser || !state.micFrame) return;
-      state.micAnalyser.getFloatTimeDomainData(state.micFrame);
-      const rms = frameRms(state.micFrame);
-      if (rms < 0.0025) {
-        els.nowChord.textContent = "-";
-        els.nowNote.textContent = "-";
-        setStatus(rms < 0.0008 ? "等待声音" : "输入偏低");
-        drawWaveform();
-        return;
+      for (const pc of activePCs) {
+        if (tplPCs.has(pc)) match++;
+        else extra++;
       }
 
-      const chroma = chromaFromFrame(state.micFrame, state.audioContext.sampleRate);
-      const chord = detectChord(chroma);
-      const pitch = detectPitch(state.micFrame, state.audioContext.sampleRate);
-      const bass = detectBass(chroma);
-      const topNotes = topChromaNotes(chroma, 5);
-      const now = (performance.now() - state.micStartedAt) / 1000;
-      const segment = {
-        start: Math.max(0, now - 0.45),
-        end: now,
-        chroma,
-        chord,
-        pitch,
-        bass,
-        topNotes
-      };
+      // Score: reward matches, penalize extra notes
+      const matchRatio = match / tplPCs.size;
+      const extraPenalty = extra * 0.15;
+      const score = matchRatio - extraPenalty;
 
-      const stable = updateMicStability(segment);
-      if (stable) appendMicSegment(stable);
-      els.nowChord.textContent = stable ? chordName(stable.chord) : chordName(chord);
-      els.nowNote.textContent = stable && stable.pitch ? noteName(stable.pitch.pc) : (pitch ? noteName(pitch.pc) : "-");
-      setStatus("正在监听");
-      renderResults();
-      drawWaveform();
-    }
+      // Favor simpler chords slightly when scores are close
+      const complexityPenalty = tpl.intervals.length > 3 ? 0.05 : 0;
 
-    function updateMicStability(segment) {
-      const key = chordName(segment.chord);
-      state.micCandidates.push({ key, segment });
-      if (state.micCandidates.length > 5) state.micCandidates.shift();
+      const finalScore = score - complexityPenalty;
 
-      const recent = state.micCandidates.slice(-4);
-      const votes = new Map();
-      recent.forEach(item => votes.set(item.key, (votes.get(item.key) || 0) + 1));
-      const [winner, count] = [...votes.entries()].sort((a, b) => b[1] - a[1])[0];
-      if (count < 3) return null;
-
-      const stableItems = recent.filter(item => item.key === winner).map(item => item.segment);
-      const last = stableItems[stableItems.length - 1];
-      const chroma = averageSegmentsChroma(stableItems);
-      state.micStable = {
-        ...last,
-        start: stableItems[0].start,
-        end: last.end,
-        chroma,
-        chord: {
-          ...last.chord,
-          confidence: stableItems.reduce((sum, item) => sum + item.chord.confidence, 0) / stableItems.length
-        },
-        topNotes: topChromaNotes(chroma, 5)
-      };
-      return state.micStable;
-    }
-
-    function appendMicSegment(segment) {
-      const name = chordName(segment.chord);
-      const prev = state.results[state.results.length - 1];
-      if (prev && chordName(prev.chord) === name && segment.start - prev.end < 1.2) {
-        prev.end = segment.end;
-        prev.chroma = avgChroma(prev.chroma, segment.chroma);
-        prev.topNotes = topChromaNotes(prev.chroma, 5);
-        prev.pitch = segment.pitch || prev.pitch;
-        prev.bass = segment.bass;
-        prev.chord = {
-          ...segment.chord,
-          confidence: (prev.chord.confidence + segment.chord.confidence) / 2
-        };
-      } else {
-        state.results.push(segment);
-        if (state.results.length > 80) state.results.shift();
-      }
-    }
-
-    function stopMic() {
-      if (state.micTimer) window.clearInterval(state.micTimer);
-      state.micTimer = null;
-      if (state.micSilentGain) state.micSilentGain.disconnect();
-      if (state.micSource) state.micSource.disconnect();
-      if (state.micStream) state.micStream.getTracks().forEach(track => track.stop());
-      state.micStream = null;
-      state.micSource = null;
-      state.micAnalyser = null;
-      state.micSilentGain = null;
-      state.micFrame = null;
-      state.micListening = false;
-      state.micCandidates = [];
-      state.micStable = null;
-      setMicIcon(false);
-      if (!state.buffer) {
-        els.analyzeBtn.disabled = true;
-        els.playBtn.disabled = true;
-      }
-      if (els.fileMeta.textContent.includes("麦克风")) {
-        els.fileMeta.textContent = state.buffer ? state.fileName : "还没有载入音频";
-      }
-      if (els.status.textContent.includes("监听") || els.status.textContent.includes("声音")) {
-        setStatus(state.buffer ? "已载入" : "等待音频");
-      }
-      drawWaveform();
-    }
-
-    async function analyze() {
-      if (!state.buffer) return;
-      stopMic();
-      stopPlayback();
-      els.analyzeBtn.disabled = true;
-      setStatus("分析中");
-      await nextFrame();
-
-      const mono = mixToMono(state.buffer);
-      const sampleRate = state.buffer.sampleRate;
-      const windowSeconds = Number(els.windowRange.value);
-      const hopSeconds = windowSeconds;
-      const hopSize = Math.max(1, Math.floor(sampleRate * hopSeconds));
-      const fftSize = Math.max(2048, Math.min(32768, nearestPowerOfTwo(hopSize)));
-      const results = [];
-
-      for (let start = 0; start < mono.length; start += hopSize) {
-        const end = Math.min(start + hopSize, mono.length);
-        const slice = mono.subarray(start, Math.min(start + fftSize, mono.length));
-        if (slice.length < 512) break;
-        const chroma = chromaFromFrame(slice, sampleRate);
-        const chord = detectChord(chroma);
-        const pitch = detectPitch(slice, sampleRate);
-        const bass = detectBass(chroma);
-        const topNotes = topChromaNotes(chroma, 5);
-        results.push({
-          start: start / sampleRate,
-          end: end / sampleRate,
-          chroma,
-          chord,
-          pitch,
-          bass,
-          topNotes
-        });
-        if (results.length % 8 === 0) {
-          setStatus(`分析 ${Math.min(99, Math.round(start / mono.length * 100))}%`);
-          await nextFrame();
-        }
-      }
-
-      state.results = mergeSegments(smoothResults(results, Number(els.smoothRange.value)));
-      renderResults();
-      drawWaveform();
-      guessKey();
-      setStatus("识别完成");
-      els.analyzeBtn.disabled = false;
-    }
-
-    function mixToMono(buffer) {
-      const length = buffer.length;
-      const out = new Float32Array(length);
-      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-        const data = buffer.getChannelData(ch);
-        for (let i = 0; i < length; i++) out[i] += data[i] / buffer.numberOfChannels;
-      }
-      return out;
-    }
-
-    function frameRms(frame) {
-      let sum = 0;
-      for (const x of frame) sum += x * x;
-      return Math.sqrt(sum / frame.length);
-    }
-
-    function chromaFromFrame(frame, sampleRate) {
-      const n = nearestPowerOfTwo(frame.length);
-      const real = new Float32Array(n);
-      const imag = new Float32Array(n);
-      for (let i = 0; i < n; i++) {
-        const win = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
-        real[i] = (frame[i] || 0) * win;
-      }
-      fft(real, imag);
-
-      const chroma = new Float32Array(12);
-      const minFreq = 55;
-      const maxFreq = Math.min(5000, sampleRate / 2);
-      const minBin = Math.max(1, Math.floor(minFreq * n / sampleRate));
-      const maxBin = Math.min(n / 2 - 1, Math.ceil(maxFreq * n / sampleRate));
-
-      for (let bin = minBin; bin <= maxBin; bin++) {
-        const freq = bin * sampleRate / n;
-        const midi = Math.round(69 + 12 * Math.log2(freq / 440));
-        if (midi < 24 || midi > 108) continue;
-        const pc = ((midi % 12) + 12) % 12;
-        const mag = Math.hypot(real[bin], imag[bin]);
-        const rolloff = 1 / Math.sqrt(Math.max(1, freq / 220));
-        chroma[pc] += Math.log1p(mag) * rolloff;
-      }
-
-      const max = Math.max(...chroma);
-      if (max > 0) {
-        for (let i = 0; i < 12; i++) chroma[i] /= max;
-      }
-      return chroma;
-    }
-
-    function detectChord(chroma) {
-      let best = { root: 0, suffix: "", score: -Infinity, confidence: 0 };
-      for (let root = 0; root < 12; root++) {
-        for (const tpl of CHORD_TEMPLATES) {
-          let score = scoreChordTemplate(chroma, root, tpl);
-          if (isExtendedChord(tpl.suffix)) {
-            score = gateExtendedChord(chroma, root, tpl, score);
-          }
-          if (isSuspendedChord(tpl.suffix)) {
-            score = gateSuspendedChord(chroma, root, tpl, score);
-          }
-          if (tpl.suffix === "aug") {
-            score = gateAugmentedChord(chroma, root, tpl, score);
-          }
-          if (score > best.score) best = { root, suffix: tpl.suffix, score, confidence: clamp(score, 0, 1) };
-        }
-      }
-      return best;
-    }
-
-    function scoreChordTemplate(chroma, root, tpl) {
-      let score = 0;
-      let expected = 0;
-      const mask = new Set(tpl.intervals.map(i => (root + i) % 12));
-      tpl.intervals.forEach((interval, idx) => {
-        score += chroma[(root + interval) % 12] * tpl.weight[idx];
-        expected += tpl.weight[idx];
-      });
-      let penalty = 0;
-      for (let pc = 0; pc < 12; pc++) {
-        if (!mask.has(pc)) penalty += chroma[pc] * 0.09;
-      }
-      return score / expected - penalty;
-    }
-
-    function isExtendedChord(suffix) {
-      return suffix === "7" || suffix === "m7" || suffix === "maj7";
-    }
-
-    function isSuspendedChord(suffix) {
-      return suffix === "sus2" || suffix === "sus4";
-    }
-
-    function getExtensionSensitivity() {
-      const value = els.extensionSensitivitySelect.value;
-      if (value === "high") {
-        return {
-          level: "high",
-          extensionMin: 0.42,
-          extensionRatio: 0.5,
-          extensionScoreGap: 0,
-          extensionPenalty: 0.12,
-          susThirdMax: 0.42,
-          susRatio: 1.18,
-          susMin: 0.38,
-          susScoreGap: 0,
-          susPenalty: 0.12
+      if (finalScore > best.confidence) {
+        best = {
+          root, suffix: tpl.name, confidence: clamp(finalScore, 0, 1),
+          detectedNotes: [...activePCs]
         };
       }
-      if (value === "low") {
-        return {
-          level: "low",
-          extensionMin: 0.62,
-          extensionRatio: 0.82,
-          extensionScoreGap: 0.2,
-          extensionPenalty: 0.55,
-          susThirdMax: 0.12,
-          susRatio: 2.6,
-          susMin: 0.76,
-          susScoreGap: 0.2,
-          susPenalty: 0.55
-        };
+    }
+  }
+
+  return best;
+}
+
+// ============================================================
+// Analysis pipeline
+// ============================================================
+async function analyzeWithBasicPitch() {
+  if (!state.buffer || !state.modelLoaded) return;
+  stopPlayback();
+  $( 'analyzeBtn' ).disabled = true;
+  setStatus('检测中...');
+  const progBar = $( 'analyzeProgressBar' );
+  const progText = $( 'analyzeProgressText' );
+  progBar.style.display = 'block';
+
+  // 1. Resample to 22050Hz mono
+  progText.textContent = '预处理音频...';
+  await sleep(50);
+  const mono = mixToMono(state.buffer);
+  const oc = new OfflineAudioContext(1, Math.ceil(mono.length * AUDIO_SAMPLE_RATE / state.buffer.sampleRate), AUDIO_SAMPLE_RATE);
+  const src = oc.createBufferSource();
+  const buf22050 = oc.createBuffer(1, mono.length, state.buffer.sampleRate);
+  buf22050.getChannelData(0).set(mono);
+  src.buffer = buf22050;
+  src.connect(oc.destination);
+  src.start();
+  const rendered = await oc.startRendering();
+  const audio22050 = rendered.getChannelData(0);
+
+  // 2. Run Basic Pitch
+  progText.textContent = 'Basic Pitch 推理中...';
+
+  const AUDIO_WINDOW = AUDIO_SAMPLE_RATE * 2 - 256; // 43844
+  const OVERLAP_FRAMES = 30;
+  const OVERLAP_LEN = OVERLAP_FRAMES * 256; // 7680
+  const HOP_SIZE = AUDIO_WINDOW - OVERLAP_LEN; // 36164
+
+  // Pad audio
+  const padLen = Math.floor(OVERLAP_LEN / 2) + audio22050.length;
+  const padded = new Float32Array(padLen);
+  padded.fill(0);
+  padded.set(audio22050, Math.floor(OVERLAP_LEN / 2));
+
+  // Frame the audio
+  const nFrames = Math.ceil((padLen - AUDIO_WINDOW) / HOP_SIZE) + 1;
+  const nOutputFramesOriginal = Math.floor(audio22050.length * (ANNOTATIONS_FPS / AUDIO_SAMPLE_RATE));
+
+  // Run model frame by frame
+  const allNotes = [];
+
+  for (let i = 0; i < nFrames; i++) {
+    const start = i * HOP_SIZE;
+    const end = start + AUDIO_WINDOW;
+    const frame = padded.slice(start, Math.min(end, padLen));
+    if (frame.length < 512) break;
+
+    // Pad to exact window size
+    const input = new Float32Array(AUDIO_WINDOW);
+    input.set(frame.subarray(0, Math.min(AUDIO_WINDOW, frame.length)));
+
+    const tensor = tf.tensor(input, [1, AUDIO_WINDOW, 1]);
+    const result = state.model.execute(tensor, ['Identity_1', 'Identity_2', 'Identity']);
+    const frames = result[0];
+    const onsets = result[1];
+    const contours = result[2];
+
+    // Unwrap overlap
+    const nOverlap = Math.floor(OVERLAP_FRAMES / 2);
+    let uFrames = frames.slice([0, nOverlap, 0], [-1, frames.shape[1] - 2 * nOverlap, -1]);
+    let uOnsets = onsets.slice([0, nOverlap, 0], [-1, onsets.shape[1] - 2 * nOverlap, -1]);
+
+    uFrames = uFrames.reshape([uFrames.shape[0] * uFrames.shape[1], uFrames.shape[2]]);
+    uOnsets = uOnsets.reshape([uOnsets.shape[0] * uOnsets.shape[1], uOnsets.shape[2]]);
+
+    const framesArr = await uFrames.array();
+    const onsetsArr = await uOnsets.array();
+
+    // Dispose tensors
+    tensor.dispose();
+    result.forEach(t => t.dispose());
+
+    const notes = outputToNotesPoly(framesArr, onsetsArr, 0.5, 0.3, 5, true);
+    // Offset notes by this frame's start time
+    const frameStartFrames = i * (HOP_SIZE / 256);
+    notes.forEach(n => {
+      n.startFrame += frameStartFrames;
+    });
+    allNotes.push(...notes);
+
+    // Update progress
+    const pct = Math.round((i / nFrames) * 100);
+    progBar.querySelector('div').style.width = pct + '%';
+    progText.textContent = `Basic Pitch 推理中... ${pct}%`;
+
+    // Allow UI updates
+    await sleep(0);
+  }
+
+  // Convert to time-based notes
+  const timedNotes = notesToTimeEvents(allNotes);
+
+  // 3. Group notes into time windows for chord detection
+  progText.textContent = '和弦匹配...';
+  const windowSec = 0.5; // 500ms windows
+  const duration = mono.length / state.buffer.sampleRate;
+  const chords = [];
+
+  for (let t = 0; t < duration; t += windowSec) {
+    const tEnd = t + windowSec;
+    const activePCs = new Set();
+
+    // Find notes active in this window
+    let noteCount = 0;
+    for (const note of timedNotes) {
+      const noteEnd = note.startTimeSeconds + note.durationSeconds;
+      if (note.startTimeSeconds < tEnd && noteEnd > t) {
+        activePCs.add(((note.pitchMidi % 12) + 12) % 12);
+        noteCount++;
       }
-      return {
-        level: "medium",
-        extensionMin: 0.5,
-        extensionRatio: 0.62,
-        extensionScoreGap: 0.02,
-        extensionPenalty: 0.22,
-        susThirdMax: 0.34,
-        susRatio: 1.45,
-        susMin: 0.48,
-        susScoreGap: 0.03,
-        susPenalty: 0.2
-      };
     }
 
-    function gateExtendedChord(chroma, root, tpl, score) {
-      const sensitivity = getExtensionSensitivity();
-      if (sensitivity.level === "low") return score - sensitivity.extensionPenalty;
-      const triadSuffix = tpl.suffix === "m7" ? "m" : "";
-      const triad = CHORD_TEMPLATES.find(item => item.suffix === triadSuffix);
-      const triadScore = scoreChordTemplate(chroma, root, triad);
-      const extensionInterval = tpl.suffix === "maj7" ? 11 : 10;
-      const extensionStrength = chroma[(root + extensionInterval) % 12];
-      const isDominant = tpl.suffix === "7";
-      const extensionMin = isDominant ? Math.min(sensitivity.extensionMin, 0.36) : sensitivity.extensionMin;
-      const extensionRatio = isDominant ? Math.min(sensitivity.extensionRatio, 0.58) : sensitivity.extensionRatio;
-      const extensionScoreGap = isDominant ? Math.min(sensitivity.extensionScoreGap, -0.015) : sensitivity.extensionScoreGap;
-      const triadStrength = Math.min(
-        chroma[root],
-        chroma[(root + triad.intervals[1]) % 12],
-        chroma[(root + 7) % 12]
-      );
-      const strongEnough = extensionStrength > extensionMin && extensionStrength > triadStrength * extensionRatio;
-      const clearlyBetter = score > triadScore + extensionScoreGap;
-      return strongEnough && clearlyBetter ? score : score - sensitivity.extensionPenalty;
-    }
-
-    function gateAugmentedChord(chroma, root, tpl, score) {
-      const majorThird = chroma[(root + 4) % 12];
-      const augmentedFifth = chroma[(root + 8) % 12];
-      const perfectFifth = chroma[(root + 7) % 12];
-      const rootStrength = chroma[root];
-      const augmentedEvidence = Math.min(rootStrength, majorThird, augmentedFifth);
-      const augmentedIsClear = augmentedEvidence > 0.32 && augmentedFifth > perfectFifth * 1.25;
-      return augmentedIsClear ? score : score - 0.24;
-    }
-
-    function gateSuspendedChord(chroma, root, tpl, score) {
-      const sensitivity = getExtensionSensitivity();
-      if (sensitivity.level === "low") return score - sensitivity.susPenalty;
-      const majorThird = chroma[(root + 4) % 12];
-      const minorThird = chroma[(root + 3) % 12];
-      const thirdStrength = Math.max(majorThird, minorThird);
-      const susInterval = tpl.suffix === "sus2" ? 2 : 5;
-      const susStrength = chroma[(root + susInterval) % 12];
-      const majorTriad = CHORD_TEMPLATES.find(item => item.suffix === "");
-      const minorTriad = CHORD_TEMPLATES.find(item => item.suffix === "m");
-      const bestTriadScore = Math.max(
-        scoreChordTemplate(chroma, root, majorTriad),
-        scoreChordTemplate(chroma, root, minorTriad)
-      );
-      const thirdIsAbsent = thirdStrength < sensitivity.susThirdMax || susStrength > thirdStrength * sensitivity.susRatio;
-      const susIsClear = susStrength > sensitivity.susMin && score > bestTriadScore + sensitivity.susScoreGap;
-      return thirdIsAbsent && susIsClear ? score : score - sensitivity.susPenalty;
-    }
-
-    function detectBass(chroma) {
-      let idx = 0;
-      for (let i = 1; i < 12; i++) {
-        if (chroma[i] > chroma[idx]) idx = i;
-      }
-      return idx;
-    }
-
-    function detectPitch(frame, sampleRate) {
-      let rms = 0;
-      for (const x of frame) rms += x * x;
-      rms = Math.sqrt(rms / frame.length);
-      if (rms < 0.008) return null;
-
-      const minLag = Math.floor(sampleRate / 1000);
-      const maxLag = Math.floor(sampleRate / 65);
-      let bestLag = -1;
-      let bestCorr = 0;
-      for (let lag = minLag; lag <= maxLag; lag++) {
-        let corr = 0;
-        let normA = 0;
-        let normB = 0;
-        for (let i = 0; i < frame.length - lag; i += 2) {
-          const a = frame[i];
-          const b = frame[i + lag];
-          corr += a * b;
-          normA += a * a;
-          normB += b * b;
-        }
-        const normalized = corr / Math.sqrt(normA * normB || 1);
-        if (normalized > bestCorr) {
-          bestCorr = normalized;
-          bestLag = lag;
-        }
-      }
-      if (bestLag < 0 || bestCorr < 0.35) return null;
-      const freq = sampleRate / bestLag;
-      const midi = Math.round(69 + 12 * Math.log2(freq / 440));
-      return { freq, midi, pc: ((midi % 12) + 12) % 12, confidence: bestCorr };
-    }
-
-    function smoothResults(results, level) {
-      if (level === 0 || results.length < 3) return results;
-      const radius = level;
-      return results.map((item, index) => {
-        const votes = new Map();
-        for (let i = Math.max(0, index - radius); i <= Math.min(results.length - 1, index + radius); i++) {
-          const key = `${results[i].chord.root}:${results[i].chord.suffix}`;
-          votes.set(key, (votes.get(key) || 0) + results[i].chord.confidence);
-        }
-        const winner = [...votes.entries()].sort((a, b) => b[1] - a[1])[0][0];
-        const [root, suffix] = winner.split(":");
-        return {
-          ...item,
-          chord: { ...item.chord, root: Number(root), suffix }
-        };
+    if (activePCs.size > 0) {
+      const chord = detectChordFromPitchClasses(activePCs);
+      chords.push({
+        start: t, end: tEnd, chord,
+        activePCs: [...activePCs], noteCount
       });
     }
+  }
 
-    function mergeSegments(results) {
-      const merged = [];
-      for (const item of results) {
-        const prev = merged[merged.length - 1];
-        const name = chordName(item.chord);
-        if (prev && chordName(prev.chord) === name) {
-          prev.end = item.end;
-          prev.confidences.push(item.chord.confidence);
-          prev.topNotes = topChromaNotes(avgChroma(prev.chroma, item.chroma), 5);
-          prev.chroma = avgChroma(prev.chroma, item.chroma);
-        } else {
-          merged.push({ ...item, confidences: [item.chord.confidence] });
-        }
-      }
-      return merged.map(item => ({
-        ...item,
-        chord: {
-          ...item.chord,
-          confidence: item.confidences.reduce((a, b) => a + b, 0) / item.confidences.length
-        }
-      }));
+  // 4. Merge consecutive same chords
+  const merged = [];
+  for (const c of chords) {
+    const prev = merged[merged.length - 1];
+    if (prev && chordNameStr(prev.chord) === chordNameStr(c.chord)) {
+      prev.end = c.end;
+      prev.confidences = (prev.confidences || [prev.chord.confidence]).concat(c.chord.confidence);
+    } else {
+      merged.push({ ...c, confidences: [c.chord.confidence] });
     }
+  }
+  merged.forEach(m => {
+    m.chord.confidence = m.confidences.reduce((a, b) => a + b, 0) / m.confidences.length;
+  });
 
-    function avgChroma(a, b) {
-      const out = new Float32Array(12);
-      for (let i = 0; i < 12; i++) out[i] = (a[i] + b[i]) / 2;
-      return out;
+  // Filter out very short segments and low confidence
+  state.results = merged.filter(m => m.end - m.start >= 0.3 && m.chord.confidence > 0.2);
+
+  progBar.style.display = 'none';
+  progText.textContent = '';
+  $( 'analyzeBtn' ).disabled = false;
+  setStatus('检测完成');
+  renderResults();
+  drawWaveform();
+}
+
+// ============================================================
+// UI helpers
+// ============================================================
+function setStatus(msg) { $( 'status' ).textContent = msg; }
+
+function chordNameStr(chord) {
+  const notes = $( 'notationSelect' ).value === 'flat' ? NOTE_FLAT : NOTE_SHARP;
+  return notes[chord.root] + chord.suffix;
+}
+
+function noteName(midi) {
+  const notes = $( 'notationSelect' ).value === 'flat' ? NOTE_FLAT : NOTE_SHARP;
+  return notes[((midi % 12) + 12) % 12] + Math.floor(midi / 12 - 1);
+}
+
+function mixToMono(buffer) {
+  if (buffer.numberOfChannels === 1) return new Float32Array(buffer.getChannelData(0));
+  const mono = new Float32Array(buffer.length);
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < buffer.length; i++) mono[i] += data[i];
+  }
+  for (let i = 0; i < mono.length; i++) mono[i] /= buffer.numberOfChannels;
+  return mono;
+}
+
+function renderResults() {
+  const tbody = $( 'resultBody' );
+  const notes = $( 'notationSelect' ).value === 'flat' ? NOTE_FLAT : NOTE_SHARP;
+  tbody.innerHTML = '';
+
+  if (state.results.length === 0) {
+    $( 'emptyState' ).textContent = '未检测到和弦，尝试上传包含和弦的音频文件';
+    $( 'emptyState' ).style.display = 'block';
+    $( 'resultCount' ).textContent = '0 段';
+    return;
+  }
+
+  $( 'emptyState' ).style.display = 'none';
+  $( 'resultCount' ).textContent = state.results.length + ' 段';
+
+  for (const r of state.results) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${formatTime(r.start)} – ${formatTime(r.end)}</td>
+      <td><span class="chord-tag">${notes[r.chord.root]}${r.chord.suffix || ''}</span></td>
+      <td>${notes[r.chord.root]}</td>
+      <td><div class="notes">${r.activePCs.map(pc => `<span class="note">${notes[pc]}</span>`).join('')}</div></td>
+      <td><div class="confidence"><div style="width:${Math.round(r.chord.confidence * 100)}%"></div></div></td>
+    `;
+    tr.addEventListener('click', () => seekTo(r.start));
+    tbody.appendChild(tr);
+  }
+
+  // Update readout with first chord
+  const first = state.results[0];
+  if (first) {
+    $( 'nowChord' ).textContent = notes[first.chord.root] + (first.chord.suffix || '');
+    $( 'nowNoteCount' ).textContent = first.activePCs.length + ' 个';
+    $( 'keyGuess' ).textContent = first.activePCs.length >= 2 ? notes[first.activePCs[0]] + ' 调' : '-';
+  }
+}
+
+// ============================================================
+// Waveform
+// ============================================================
+function drawWaveform() {
+  const canvas = $( 'waveCanvas' );
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const mono = mixToMono(state.buffer);
+  ctx.clearRect(0, 0, w, h);
+
+  // Draw waveform
+  const step = Math.max(1, Math.floor(mono.length / w));
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(14,124,123,0.55)';
+  ctx.lineWidth = 1.2;
+
+  for (let x = 0; x < w; x++) {
+    let min = 0, max = 0;
+    const start = x * step;
+    for (let i = 0; i < step && start + i < mono.length; i++) {
+      const v = mono[start + i];
+      if (v < min) min = v;
+      if (v > max) max = v;
     }
+    const y1 = h/2 + min * h/2 * 0.9;
+    const y2 = h/2 + max * h/2 * 0.9;
+    ctx.moveTo(x + 0.5, y1);
+    ctx.lineTo(x + 0.5, y2);
+  }
+  ctx.stroke();
 
-    function averageSegmentsChroma(segments) {
-      const out = new Float32Array(12);
-      if (!segments.length) return out;
-      segments.forEach(segment => {
-        for (let i = 0; i < 12; i++) out[i] += segment.chroma[i];
-      });
-      for (let i = 0; i < 12; i++) out[i] /= segments.length;
-      return out;
+  // Draw chord segments
+  const dur = mono.length / state.buffer.sampleRate;
+  for (const r of state.results) {
+    const x1 = (r.start / dur) * w;
+    const x2 = (r.end / dur) * w;
+    ctx.fillStyle = 'rgba(45,95,154,0.12)';
+    ctx.fillRect(x1, 0, x2 - x1, h);
+  }
+
+  // Center line
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(25,27,31,0.2)';
+  ctx.lineWidth = 1;
+  ctx.moveTo(0, h/2);
+  ctx.lineTo(w, h/2);
+  ctx.stroke();
+}
+
+function seekTo(time) {
+  if (!state.buffer) return;
+  playAt(time);
+}
+
+function updatePlayhead() {
+  const elapsed = (state.playing ? state.audioCtx.currentTime - state.startedAt : state.pausedAt);
+  const dur = state.buffer.duration;
+  const progress = clamp(elapsed / dur, 0, 1);
+  const wrap = $( 'waveCanvas' ).parentElement;
+  const playhead = $( 'playhead' );
+  const tooltip = $( 'timeTooltip' );
+  playhead.style.left = (16 + progress * (wrap.clientWidth - 16)) + 'px';
+  playhead.style.opacity = '1';
+  tooltip.textContent = formatTime(elapsed);
+  tooltip.style.left = playhead.style.left;
+  tooltip.style.opacity = '1';
+
+  // Highlight current chord
+  const t = elapsed;
+  for (const r of state.results) {
+    if (t >= r.start && t < r.end) {
+      const notes = $( 'notationSelect' ).value === 'flat' ? NOTE_FLAT : NOTE_SHARP;
+      $( 'nowChord' ).textContent = notes[r.chord.root] + (r.chord.suffix || '');
+      $( 'nowNoteCount' ).textContent = r.activePCs.length + ' 个';
+      break;
     }
+  }
 
-    function topChromaNotes(chroma, count) {
-      return [...chroma]
-        .map((value, pc) => ({ pc, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, count)
-        .filter(item => item.value > 0.18);
-    }
+  if (state.playing) state.raf = requestAnimationFrame(updatePlayhead);
+  else { playhead.style.opacity = '0'; tooltip.style.opacity = '0'; }
+}
 
-    function guessKey() {
-      if (!state.results.length) {
-        els.keyGuess.textContent = "-";
-        return;
-      }
-      const total = new Float32Array(12);
-      state.results.forEach(segment => {
-        for (let i = 0; i < 12; i++) total[i] += segment.chroma[i] * (segment.end - segment.start);
-      });
-      const major = [1, 0, 0.45, 0, 0.72, 0.55, 0, 0.8, 0, 0.5, 0, 0.42];
-      const minor = [1, 0, 0.42, 0.68, 0, 0.55, 0, 0.78, 0.48, 0, 0.45, 0];
-      let best = { root: 0, mode: "", score: -Infinity };
-      for (let root = 0; root < 12; root++) {
-        const scoreMajor = templateScore(total, major, root);
-        const scoreMinor = templateScore(total, minor, root);
-        if (scoreMajor > best.score) best = { root, mode: "大调", score: scoreMajor };
-        if (scoreMinor > best.score) best = { root, mode: "小调", score: scoreMinor };
-      }
-      els.keyGuess.textContent = `${noteName(best.root)} ${best.mode}`;
-    }
+function playAt(time) {
+  if (!state.buffer) return;
+  stopPlayback();
+  state.audioCtx = new AudioContext();
+  state.source = state.audioCtx.createBufferSource();
+  state.source.buffer = state.buffer;
+  state.source.connect(state.audioCtx.destination);
+  state.source.start(0, time);
+  state.startedAt = state.audioCtx.currentTime - time;
+  state.playing = true;
+  $( 'playIcon' ).innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+  updatePlayhead();
+}
 
-    function templateScore(chroma, template, root) {
-      let score = 0;
-      for (let i = 0; i < 12; i++) score += chroma[(root + i) % 12] * template[i];
-      return score;
-    }
+function stopPlayback() {
+  if (state.raf) cancelAnimationFrame(state.raf);
+  if (state.source) { try { state.source.stop(); } catch(e) {} state.source = null; }
+  if (state.playing) state.pausedAt = state.audioCtx ? state.audioCtx.currentTime - state.startedAt : 0;
+  state.playing = false;
+  $( 'playIcon' ).innerHTML = '<path d="M8 5v14l11-7z"></path>';
+}
 
-    function renderResults() {
-      const vt = visibleTime();
-      // At initial state (time 0), show everything. Once seeked or playing, filter.
-      const filtered = vt > 0 ? state.results.filter(s => s.start <= vt) : state.results;
-      els.resultBody.innerHTML = "";
-      els.resultCount.textContent = vt > 0
-        ? `${filtered.length} / ${state.results.length} 段`
-        : `${state.results.length} 段`;
-      els.emptyState.style.display = state.results.length ? "none" : "block";
-      [...filtered].reverse().forEach(segment => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${formatTime(segment.start)} - ${formatTime(segment.end)}</td>
-          <td><span class="chord">${chordName(segment.chord)}</span></td>
-          <td>${noteName(segment.bass)}</td>
-          <td>${segment.pitch ? noteName(segment.pitch.pc) : "-"}</td>
-          <td><div class="notes">${segment.topNotes.map(note => `<span class="note">${noteName(note.pc)}</span>`).join("")}</div></td>
-          <td><div class="confidence" title="${Math.round(segment.chord.confidence * 100)}%"><div style="width:${Math.round(segment.chord.confidence * 100)}%"></div></div></td>
-        `;
-        tr.addEventListener("click", () => {
-          if (state.buffer) playFrom(segment.start);
-        });
-        els.resultBody.appendChild(tr);
-      });
-    }
+// ============================================================
+// Event handlers
+// ============================================================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    function drawWaveform() {
-      const canvas = els.waveCanvas;
-      const rect = canvas.getBoundingClientRect();
-      const scale = window.devicePixelRatio || 1;
-      canvas.width = Math.max(600, Math.floor(rect.width * scale));
-      canvas.height = Math.max(300, Math.floor(rect.height * scale));
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
+async function handleFile(file) {
+  state.fileName = file.name;
+  const arr = await file.arrayBuffer();
+  const actx = new AudioContext();
+  state.buffer = await actx.decodeAudioData(arr);
+  actx.close();
+  state.fileName = file.name;
+  $( 'fileInfo' ).innerHTML = `<strong>${file.name}</strong><span>${state.buffer.duration.toFixed(1)} 秒 · ${state.buffer.sampleRate}Hz · ${state.buffer.numberOfChannels}声道</span>`;
+  setStatus('音频就绪');
+  if (state.modelLoaded) $( 'analyzeBtn' ).disabled = false;
+  drawWaveform();
+}
 
-      ctx.fillStyle = "#fbfaf6";
-      ctx.fillRect(0, 0, w, h);
-      drawGrid(ctx, w, h);
+async function loadModel() {
+  const btn = $( 'loadModelBtn' );
+  const bar = $( 'modelProgressBar' );
+  const text = $( 'modelProgressText' );
+  btn.disabled = true;
+  bar.style.display = 'block';
+  text.textContent = '正在加载 Basic Pitch 模型... (725KB)';
+  bar.querySelector('div').style.width = '0%';
 
-      if (!state.buffer && state.micFrame) {
-        drawLiveFrame(ctx, w, h, scale);
-        return;
-      }
+  try {
+    state.model = await tf.loadGraphModel(BP_MODEL_URL);
+    bar.querySelector('div').style.width = '100%';
+    text.textContent = '模型加载完成! Spotify Basic Pitch (ICASSP 2022)';
+    state.modelLoaded = true;
+    setStatus('模型就绪');
+    $( 'modelBadge' ).style.display = 'inline-flex';
+    if (state.buffer) $( 'analyzeBtn' ).disabled = false;
+  } catch(e) {
+    text.textContent = '加载失败: ' + e.message;
+    setStatus('模型加载失败');
+    btn.disabled = false;
+  }
+}
 
-      if (!state.buffer) {
-        ctx.fillStyle = "#687078";
-        ctx.font = `${16 * scale}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText("音频波形会显示在这里", w / 2, h / 2);
-        return;
-      }
+// File input
+$( 'fileInput' ).addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
 
-      if (state.results.length) {
-        state.results.forEach((segment, idx) => {
-          const x = segment.start / state.buffer.duration * w;
-          const width = Math.max(1, (segment.end - segment.start) / state.buffer.duration * w);
-          ctx.fillStyle = idx % 2 ? "rgba(45,95,154,0.10)" : "rgba(14,124,123,0.10)";
-          ctx.fillRect(x, 0, width, h);
-          if (width > 42 * scale) {
-            ctx.fillStyle = "rgba(31,36,40,0.62)";
-            ctx.font = `${12 * scale}px sans-serif`;
-            ctx.textAlign = "left";
-            ctx.fillText(chordName(segment.chord), x + 8 * scale, 22 * scale);
-          }
-        });
-      }
+// Drop zone
+const dropZone = $( 'dropZone' );
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragging');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
 
-      const data = state.buffer.getChannelData(0);
-      const step = Math.ceil(data.length / w);
-      const amp = h * 0.38;
-      ctx.beginPath();
-      ctx.strokeStyle = "#0e7c7b";
-      ctx.lineWidth = 2 * scale;
-      for (let x = 0; x < w; x++) {
-        let min = 1;
-        let max = -1;
-        const start = x * step;
-        for (let j = 0; j < step; j++) {
-          const value = data[start + j] || 0;
-          if (value < min) min = value;
-          if (value > max) max = value;
-        }
-        ctx.moveTo(x, h / 2 + min * amp);
-        ctx.lineTo(x, h / 2 + max * amp);
-      }
-      ctx.stroke();
+// Load model
+$( 'loadModelBtn' ).addEventListener('click', loadModel);
 
-      // Draw playhead line
-      const vt = visibleTime();
-      if (state.buffer && vt > 0) {
-        const px = vt / state.buffer.duration * w;
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(211, 93, 53, 0.7)";
-        ctx.lineWidth = 2 * scale;
-        ctx.setLineDash([6 * scale, 4 * scale]);
-        ctx.moveTo(px, 0);
-        ctx.lineTo(px, h);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
+// Analyze
+$( 'analyzeBtn' ).addEventListener('click', analyzeWithBasicPitch);
 
-    function drawLiveFrame(ctx, w, h, scale) {
-      const frame = state.micFrame;
-      if (!frame) return;
-      ctx.fillStyle = "rgba(45,95,154,0.10)";
-      ctx.fillRect(0, 0, w, h);
-      ctx.beginPath();
-      ctx.strokeStyle = "#0e7c7b";
-      ctx.lineWidth = 2 * scale;
-      const step = Math.max(1, Math.floor(frame.length / w));
-      const amp = h * 1.1;
-      for (let x = 0; x < w; x++) {
-        let min = 1;
-        let max = -1;
-        const start = x * step;
-        for (let j = 0; j < step; j++) {
-          const value = frame[start + j] || 0;
-          if (value < min) min = value;
-          if (value > max) max = value;
-        }
-        ctx.moveTo(x, h / 2 + min * amp);
-        ctx.lineTo(x, h / 2 + max * amp);
-      }
-      ctx.stroke();
-      ctx.fillStyle = "rgba(31,36,40,0.62)";
-      ctx.font = `${13 * scale}px sans-serif`;
-      ctx.textAlign = "left";
-      ctx.fillText("麦克风实时波形", 12 * scale, 24 * scale);
-    }
+// Play
+$( 'playBtn' ).addEventListener('click', () => {
+  if (state.playing) stopPlayback();
+  else playAt(0);
+});
 
-    function drawGrid(ctx, w, h) {
-      ctx.strokeStyle = "rgba(104,112,120,0.14)";
-      ctx.lineWidth = 1;
-      for (let i = 1; i < 6; i++) {
-        const y = h * i / 6;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-      for (let i = 1; i < 12; i++) {
-        const x = w * i / 12;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-    }
+// Notation change → re-render
+$( 'notationSelect' ).addEventListener('change', renderResults);
 
-    function togglePlay() {
-      if (!state.buffer) return;
-      if (state.playing) {
-        state.pausedAt = getCurrentTime();
-        stopPlayback(false);
-      } else {
-        playFrom(state.pausedAt || 0);
-      }
-    }
+// Canvas click → seek
+$( 'waveCanvas' ).addEventListener('click', e => {
+  if (!state.buffer) return;
+  const rect = e.target.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const time = (x / rect.width) * state.buffer.duration;
+  playAt(time);
+});
 
-    async function playFrom(offset) {
-      if (!state.buffer) return;
-      state.audioContext = state.audioContext || new AudioContext();
-      if (state.audioContext.state === "suspended") await state.audioContext.resume();
-      stopPlayback(false);
-      const source = state.audioContext.createBufferSource();
-      source.buffer = state.buffer;
-      source.connect(state.audioContext.destination);
-      state.source = source;
-      state.startedAt = state.audioContext.currentTime - offset;
-      state.pausedAt = offset;
-      state.playing = true;
-      setPlayIcon(true);
-      source.onended = () => {
-        if (state.playing && getCurrentTime() >= state.buffer.duration - 0.05) {
-          state.pausedAt = state.buffer.duration;
-          stopPlayback(false);
-          renderResults();
-        }
-      };
-      source.start(0, offset);
-      tickPlayback();
-    }
-
-    function stopPlayback(reset = true) {
-      if (state.source) {
-        try { state.source.stop(); } catch (err) {}
-        state.source.disconnect();
-      }
-      state.source = null;
-      state.playing = false;
-      if (reset) state.pausedAt = 0;
-      cancelAnimationFrame(state.raf);
-      setPlayIcon(false);
-      updatePlayhead(reset ? 0 : state.pausedAt);
-    }
-
-    function tickPlayback() {
-      const current = getCurrentTime();
-      updatePlayhead(current);
-      updateNow(current);
-      renderResults();
-      if (state.playing) state.raf = requestAnimationFrame(tickPlayback);
-    }
-
-    function updatePlayhead(time) {
-      if (!state.buffer) {
-        els.playhead.style.transform = "translateX(-10px)";
-        els.playhead.classList.remove("visible");
-        return;
-      }
-      const rect = els.waveCanvas.getBoundingClientRect();
-      const x = time / state.buffer.duration * rect.width;
-      els.playhead.style.transform = `translateX(${x}px)`;
-      els.playhead.classList.add("visible");
-    }
-
-    function updateNow(time = state.pausedAt || 0) {
-      const segment = state.results.find(item => time >= item.start && time < item.end);
-      els.nowChord.textContent = segment ? chordName(segment.chord) : "-";
-      els.nowNote.textContent = segment && segment.pitch ? noteName(segment.pitch.pc) : "-";
-    }
-
-    function getCurrentTime() {
-      if (!state.audioContext || !state.playing) return state.pausedAt || 0;
-      return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
-    }
-
-    function visibleTime() {
-      if (!state.buffer) return 0;
-      if (state.playing && state.audioContext) {
-        return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
-      }
-      return state.pausedAt || 0;
-    }
-
-    function setPlayIcon(isPlaying) {
-      els.playIcon.innerHTML = isPlaying
-        ? '<path d="M7 5h4v14H7z"></path><path d="M13 5h4v14h-4z"></path>'
-        : '<path d="M8 5v14l11-7z"></path>';
-    }
-
-    function setMicIcon(isListening) {
-      els.micBtn.classList.toggle("listening", isListening);
-      els.micBtn.title = isListening ? "停止监听" : "监听麦克风";
-      els.micBtn.setAttribute("aria-label", isListening ? "停止监听" : "监听麦克风");
-      els.micBtnText.textContent = isListening ? "停止监听" : "开始监听";
-      els.micIcon.innerHTML = isListening
-        ? '<path d="M5 5 19 19"></path><path d="M9 9v3a3 3 0 0 0 5.12 2.12"></path><path d="M15 9.34V5a3 3 0 0 0-5.94-.6"></path><path d="M17 12a5 5 0 0 1-.9 2.86"></path><path d="M7 12a5 5 0 0 0 8 4"></path><path d="M12 19v3"></path>'
-        : '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path>';
-    }
-
-    function fft(real, imag) {
-      const n = real.length;
-      for (let i = 1, j = 0; i < n; i++) {
-        let bit = n >> 1;
-        for (; j & bit; bit >>= 1) j ^= bit;
-        j ^= bit;
-        if (i < j) {
-          [real[i], real[j]] = [real[j], real[i]];
-          [imag[i], imag[j]] = [imag[j], imag[i]];
-        }
-      }
-      for (let len = 2; len <= n; len <<= 1) {
-        const angle = -2 * Math.PI / len;
-        const wLenR = Math.cos(angle);
-        const wLenI = Math.sin(angle);
-        for (let i = 0; i < n; i += len) {
-          let wr = 1;
-          let wi = 0;
-          for (let j = 0; j < len / 2; j++) {
-            const uR = real[i + j];
-            const uI = imag[i + j];
-            const vR = real[i + j + len / 2] * wr - imag[i + j + len / 2] * wi;
-            const vI = real[i + j + len / 2] * wi + imag[i + j + len / 2] * wr;
-            real[i + j] = uR + vR;
-            imag[i + j] = uI + vI;
-            real[i + j + len / 2] = uR - vR;
-            imag[i + j + len / 2] = uI - vI;
-            const nextWr = wr * wLenR - wi * wLenI;
-            wi = wr * wLenI + wi * wLenR;
-            wr = nextWr;
-          }
-        }
-      }
-    }
-
-    function chordName(chord) {
-      return `${noteName(chord.root)}${chord.suffix}`;
-    }
-
-    function noteName(pc) {
-      const notes = els.notationSelect.value === "flat" ? NOTE_FLAT : NOTE_SHARP;
-      return notes[((pc % 12) + 12) % 12];
-    }
-
-    function formatTime(seconds) {
-      const min = Math.floor(seconds / 60);
-      const sec = Math.floor(seconds % 60).toString().padStart(2, "0");
-      return `${min}:${sec}`;
-    }
-
-    function nearestPowerOfTwo(value) {
-      return 2 ** Math.round(Math.log2(Math.max(2, value)));
-    }
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    function setStatus(text) {
-      els.status.textContent = text;
-    }
-
-    function nextFrame() {
-      return new Promise(resolve => requestAnimationFrame(resolve));
-    }
-
-    function escapeHtml(value) {
-      return value.replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[char]));
-    }
-
-    drawWaveform();
-  </script>
+// Auto-load model on page load
+window.addEventListener('DOMContentLoaded', () => {
+  // Pre-load model with slight delay to not block page render
+  setTimeout(loadModel, 500);
+});
+</script>
 </body>
 </html>
