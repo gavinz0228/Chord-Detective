@@ -394,7 +394,9 @@ els.separateBtn.addEventListener('click', async () => {
     let left = ch0, right = ch1;
     if (state.buffer.sampleRate !== 44100) {
       els.sepProgressText.textContent = '重采样到 44100Hz...';
-      const oc = new OfflineAudioContext(1, Math.ceil(state.buffer.duration * 44100), 44100);
+      const numCh = Math.min(state.buffer.numberOfChannels, 2);
+      const targetLen = Math.ceil(state.buffer.duration * 44100);
+      const oc = new OfflineAudioContext(numCh, targetLen, 44100);
       const src = oc.createBufferSource();
       src.buffer = state.buffer;
       src.connect(oc.destination);
@@ -404,9 +406,30 @@ els.separateBtn.addEventListener('click', async () => {
       right = rb.numberOfChannels > 1 ? rb.getChannelData(1) : left;
     }
 
+    // Ensure stereo (duplicate mono to both channels)
+    if (!right || right === left) {
+      right = new Float32Array(left);
+    }
+
     els.sepProgressText.textContent = 'Demucs 推理中... (可能需要 1-5 分钟)';
 
     const result = await state.processor.separate(left, right);
+
+    // Normalize each track to avoid clipping distortion
+    for (const key of Object.keys(result)) {
+      const track = result[key];
+      let peak = 0;
+      for (let i = 0; i < track.left.length; i++) {
+        peak = Math.max(peak, Math.abs(track.left[i]), Math.abs(track.right[i]));
+      }
+      if (peak > 0.95) {
+        const scale = 0.95 / peak;
+        for (let i = 0; i < track.left.length; i++) {
+          track.left[i] *= scale;
+          track.right[i] *= scale;
+        }
+      }
+    }
     state.separatedTracks = result;
 
     // Build track UI
