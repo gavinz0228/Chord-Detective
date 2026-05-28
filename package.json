@@ -1,0 +1,24 @@
+{
+  "name": "chord-detective",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gavinz0228/Chord-Detective.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gavinz0228/Chord-Detective/issues"
+  },
+  "homepage": "https://github.com/gavinz0228/Chord-Detective#readme",
+  "dependencies": {
+    "demucs-web": "^1.0.2",
+    "onnxruntime-web": "^1.26.0"
+  }
+}

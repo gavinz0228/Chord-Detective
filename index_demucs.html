@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChordDetective + Demucs / 和弦侦查员</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #11120f; --surface: #f7f4ea; --ink: #191b1f; --muted: #687078;
+  --line: rgba(37,41,46,0.14); --panel: rgba(255,252,244,0.92); --panel-2: #ece5d5;
+  --accent: #0f8b7d; --accent-2: #d35d35; --accent-3: #315c9d; --gold: #d8a431;
+  --shadow: 0 24px 70px rgba(8,10,12,0.18);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  background: linear-gradient(180deg, rgba(17,18,15,0.84) 0 240px, transparent 240px),
+              linear-gradient(135deg, rgba(15,139,125,0.18), transparent 38%),
+              linear-gradient(315deg, rgba(211,93,53,0.12), transparent 42%),
+              repeating-linear-gradient(90deg, rgba(25,27,31,0.04) 0 1px, transparent 1px 44px), var(--surface);
+  color: var(--ink);
+}
+button,input,select { font: inherit; }
+
+.app { width: min(1400px, calc(100vw - 32px)); margin: 0 auto; padding: 30px 0 42px; }
+
+header { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding: 8px 0 26px; color: #fffaf0; }
+.brandline { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 14px; color: rgba(255,250,240,0.74); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.brandline::before { content: ""; width: 30px; height: 2px; border-radius: 99px; background: var(--gold); }
+h1 { margin: 0; max-width: 780px; font-size: clamp(34px,5.8vw,68px); line-height: 0.93; }
+.subhead { max-width: 720px; margin: 14px 0 0; color: rgba(255,250,240,0.72); font-size: 16px; line-height: 1.6; }
+.status-pill { justify-self: end; min-width: 180px; padding: 12px 14px; border: 1px solid rgba(255,250,240,0.18); border-radius: 8px; background: rgba(255,250,240,0.1); color: #fffaf0; text-align: center; box-shadow: 0 16px 36px rgba(0,0,0,0.18); backdrop-filter: blur(16px); }
+
+main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; align-items: start; }
+.panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.58); border-radius: 8px; box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+.controls { position: sticky; top: 18px; overflow: hidden; }
+
+/* ===== LEFT COLUMN ===== */
+.panel-section { padding: 18px; }
+.panel-section + .panel-section { border-top: 1px solid var(--line); }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 10px; }
+
+.drop { min-height: 140px; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, rgba(15,139,125,0.16), transparent 56%), repeating-linear-gradient(90deg, rgba(25,27,31,0.08) 0 1px, transparent 1px 22px), #eee7d8; text-align: center; cursor: pointer; border-radius: 6px; }
+.drop.dragging { outline: 3px solid rgba(14,124,123,0.28); outline-offset: -8px; }
+.drop strong { display: block; font-size: 17px; margin-bottom: 6px; }
+.drop span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+#fileInput { display: none; }
+.file-info { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(135deg, rgba(255,255,255,0.62), rgba(236,229,213,0.88)); font-size: 14px; }
+.file-info strong { display: block; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-info span { color: var(--muted); }
+
+.btn { border: 0; border-radius: 8px; min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: white; background: linear-gradient(135deg, var(--accent), #136d7e); cursor: pointer; box-shadow: 0 14px 28px rgba(15,139,125,0.24); transition: transform 0.16s, filter 0.16s, opacity 0.16s; font-size: 14px; font-weight: 600; }
+.btn:hover { transform: translateY(-1px); filter: brightness(0.96); }
+.btn:disabled { cursor: not-allowed; opacity: 0.48; transform: none; }
+.btn-full { width: 100%; margin-top: 10px; }
+.btn-separate { background: linear-gradient(135deg, var(--accent-2), #a83f29); box-shadow: 0 14px 28px rgba(211,93,53,0.28); }
+
+.progress-bar { width: 100%; height: 8px; border-radius: 99px; background: #ddd5c4; overflow: hidden; margin-top: 8px; }
+.progress-bar div { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent)); transition: width 0.3s; border-radius: 99px; }
+.progress-text { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+
+/* Track list */
+.track-list { display: grid; gap: 6px; }
+.track-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; transition: background 0.15s, border-color 0.15s; background: rgba(255,255,255,0.74); }
+.track-item:hover { background: rgba(15,139,125,0.08); border-color: var(--accent); }
+.track-item.selected { background: rgba(15,139,125,0.14); border-color: var(--accent); font-weight: 600; }
+.track-icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: white; font-size: 14px; font-weight: 700; flex: none; }
+.track-icon.drums { background: #d35d35; }
+.track-icon.bass { background: #315c9d; }
+.track-icon.other { background: #0f8b7d; }
+.track-icon.vocals { background: #d8a431; }
+.track-name { flex: 1; }
+.track-action { font-size: 12px; color: var(--accent); font-weight: 600; }
+.track-item.selected .track-action { color: var(--ink); }
+
+/* ===== RIGHT COLUMN ===== */
+.workspace { display: grid; gap: 18px; }
+
+.canvas-wrap { position: relative; aspect-ratio: 2.2; min-height: 260px; border-bottom: 1px solid var(--line); background: #fbfaf6; cursor: pointer; }
+canvas { width: 100%; height: 100%; display: block; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent-2); box-shadow: 0 0 18px rgba(211,93,53,0.48); transform: translateX(-10px); pointer-events: none; z-index: 2; transition: opacity 0.15s; }
+.time-tooltip { position: absolute; top: 10px; transform: translateX(-50%); padding: 3px 8px; border-radius: 4px; background: rgba(25,27,31,0.82); color: #fffaf0; font-size: 12px; font-weight: 600; pointer-events: none; z-index: 3; opacity: 0; transition: opacity 0.12s; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 0 14px 14px; color: var(--muted); font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 18px 18px 0; }
+.section-head h2 { margin: 0; font-size: 19px; }
+.section-head span { color: var(--muted); font-size: 13px; }
+
+.table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.table th, .table td { padding: 13px 14px; border-top: 1px solid var(--line); text-align: left; }
+.table th { color: var(--muted); font-weight: 600; background: rgba(25,27,31,0.05); }
+.table tr { cursor: pointer; }
+.table tr:hover td { background: rgba(15,139,125,0.08); }
+.chord-tag { display: inline-flex; min-width: 68px; justify-content: center; padding: 7px 10px; border-radius: 8px; background: rgba(15,139,125,0.14); color: #08675d; font-weight: 700; }
+.notes { display: flex; flex-wrap: wrap; gap: 6px; }
+.note { padding: 5px 7px; border-radius: 6px; background: rgba(49,92,157,0.1); color: #273f68; font-size: 13px; }
+.confidence { width: 120px; height: 8px; border-radius: 99px; background: #ddd5c4; overflow: hidden; }
+.confidence div { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent)); }
+.empty { padding: 42px 18px; color: var(--muted); text-align: center; border-top: 1px solid var(--line); }
+
+.readout { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 10px; }
+.metric { min-height: 86px; padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,0.74); }
+.metric:first-child { background: linear-gradient(135deg, rgba(15,139,125,0.16), rgba(216,164,49,0.12)), rgba(255,255,255,0.78); }
+.metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.metric strong { display: block; font-size: 24px; line-height: 1.1; overflow-wrap: anywhere; }
+.metric:first-child strong { font-size: 34px; }
+
+.disclaimer { margin-top: 14px; color: var(--muted); line-height: 1.55; font-size: 13px; }
+
+.button-row { display: grid; grid-template-columns: 1fr 46px; gap: 10px; }
+.icon-btn { padding: 0; background: linear-gradient(135deg, #191b1f, #30343a); box-shadow: 0 14px 28px rgba(25,27,31,0.18); }
+
+@media (max-width: 1000px) { header, main { grid-template-columns: 1fr; } .controls { position: static; } }
+@media (max-width: 640px) { .app { width: min(100vw - 20px, 1400px); padding-top: 16px; } .readout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="brandline">ChordDetective + Demucs</div>
+      <h1>和弦侦查员</h1>
+      <p class="subhead">上传歌曲 → AI 分离乐器/人声 → 选择音轨 → 浏览器端和弦分析。基于 Meta HTDemucs + ONNX Runtime Web。</p>
+    </div>
+    <div class="status-pill" id="status">等待操作</div>
+  </header>
+
+  <main>
+    <!-- ===== LEFT: Upload + Separation ===== -->
+    <aside class="panel controls">
+      <!-- Upload -->
+      <div class="panel-section">
+        <div class="section-label">1. 上传音频</div>
+        <label class="drop" id="dropZone" for="fileInput">
+          <input id="fileInput" type="file" accept="audio/*">
+          <span><strong>选择或拖入音频</strong><span>mp3 / wav / m4a / flac</span></span>
+        </label>
+        <div class="file-info" id="fileInfo"><strong>未载入</strong><span>上传一首歌曲开始</span></div>
+      </div>
+
+      <!-- Model -->
+      <div class="panel-section">
+        <div class="section-label">2. 加载 AI 模型</div>
+        <button class="btn btn-full" id="loadModelBtn">下载并加载 Demucs 模型 (172MB)</button>
+        <div class="progress-bar" id="modelProgressBar" style="display:none"><div style="width:0%"></div></div>
+        <div class="progress-text" id="modelProgressText"></div>
+      </div>
+
+      <!-- Separate -->
+      <div class="panel-section">
+        <div class="section-label">3. 分离音轨</div>
+        <button class="btn btn-full btn-separate" id="separateBtn" disabled>开始分离 (4轨: 鼓/贝斯/乐器/人声)</button>
+        <div class="progress-bar" id="sepProgressBar" style="display:none"><div style="width:0%"></div></div>
+        <div class="progress-text" id="sepProgressText"></div>
+      </div>
+
+      <!-- Track selection -->
+      <div class="panel-section" id="trackSection" style="display:none">
+        <div class="section-label">4. 选择音轨 → 分析和弦</div>
+        <div class="track-list" id="trackList"></div>
+      </div>
+
+      <!-- Analysis params -->
+      <div class="panel-section">
+        <div class="section-label">和弦分析参数</div>
+        <label style="display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted);">
+          时间片 <strong id="windowValue">1.5 秒</strong>
+          <input id="windowRange" type="range" min="0.75" max="4" step="0.25" value="1.5">
+        </label>
+        <label style="display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted);">
+          和弦稳定度 <strong id="smoothValue">中</strong>
+          <input id="smoothRange" type="range" min="0" max="2" step="1" value="1">
+        </label>
+        <select id="extensionSensitivitySelect" style="width:100%;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(255,255,255,0.76);">
+          <option value="low">非三和弦敏感度：低</option>
+          <option value="medium" selected>非三和弦敏感度：中</option>
+          <option value="high">非三和弦敏感度：高</option>
+        </select>
+        <select id="notationSelect" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(255,255,255,0.76);">
+          <option value="sharp">音名：升号 C, C#, D...</option>
+          <option value="flat">音名：降号 C, Db, D...</option>
+        </select>
+        <div class="button-row" style="margin-top:14px">
+          <button class="btn" id="analyzeBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12h4l3 8 4-16 3 8h4"></path></svg>
+            分析选中音轨
+          </button>
+          <button class="btn icon-btn" id="playBtn" disabled title="播放/暂停">
+            <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live readout -->
+      <div class="panel-section">
+        <div class="readout">
+          <div class="metric"><span>当前和弦</span><strong id="nowChord">-</strong></div>
+          <div class="metric"><span>主音名</span><strong id="nowNote">-</strong></div>
+          <div class="metric"><span>调性感</span><strong id="keyGuess">-</strong></div>
+        </div>
+        <p class="disclaimer">分离需 ~172MB 模型（首次下载后缓存）。WebGPU 加速约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离后选 <b>其他乐器</b> 或 <b>贝斯</b> 音轨做和弦分析最准。</p>
+      </div>
+    </aside>
+
+    <!-- ===== RIGHT: Waveform + Results ===== -->
+    <section class="workspace">
+      <section class="panel">
+        <div class="canvas-wrap">
+          <canvas id="waveCanvas" width="1200" height="540"></canvas>
+          <div class="time-tooltip" id="timeTooltip">0:00</div>
+          <div class="playhead" id="playhead"></div>
+        </div>
+        <div class="legend">
+          <span><i class="swatch" style="background:#0e7c7b"></i>波形</span>
+          <span><i class="swatch" style="background:#d35d35"></i>播放位置</span>
+          <span><i class="swatch" style="background:#2d5f9a"></i>和弦段落</span>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="section-head"><h2>识别结果</h2><span id="resultCount">0 段</span></div>
+        <div style="overflow-x:auto">
+          <table class="table">
+            <thead><tr><th>时间</th><th>和弦</th><th>低音</th><th>主音名</th><th>可能音</th><th>可信度</th></tr></thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="emptyState">上传音频 → 加载模型 → 分离 → 选择音轨 → 分析和弦</div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web": "./node_modules/onnxruntime-web/dist/ort.all.min.mjs",
+    "demucs-web": "./node_modules/demucs-web/src/index.js",
+    "demucs-web/processor": "./node_modules/demucs-web/src/processor.js",
+    "demucs-web/fft": "./node_modules/demucs-web/src/fft.js",
+    "demucs-web/constants": "./node_modules/demucs-web/src/constants.js"
+  }
+}
+</script>
+
+<script type="module">
+// ============================================================
+// Imports
+// ============================================================
+import * as ort from 'onnxruntime-web';
+import { DemucsProcessor, CONSTANTS } from 'demucs-web';
+
+// ============================================================
+// Chord detection (same as original)
+// ============================================================
+const NOTE_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTE_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const CHORD_TEMPLATES = [
+  { suffix: "", intervals: [0,4,7], weight: [1,0.9,0.82] },
+  { suffix: "m", intervals: [0,3,7], weight: [1,0.9,0.82] },
+  { suffix: "dim", intervals: [0,3,6], weight: [1,0.86,0.7] },
+  { suffix: "aug", intervals: [0,4,8], weight: [1,0.82,0.72] },
+  { suffix: "sus2", intervals: [0,2,7], weight: [1,0.72,0.82] },
+  { suffix: "sus4", intervals: [0,5,7], weight: [1,0.78,0.82] },
+  { suffix: "7", intervals: [0,4,7,10], weight: [1,0.82,0.78,0.64] },
+  { suffix: "m7", intervals: [0,3,7,10], weight: [1,0.82,0.78,0.64] },
+  { suffix: "maj7", intervals: [0,4,7,11], weight: [1,0.82,0.78,0.6] }
+];
+
+const state = {
+  audioContext: null,
+  buffer: null, fileName: "", source: null,
+  startedAt: 0, pausedAt: 0, playing: false,
+  results: [], raf: null, currentTrack: null,
+  // Demucs state
+  processor: null, modelLoaded: false,
+  separatedTracks: null
+};
+
+const els = {
+  fileInput: byId('fileInput'), dropZone: byId('dropZone'), fileInfo: byId('fileInfo'),
+  loadModelBtn: byId('loadModelBtn'), modelProgressBar: byId('modelProgressBar'),
+  modelProgressText: byId('modelProgressText'),
+  separateBtn: byId('separateBtn'), sepProgressBar: byId('sepProgressBar'),
+  sepProgressText: byId('sepProgressText'),
+  trackSection: byId('trackSection'), trackList: byId('trackList'),
+  analyzeBtn: byId('analyzeBtn'), playBtn: byId('playBtn'), playIcon: byId('playIcon'),
+  status: byId('status'), waveCanvas: byId('waveCanvas'),
+  playhead: byId('playhead'), timeTooltip: byId('timeTooltip'),
+  windowRange: byId('windowRange'), windowValue: byId('windowValue'),
+  smoothRange: byId('smoothRange'), smoothValue: byId('smoothValue'),
+  extensionSensitivitySelect: byId('extensionSensitivitySelect'),
+  notationSelect: byId('notationSelect'),
+  resultBody: byId('resultBody'), emptyState: byId('emptyState'),
+  resultCount: byId('resultCount'), nowChord: byId('nowChord'),
+  nowNote: byId('nowNote'), keyGuess: byId('keyGuess')
+};
+
+function byId(id) { return document.getElementById(id); }
+
+// ============================================================
+// Demucs Model Loading
+// ============================================================
+els.loadModelBtn.addEventListener('click', async () => {
+  els.loadModelBtn.disabled = true;
+  els.loadModelBtn.textContent = '正在下载模型...';
+  els.modelProgressBar.style.display = 'block';
+  els.modelProgressText.textContent = '连接 HuggingFace...';
+
+  try {
+    state.processor = new DemucsProcessor({
+      ort,
+      onProgress: (p) => {
+        const pct = Math.round((p.progress ?? p) * 100);
+        // Update model loading bar during load, separation bar during separate
+        if (!state.modelLoaded) {
+          els.modelProgressBar.querySelector('div').style.width = pct + '%';
+          els.modelProgressText.textContent = `下载中 ${pct}%`;
+        } else {
+          els.sepProgressBar.querySelector('div').style.width = pct + '%';
+          els.sepProgressText.textContent = `分离中 ${pct}%`;
+        }
+      },
+      onLog: (phase, msg) => {
+        els.modelProgressText.textContent = `[${phase}] ${msg}`;
+      }
+    });
+
+    const modelUrl = './models/htdemucs_embedded.onnx';
+    await state.processor.loadModel(modelUrl);
+    state.modelLoaded = true;
+    els.loadModelBtn.textContent = '模型已加载 ✓';
+    els.modelProgressBar.querySelector('div').style.width = '100%';
+    els.modelProgressText.textContent = '就绪，可以分离音轨';
+    els.separateBtn.disabled = !state.buffer;
+    setStatus('模型就绪');
+  } catch (err) {
+    els.loadModelBtn.textContent = '加载失败，重试';
+    els.loadModelBtn.disabled = false;
+    els.modelProgressText.textContent = '错误: ' + err.message;
+    setStatus('模型加载失败');
+    console.error(err);
+  }
+});
+
+// ============================================================
+// File upload
+// ============================================================
+els.fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+['dragenter','dragover'].forEach(t => els.dropZone.addEventListener(t, e => { e.preventDefault(); els.dropZone.classList.add('dragging'); }));
+['dragleave','drop'].forEach(t => els.dropZone.addEventListener(t, e => { e.preventDefault(); els.dropZone.classList.remove('dragging'); }));
+els.dropZone.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('audio/')) loadFile(f); });
+
+async function loadFile(file) {
+  stopPlayback();
+  state.fileName = file.name;
+  state.results = [];
+  state.separatedTracks = null;
+  renderResults();
+  els.trackSection.style.display = 'none';
+  setStatus('解码中');
+  const ab = await file.arrayBuffer();
+  state.audioContext = state.audioContext || new AudioContext();
+  state.buffer = await state.audioContext.decodeAudioData(ab);
+  els.fileInfo.innerHTML = `<strong>${esc(file.name)}</strong><span>${fmtTime(state.buffer.duration)} · ${(file.size/1024/1024).toFixed(1)} MB · ${state.buffer.numberOfChannels}ch ${state.buffer.sampleRate}Hz</span>`;
+  els.separateBtn.disabled = !state.modelLoaded;
+  els.analyzeBtn.disabled = true;
+  els.playBtn.disabled = true;
+  setStatus(state.modelLoaded ? '可分离' : '已载入');
+  drawWaveform();
+}
+
+// ============================================================
+// Separation
+// ============================================================
+els.separateBtn.addEventListener('click', async () => {
+  if (!state.buffer || !state.processor) return;
+  els.separateBtn.disabled = true;
+  els.sepProgressBar.style.display = 'block';
+  els.sepProgressText.textContent = '分离中...';
+  setStatus('AI 分离中');
+
+  try {
+    // Convert to mono or extract stereo channels
+    const ch0 = state.buffer.getChannelData(0);
+    const ch1 = state.buffer.numberOfChannels > 1 ? state.buffer.getChannelData(1) : ch0;
+
+    // Resample to 44100 if needed
+    let left = ch0, right = ch1;
+    if (state.buffer.sampleRate !== 44100) {
+      els.sepProgressText.textContent = '重采样到 44100Hz...';
+      const oc = new OfflineAudioContext(1, Math.ceil(state.buffer.duration * 44100), 44100);
+      const src = oc.createBufferSource();
+      src.buffer = state.buffer;
+      src.connect(oc.destination);
+      src.start();
+      const rb = await oc.startRendering();
+      left = rb.getChannelData(0);
+      right = rb.numberOfChannels > 1 ? rb.getChannelData(1) : left;
+    }
+
+    els.sepProgressText.textContent = 'Demucs 推理中... (可能需要 1-5 分钟)';
+
+    const result = await state.processor.separate(left, right);
+    state.separatedTracks = result;
+
+    // Build track UI
+    const tracks = CONSTANTS.TRACKS;
+    const zhNames = { drums: '🥁 鼓组', bass: '🎸 贝斯', other: '🎹 其他乐器', vocals: '🎤 人声' };
+    els.trackList.innerHTML = tracks.map((t, i) => `
+      <div class="track-item" data-track="${t}">
+        <div class="track-icon ${t}">${(i+1)}</div>
+        <span class="track-name">${zhNames[t]}</span>
+        <span class="track-action">→ 分析和弦</span>
+      </div>
+    `).join('');
+    // Use addEventListener instead of inline onclick (module scope)
+    els.trackList.querySelectorAll('.track-item').forEach(el => {
+      el.addEventListener('click', () => selectTrack(el.dataset.track));
+    });
+    els.trackSection.style.display = 'block';
+    els.sepProgressBar.querySelector('div').style.width = '100%';
+    els.sepProgressText.textContent = '分离完成！选择音轨';
+    els.separateBtn.textContent = '重新分离';
+    els.separateBtn.disabled = false;
+    setStatus('分离完成');
+  } catch (err) {
+    els.sepProgressText.textContent = '错误: ' + err.message;
+    els.separateBtn.disabled = false;
+    setStatus('分离失败');
+    console.error(err);
+  }
+});
+
+// Track selection
+function selectTrack(trackName) {
+  if (!state.separatedTracks || !state.separatedTracks[trackName]) return;
+
+  document.querySelectorAll('.track-item').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`[data-track="${trackName}"]`).classList.add('selected');
+  state.currentTrack = trackName;
+
+  // Build AudioBuffer from separated track
+  const track = state.separatedTracks[trackName];
+  const len = track.left.length;
+  const sr = CONSTANTS.SAMPLE_RATE;
+  const ab = state.audioContext.createBuffer(2, len, sr);
+  ab.copyToChannel(track.left, 0);
+  ab.copyToChannel(track.right || track.left, 1);
+
+  state.buffer = ab;
+  state.fileName = `${state.fileName} [${trackName}]`;
+  state.results = [];
+  state.pausedAt = 0;
+  renderResults();
+  drawWaveform();
+  els.analyzeBtn.disabled = false;
+  els.playBtn.disabled = false;
+  els.nowChord.textContent = '-';
+  els.nowNote.textContent = '-';
+  els.keyGuess.textContent = '-';
+  setStatus(`已选: ${trackName}`);
+};
+
+// ============================================================
+// Chord Analysis (same pipeline as original)
+// ============================================================
+els.analyzeBtn.addEventListener('click', analyze);
+els.playBtn.addEventListener('click', togglePlay);
+window.addEventListener('resize', drawWaveform);
+
+els.waveCanvas.addEventListener('click', (e) => {
+  if (!state.buffer) return;
+  const rect = els.waveCanvas.getBoundingClientRect();
+  const time = Math.max(0, Math.min(state.buffer.duration, (e.clientX - rect.left) / rect.width * state.buffer.duration));
+  stopPlayback(false);
+  state.pausedAt = time;
+  updatePlayhead(time);
+  renderResults();
+  els.nowChord.textContent = '-';
+  els.nowNote.textContent = '-';
+});
+
+els.waveCanvas.addEventListener('mousemove', (e) => {
+  if (!state.buffer) return;
+  const rect = els.waveCanvas.getBoundingClientRect();
+  const time = Math.max(0, Math.min(state.buffer.duration, (e.clientX - rect.left) / rect.width * state.buffer.duration));
+  els.timeTooltip.textContent = fmtTime(time);
+  els.timeTooltip.style.left = (e.clientX - rect.left) + 'px';
+  els.timeTooltip.style.opacity = '1';
+});
+els.waveCanvas.addEventListener('mouseleave', () => { els.timeTooltip.style.opacity = '0'; });
+
+els.windowRange.addEventListener('input', () => { els.windowValue.textContent = `${Number(els.windowRange.value).toFixed(2).replace(/\.00$/,'')} 秒`; });
+els.smoothRange.addEventListener('input', () => { els.smoothValue.textContent = ['低','中','高'][Number(els.smoothRange.value)]; });
+els.notationSelect.addEventListener('change', () => { renderResults(); drawWaveform(); updateNow(); });
+
+function mixToMono(buf) {
+  const len = buf.length;
+  const out = new Float32Array(len);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) out[i] += d[i] / buf.numberOfChannels;
+  }
+  return out;
+}
+
+function fft(real, imag) {
+  const n = real.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [real[i], real[j]] = [real[j], real[i]]; [imag[i], imag[j]] = [imag[j], imag[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const angle = -2 * Math.PI / len;
+    const wR = Math.cos(angle), wI = Math.sin(angle);
+    for (let i = 0; i < n; i += len) {
+      let wr = 1, wi = 0;
+      for (let j = 0; j < len / 2; j++) {
+        const uR = real[i+j], uI = imag[i+j];
+        const vR = real[i+j+len/2] * wr - imag[i+j+len/2] * wi;
+        const vI = real[i+j+len/2] * wi + imag[i+j+len/2] * wr;
+        real[i+j] = uR + vR; imag[i+j] = uI + vI;
+        real[i+j+len/2] = uR - vR; imag[i+j+len/2] = uI - vI;
+        const nwR = wr * wR - wi * wI;
+        wi = wr * wI + wi * wR; wr = nwR;
+      }
+    }
+  }
+}
+
+function chromaFromFrame(frame, sr) {
+  const n = nearestPow2(frame.length);
+  const real = new Float32Array(n), imag = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const win = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
+    real[i] = (frame[i] || 0) * win;
+  }
+  fft(real, imag);
+  const chroma = new Float32Array(12);
+  const minF = 55, maxF = Math.min(5000, sr / 2);
+  const minBin = Math.max(1, Math.floor(minF * n / sr));
+  const maxBin = Math.min(n / 2 - 1, Math.ceil(maxF * n / sr));
+  for (let bin = minBin; bin <= maxBin; bin++) {
+    const freq = bin * sr / n;
+    const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+    if (midi < 24 || midi > 108) continue;
+    const pc = ((midi % 12) + 12) % 12;
+    const mag = Math.hypot(real[bin], imag[bin]);
+    chroma[pc] += Math.log1p(mag) / Math.sqrt(Math.max(1, freq / 220));
+  }
+  const max = Math.max(...chroma);
+  if (max > 0) for (let i = 0; i < 12; i++) chroma[i] /= max;
+  return chroma;
+}
+
+function scoreChordTemplate(chroma, root, tpl) {
+  let score = 0, expected = 0;
+  const mask = new Set(tpl.intervals.map(i => (root + i) % 12));
+  tpl.intervals.forEach((iv, idx) => { score += chroma[(root+iv)%12] * tpl.weight[idx]; expected += tpl.weight[idx]; });
+  let penalty = 0;
+  for (let pc = 0; pc < 12; pc++) if (!mask.has(pc)) penalty += chroma[pc] * 0.09;
+  return score / expected - penalty;
+}
+
+function getExtSens() {
+  const v = els.extensionSensitivitySelect.value;
+  if (v === 'high') return { extMin:0.42, extRatio:0.5, extGap:0, extPen:0.12, susThirdMax:0.42, susRatio:1.18, susMin:0.38, susGap:0, susPen:0.12 };
+  if (v === 'low') return { extMin:0.62, extRatio:0.82, extGap:0.2, extPen:0.55, susThirdMax:0.12, susRatio:2.6, susMin:0.76, susGap:0.2, susPen:0.55 };
+  return { extMin:0.5, extRatio:0.62, extGap:0.02, extPen:0.22, susThirdMax:0.34, susRatio:1.45, susMin:0.48, susGap:0.03, susPen:0.2 };
+}
+
+function detectChord(chroma) {
+  let best = { root: 0, suffix: '', score: -Infinity, confidence: 0 };
+  for (let root = 0; root < 12; root++) {
+    for (const tpl of CHORD_TEMPLATES) {
+      let score = scoreChordTemplate(chroma, root, tpl);
+      const sens = getExtSens();
+      if (['7','m7','maj7'].includes(tpl.suffix)) {
+        const triad = CHORD_TEMPLATES.find(t => t.suffix === (tpl.suffix === 'm7' ? 'm' : ''));
+        const triadScore = scoreChordTemplate(chroma, root, triad);
+        const extIv = tpl.suffix === 'maj7' ? 11 : 10;
+        const extStr = chroma[(root+extIv)%12];
+        const triadStr = Math.min(chroma[root], chroma[(root+triad.intervals[1])%12], chroma[(root+7)%12]);
+        const isDom = tpl.suffix === '7';
+        const em = isDom ? Math.min(sens.extMin, 0.36) : sens.extMin;
+        const er = isDom ? Math.min(sens.extRatio, 0.58) : sens.extRatio;
+        const eg = isDom ? Math.min(sens.extGap, -0.015) : sens.extGap;
+        if (!(extStr > em && extStr > triadStr * er && score > triadScore + eg)) score -= sens.extPen;
+      }
+      if (['sus2','sus4'].includes(tpl.suffix)) {
+        const m3 = chroma[(root+4)%12], mi3 = chroma[(root+3)%12];
+        const thirdStr = Math.max(m3, mi3);
+        const susIv = tpl.suffix === 'sus2' ? 2 : 5;
+        const susStr = chroma[(root+susIv)%12];
+        const major = CHORD_TEMPLATES.find(t => t.suffix === '');
+        const minor = CHORD_TEMPLATES.find(t => t.suffix === 'm');
+        const bestTriad = Math.max(scoreChordTemplate(chroma, root, major), scoreChordTemplate(chroma, root, minor));
+        if (!(thirdStr < sens.susThirdMax || susStr > thirdStr * sens.susRatio) || !(susStr > sens.susMin && score > bestTriad + sens.susGap)) score -= sens.susPen;
+      }
+      if (tpl.suffix === 'aug') {
+        const augEv = Math.min(chroma[root], chroma[(root+4)%12], chroma[(root+8)%12]);
+        if (!(augEv > 0.32 && chroma[(root+8)%12] > chroma[(root+7)%12] * 1.25)) score -= 0.24;
+      }
+      if (score > best.score) best = { root, suffix: tpl.suffix, score, confidence: clamp(score, 0, 1) };
+    }
+  }
+  return best;
+}
+
+function detectBass(chroma) { let idx = 0; for (let i = 1; i < 12; i++) if (chroma[i] > chroma[idx]) idx = i; return idx; }
+
+function detectPitch(frame, sr) {
+  let rms = 0; for (const x of frame) rms += x * x; rms = Math.sqrt(rms / frame.length);
+  if (rms < 0.008) return null;
+  const minLag = Math.floor(sr / 1000), maxLag = Math.floor(sr / 65);
+  let bestLag = -1, bestCorr = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0, nA = 0, nB = 0;
+    for (let i = 0; i < frame.length - lag; i += 2) { corr += frame[i] * frame[i+lag]; nA += frame[i] * frame[i]; nB += frame[i+lag] * frame[i+lag]; }
+    const norm = corr / Math.sqrt(nA * nB || 1);
+    if (norm > bestCorr) { bestCorr = norm; bestLag = lag; }
+  }
+  if (bestLag < 0 || bestCorr < 0.35) return null;
+  const freq = sr / bestLag;
+  const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+  return { freq, midi, pc: ((midi%12)+12)%12, confidence: bestCorr };
+}
+
+function topChromaNotes(chroma, count) {
+  return [...chroma].map((v, pc) => ({ pc, value: v })).sort((a,b) => b.value - a.value).slice(0, count).filter(i => i.value > 0.18);
+}
+
+function smoothResults(results, level) {
+  if (level === 0 || results.length < 3) return results;
+  const radius = level;
+  return results.map((item, idx) => {
+    const votes = new Map();
+    for (let i = Math.max(0, idx - radius); i <= Math.min(results.length - 1, idx + radius); i++) {
+      const key = `${results[i].chord.root}:${results[i].chord.suffix}`;
+      votes.set(key, (votes.get(key) || 0) + results[i].chord.confidence);
+    }
+    const [winner] = [...votes.entries()].sort((a,b) => b[1] - a[1])[0];
+    const [root, suffix] = winner.split(':');
+    return { ...item, chord: { ...item.chord, root: Number(root), suffix } };
+  });
+}
+
+function mergeSegments(results) {
+  const merged = [];
+  for (const item of results) {
+    const prev = merged[merged.length - 1];
+    if (prev && chordName(prev.chord) === chordName(item.chord)) {
+      prev.end = item.end;
+      prev.confidences.push(item.chord.confidence);
+      prev.chroma = avgChroma(prev.chroma, item.chroma);
+      prev.topNotes = topChromaNotes(prev.chroma, 5);
+    } else {
+      merged.push({ ...item, confidences: [item.chord.confidence] });
+    }
+  }
+  return merged.map(item => ({ ...item, chord: { ...item.chord, confidence: item.confidences.reduce((a,b)=>a+b,0) / item.confidences.length } }));
+}
+
+function avgChroma(a, b) { const o = new Float32Array(12); for (let i = 0; i < 12; i++) o[i] = (a[i] + b[i]) / 2; return o; }
+
+async function analyze() {
+  if (!state.buffer) return;
+  stopPlayback();
+  els.analyzeBtn.disabled = true;
+  setStatus('分析中');
+  await nextFrame();
+
+  const mono = mixToMono(state.buffer);
+  const sr = state.buffer.sampleRate;
+  const wSec = Number(els.windowRange.value);
+  const hopSize = Math.max(1, Math.floor(sr * wSec));
+  const fftSize = Math.max(2048, Math.min(32768, nearestPow2(hopSize)));
+  const results = [];
+
+  for (let start = 0; start < mono.length; start += hopSize) {
+    const slice = mono.subarray(start, Math.min(start + fftSize, mono.length));
+    if (slice.length < 512) break;
+    const chroma = chromaFromFrame(slice, sr);
+    results.push({
+      start: start / sr, end: Math.min(start + hopSize, mono.length) / sr, chroma,
+      chord: detectChord(chroma), pitch: detectPitch(slice, sr),
+      bass: detectBass(chroma), topNotes: topChromaNotes(chroma, 5)
+    });
+    if (results.length % 16 === 0) { setStatus(`分析 ${Math.min(99, Math.round(start/mono.length*100))}%`); await nextFrame(); }
+  }
+
+  state.results = mergeSegments(smoothResults(results, Number(els.smoothRange.value)));
+  renderResults(); drawWaveform(); guessKey();
+  setStatus('识别完成');
+  els.analyzeBtn.disabled = false;
+}
+
+function guessKey() {
+  if (!state.results.length) { els.keyGuess.textContent = '-'; return; }
+  const total = new Float32Array(12);
+  state.results.forEach(s => { for (let i = 0; i < 12; i++) total[i] += s.chroma[i] * (s.end - s.start); });
+  const major = [1,0,0.45,0,0.72,0.55,0,0.8,0,0.5,0,0.42];
+  const minor = [1,0,0.42,0.68,0,0.55,0,0.78,0.48,0,0.45,0];
+  let best = { root: 0, mode: '', score: -Infinity };
+  for (let root = 0; root < 12; root++) {
+    let sM = 0, sm = 0;
+    for (let i = 0; i < 12; i++) { sM += total[(root+i)%12] * major[i]; sm += total[(root+i)%12] * minor[i]; }
+    if (sM > best.score) best = { root, mode: '大调', score: sM };
+    if (sm > best.score) best = { root, mode: '小调', score: sm };
+  }
+  els.keyGuess.textContent = `${noteName(best.root)} ${best.mode}`;
+}
+
+function renderResults() {
+  const vt = visibleTime();
+  const filtered = vt > 0 ? state.results.filter(s => s.start <= vt) : state.results;
+  els.resultBody.innerHTML = '';
+  els.resultCount.textContent = vt > 0 ? `${filtered.length} / ${state.results.length} 段` : `${state.results.length} 段`;
+  els.emptyState.style.display = state.results.length ? 'none' : 'block';
+  [...filtered].reverse().forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtTime(s.start)} - ${fmtTime(s.end)}</td>
+      <td><span class="chord-tag">${chordName(s.chord)}</span></td>
+      <td>${noteName(s.bass)}</td>
+      <td>${s.pitch ? noteName(s.pitch.pc) : '-'}</td>
+      <td><div class="notes">${s.topNotes.map(n => `<span class="note">${noteName(n.pc)}</span>`).join('')}</div></td>
+      <td><div class="confidence" title="${Math.round(s.chord.confidence*100)}%"><div style="width:${Math.round(s.chord.confidence*100)}%"></div></div></td>`;
+    tr.addEventListener('click', () => { if (state.buffer) playFrom(s.start); });
+    els.resultBody.appendChild(tr);
+  });
+}
+
+function drawWaveform() {
+  const c = els.waveCanvas;
+  const rect = c.getBoundingClientRect();
+  const s = window.devicePixelRatio || 1;
+  c.width = Math.max(600, Math.floor(rect.width * s));
+  c.height = Math.max(300, Math.floor(rect.height * s));
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#fbfaf6'; ctx.fillRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(104,112,120,0.14)'; ctx.lineWidth = 1;
+  for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0, h*i/6); ctx.lineTo(w, h*i/6); ctx.stroke(); }
+  for (let i = 1; i < 12; i++) { ctx.beginPath(); ctx.moveTo(w*i/12, 0); ctx.lineTo(w*i/12, h); ctx.stroke(); }
+
+  if (!state.buffer) {
+    ctx.fillStyle = '#687078'; ctx.font = `${16*s}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText('音频波形会显示在这里', w/2, h/2); return;
+  }
+
+  // Chord segments
+  if (state.results.length) {
+    state.results.forEach((seg, idx) => {
+      const x = seg.start / state.buffer.duration * w;
+      const width = Math.max(1, (seg.end - seg.start) / state.buffer.duration * w);
+      ctx.fillStyle = idx % 2 ? 'rgba(45,95,154,0.10)' : 'rgba(14,124,123,0.10)';
+      ctx.fillRect(x, 0, width, h);
+      if (width > 42 * s) {
+        ctx.fillStyle = 'rgba(31,36,40,0.62)'; ctx.font = `${12*s}px sans-serif`; ctx.textAlign = 'left';
+        ctx.fillText(chordName(seg.chord), x + 8*s, 22*s);
+      }
+    });
+  }
+
+  // Waveform
+  const data = state.buffer.getChannelData(0);
+  const step = Math.ceil(data.length / w);
+  const amp = h * 0.38;
+  ctx.beginPath(); ctx.strokeStyle = '#0e7c7b'; ctx.lineWidth = 2 * s;
+  for (let x = 0; x < w; x++) {
+    let min = 1, max = -1;
+    const start = x * step;
+    for (let j = 0; j < step; j++) { const v = data[start+j] || 0; if (v < min) min = v; if (v > max) max = v; }
+    ctx.moveTo(x, h/2 + min * amp); ctx.lineTo(x, h/2 + max * amp);
+  }
+  ctx.stroke();
+
+  // Playhead
+  const vt = visibleTime();
+  if (state.buffer && vt > 0) {
+    const px = vt / state.buffer.duration * w;
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(211,93,53,0.7)'; ctx.lineWidth = 2*s; ctx.setLineDash([6*s, 4*s]);
+    ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+// ============================================================
+// Playback
+// ============================================================
+function togglePlay() {
+  if (!state.buffer) return;
+  if (state.playing) { state.pausedAt = getCurTime(); stopPlayback(false); }
+  else playFrom(state.pausedAt || 0);
+}
+
+async function playFrom(offset) {
+  if (!state.buffer) return;
+  state.audioContext = state.audioContext || new AudioContext();
+  if (state.audioContext.state === 'suspended') await state.audioContext.resume();
+  stopPlayback(false);
+  const src = state.audioContext.createBufferSource();
+  src.buffer = state.buffer; src.connect(state.audioContext.destination);
+  state.source = src; state.startedAt = state.audioContext.currentTime - offset;
+  state.pausedAt = offset; state.playing = true;
+  setPlayIcon(true);
+  src.onended = () => {
+    if (state.playing && getCurTime() >= state.buffer.duration - 0.05) {
+      state.pausedAt = state.buffer.duration; stopPlayback(false); renderResults();
+    }
+  };
+  src.start(0, offset);
+  tickPlayback();
+}
+
+function stopPlayback(reset = true) {
+  if (state.source) { try { state.source.stop(); } catch(e) {} state.source.disconnect(); }
+  state.source = null; state.playing = false;
+  if (reset) state.pausedAt = 0;
+  cancelAnimationFrame(state.raf); setPlayIcon(false);
+  updatePlayhead(reset ? 0 : state.pausedAt);
+}
+
+function tickPlayback() {
+  const cur = getCurTime(); updatePlayhead(cur); updateNow(cur); renderResults();
+  if (state.playing) state.raf = requestAnimationFrame(tickPlayback);
+}
+
+function updatePlayhead(time) {
+  if (!state.buffer) { els.playhead.style.transform = 'translateX(-10px)'; return; }
+  const rect = els.waveCanvas.getBoundingClientRect();
+  els.playhead.style.transform = `translateX(${time / state.buffer.duration * rect.width}px)`;
+}
+
+function updateNow(time = state.pausedAt || 0) {
+  const seg = state.results.find(s => time >= s.start && time < s.end);
+  els.nowChord.textContent = seg ? chordName(seg.chord) : '-';
+  els.nowNote.textContent = seg && seg.pitch ? noteName(seg.pitch.pc) : '-';
+}
+
+function getCurTime() {
+  if (!state.audioContext || !state.playing) return state.pausedAt || 0;
+  return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
+}
+
+function visibleTime() {
+  if (!state.buffer) return 0;
+  if (state.playing) return Math.min(state.audioContext.currentTime - state.startedAt, state.buffer.duration);
+  return state.pausedAt || 0;
+}
+
+function setPlayIcon(p) {
+  els.playIcon.innerHTML = p ? '<path d="M7 5h4v14H7z"></path><path d="M13 5h4v14h-4z"></path>' : '<path d="M8 5v14l11-7z"></path>';
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function chordName(ch) { return `${noteName(ch.root)}${ch.suffix}`; }
+function noteName(pc) {
+  const notes = els.notationSelect.value === 'flat' ? NOTE_FLAT : NOTE_SHARP;
+  return notes[((pc % 12) + 12) % 12];
+}
+function fmtTime(s) { const m = Math.floor(s/60); const sec = Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`; }
+function nearestPow2(v) { return 2 ** Math.round(Math.log2(Math.max(2, v))); }
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function setStatus(t) { els.status.textContent = t; }
+function nextFrame() { return new Promise(r => requestAnimationFrame(r)); }
+function esc(v) { return v.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+
+// Init
+drawWaveform();
+</script>
+</body>
+</html>
