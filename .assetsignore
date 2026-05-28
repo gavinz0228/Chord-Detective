@@ -1,0 +1,10 @@
+node_modules/
+models/
+.git/
+*.py
+generate_test_audio.py
+package*.json
+test_audio/real_song*
+test_audio/real_song_no_vocal*
+test_audio/yujian*
+test_audio/yujian_no_vocal*
