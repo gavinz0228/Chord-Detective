@@ -415,15 +415,15 @@ els.separateBtn.addEventListener('click', async () => {
 
     const result = await state.processor.separate(left, right);
 
-    // Normalize each track to avoid clipping distortion
+    // Normalize each track to consistent volume (target peak ~0.8)
     for (const key of Object.keys(result)) {
       const track = result[key];
       let peak = 0;
       for (let i = 0; i < track.left.length; i++) {
         peak = Math.max(peak, Math.abs(track.left[i]), Math.abs(track.right[i]));
       }
-      if (peak > 0.95) {
-        const scale = 0.95 / peak;
+      if (peak > 0.0001) {
+        const scale = 0.8 / peak;
         for (let i = 0; i < track.left.length; i++) {
           track.left[i] *= scale;
           track.right[i] *= scale;
