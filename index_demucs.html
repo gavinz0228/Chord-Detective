@@ -238,11 +238,11 @@ canvas { width: 100%; height: 100%; display: block; }
 <script type="importmap">
 {
   "imports": {
-    "onnxruntime-web": "./node_modules/onnxruntime-web/dist/ort.all.min.mjs",
-    "demucs-web": "./node_modules/demucs-web/src/index.js",
-    "demucs-web/processor": "./node_modules/demucs-web/src/processor.js",
-    "demucs-web/fft": "./node_modules/demucs-web/src/fft.js",
-    "demucs-web/constants": "./node_modules/demucs-web/src/constants.js"
+    "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.all.min.mjs",
+    "demucs-web": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/index.js",
+    "demucs-web/processor": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/processor.js",
+    "demucs-web/fft": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/fft.js",
+    "demucs-web/constants": "https://cdn.jsdelivr.net/npm/demucs-web@1.0.2/src/constants.js"
   }
 }
 </script>
@@ -330,7 +330,7 @@ els.loadModelBtn.addEventListener('click', async () => {
       }
     });
 
-    const modelUrl = './models/htdemucs_embedded.onnx';
+    const modelUrl = CONSTANTS.DEFAULT_MODEL_URL; // HuggingFace CDN
     await state.processor.loadModel(modelUrl);
     state.modelLoaded = true;
     els.loadModelBtn.textContent = '模型已加载 ✓';
