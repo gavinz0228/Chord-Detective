@@ -449,7 +449,7 @@ $("loadModelBtn").addEventListener("click",loadModel);$("analyzeBtn").addEventLi
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
 $("notationSelect").addEventListener("change",renderRes);
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
-window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>setTimeout(loadModel,400));
+window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{resizeCanvas();setTimeout(loadModel,400)});
 </script>
 </body>
 </html>
