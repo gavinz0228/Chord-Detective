@@ -10,7 +10,7 @@
   --r:16px;--rs:10px;
   --font:"SF Pro Display","Inter",ui-sans-serif,system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
   --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,monospace;
-  font-family:var(--font);font-size:15px;color-scheme:dark}
+  font-family:var(--font);font-size:16px;color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -51,10 +51,10 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 .card-num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;
   font-size:12px;font-weight:800;font-family:var(--mono);
   background:linear-gradient(135deg,rgba(0,229,255,0.14),rgba(168,85,247,0.09));color:var(--cyan);margin-bottom:14px}
-.card-label{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;font-family:var(--mono)}
+.card-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;font-family:var(--mono)}
 
 .tabs{display:flex;gap:3px;margin-bottom:10px;padding:3px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--bdr)}
-.tab{flex:1;padding:8px 0;border-radius:6px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all .25s}
+.tab{flex:1;padding:9px 0;border-radius:6px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all .25s}
 .tab:hover{color:var(--dim)}.tab.on{background:rgba(0,229,255,0.1);color:var(--cyan);border-color:rgba(0,229,255,0.2)}
 
 .dropzone{min-height:110px;display:grid;place-items:center;padding:18px;border:1.5px dashed rgba(255,255,255,0.1);border-radius:var(--rs);cursor:pointer;text-align:center;transition:all .3s}
@@ -67,7 +67,7 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 .meta span{color:var(--muted)}
 
 .mic-zone{display:none;text-align:center;padding:8px 0}.mic-zone.show{display:block}
-.mic-btn{padding:14px 28px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--bdr);background:rgba(255,255,255,0.03);color:var(--dim);transition:all .3s}
+.mic-btn{padding:15px 28px;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;border:1px solid var(--bdr);background:rgba(255,255,255,0.03);color:var(--dim);transition:all .3s}
 .mic-btn:hover{border-color:var(--bdr-glow);color:var(--cyan)}
 .mic-btn.live{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171;animation:micPulse 1.5s ease-in-out infinite}
 @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
@@ -77,8 +77,8 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 .model-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:.4s}
 .model-dot.ready{background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2.5s ease-in-out infinite}
 
-.btn{border:1px solid var(--bdr);border-radius:var(--rs);min-height:46px;padding:0 20px;
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;cursor:pointer;transition:all .3s}
+.btn{border:1px solid var(--bdr);border-radius:var(--rs);min-height:48px;padding:0 20px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:15px;cursor:pointer;transition:all .3s}
 .btn:hover:not(:disabled){transform:translateY(-1px)}.btn:active:not(:disabled){transform:translateY(0)}
 .btn:disabled{opacity:.3;cursor:not-allowed;filter:grayscale(0.3)}.btn-full{width:100%}
 .btn-model{background:rgba(255,255,255,0.03);color:var(--ink)}
@@ -115,14 +115,14 @@ tbody tr.playing-row{background:rgba(0,229,255,0.06);border-left-color:var(--mag
 .res-hdr{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px 20px 0}
 .res-hdr h2{font-size:15px;font-weight:700}.res-hdr .cnt{color:var(--muted);font-size:12px;font-family:var(--mono)}
 .res-wrap{max-height:460px;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:12px 16px;border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
-th{color:var(--muted);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);
+th{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);
   position:sticky;top:0;background:rgba(10,13,20,0.95);backdrop-filter:blur(12px);z-index:1}
 tbody tr{cursor:pointer;transition:all .18s;border-left:3px solid transparent}
 tbody tr:hover{background:rgba(0,229,255,0.03);border-left-color:var(--cyan)}
-.chord{display:inline-flex;min-width:60px;justify-content:center;padding:5px 10px;border-radius:5px;
-  background:linear-gradient(135deg,rgba(0,229,255,0.1),rgba(168,85,247,0.08));border:1px solid rgba(0,229,255,0.16);color:var(--cyan);font-weight:800;font-size:14px;font-family:var(--mono)}
+.chord{display:inline-flex;min-width:64px;justify-content:center;padding:5px 10px;border-radius:5px;
+  background:linear-gradient(135deg,rgba(0,229,255,0.1),rgba(168,85,247,0.08));border:1px solid rgba(0,229,255,0.16);color:var(--cyan);font-weight:800;font-size:15px;font-family:var(--mono)}
 .notes{display:flex;flex-wrap:wrap;gap:4px}
 .note{padding:3px 6px;border-radius:4px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.13);color:var(--purple);font-size:11px;font-weight:600;font-family:var(--mono)}
 .cbar{width:80px;height:3px;border-radius:99px;background:rgba(255,255,255,0.05);overflow:hidden}
@@ -232,7 +232,7 @@ function topChromaNotes(c,ct){return[...c].map((v,pc)=>({pc,value:v})).sort((a,b
 // ============ CHORD TEMPLATES (mic chroma-style) ============
 const CT_MIC=[{s:"",i:[0,4,7],w:[1,.9,.82]},{s:"m",i:[0,3,7],w:[1,.9,.82]},{s:"dim",i:[0,3,6],w:[1,.86,.7]},
   {s:"aug",i:[0,4,8],w:[1,.82,.72]},{s:"sus2",i:[0,2,7],w:[1,.72,.82]},{s:"sus4",i:[0,5,7],w:[1,.78,.82]},
-  {s:"7",i:[0,4,7,10],w:[1,.82,.78,.64]},{s:"m7",i:[0,3,7,10],w:[1,.82,.78,.64]},{s:"maj7",i:[0,4,7,11],w:[1,.82,.78,.6]}];
+  {s:"7",i:[0,4,7,10],w:[1,.82,.78,.52]},{s:"m7",i:[0,3,7,10],w:[1,.82,.78,.52]},{s:"maj7",i:[0,4,7,11],w:[1,.82,.78,.48]}];
 
 function scoreChordTpl(c,root,tpl){let sc=0,ex=0;const mk=new Set(tpl.i.map(iv=>(root+iv)%12));
   tpl.i.forEach((iv,idx)=>{sc+=c[(root+iv)%12]*tpl.w[idx];ex+=tpl.w[idx]});
@@ -242,10 +242,10 @@ function detectChordMic(c){
   let best={root:0,suffix:"",score:-Infinity,confidence:0};
   for(let r=0;r<12;r++)for(const tpl of CT_MIC){
     let sc=scoreChordTpl(c,r,tpl);
-    // 7th gating
+    // 7th gating: stricter to avoid false maj7/7 detections
     if(["7","m7","maj7"].includes(tpl.s)){const tr=CT_MIC.find(t=>t.s===(tpl.s==="m7"?"m":""));const ts=scoreChordTpl(c,r,tr);
       const ev=tpl.s==="maj7"?11:10,es=c[(r+ev)%12],trs=Math.min(c[r],c[(r+tr.i[1])%12],c[(r+7)%12]);
-      if(!(es>.36&&es>trs*.58&&sc>ts-.015))sc-=.22}
+      if(!(es>.50&&es>trs*.68&&sc>ts+.01))sc-=.28}
     // sus gating
     if(["sus2","sus4"].includes(tpl.s)){const m3=Math.max(c[(r+4)%12],c[(r+3)%12]),sv=tpl.s==="sus2"?2:5,ss=c[(r+sv)%12];
       const mj=CT_MIC.find(t=>t.s===""),mn=CT_MIC.find(t=>t.s==="m"),bt=Math.max(scoreChordTpl(c,r,mj),scoreChordTpl(c,r,mn));
