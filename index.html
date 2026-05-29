@@ -279,7 +279,7 @@ function listenMicFrame(){
   if(!S.micListening||!S.micAnalyser||!S.micFrame)return;
   S.micAnalyser.getFloatTimeDomainData(S.micFrame);
   const rms=frameRms(S.micFrame);
-  if(rms<.0025){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";$("status").textContent=rms<.0008?"◈ 等待声音":"◈ 输入偏低";drawWaveform();return}
+  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";$("status").textContent=rms<.0001?"◈ 等待声音":"◈ 输入偏低";drawWaveform();return}
   const chroma=chromaFromFrame(S.micFrame,S.ctx.sampleRate);
   const chord=detectChordMic(chroma),bass=detectBass(chroma),tn=topChromaNotes(chroma,5);
   const now=(performance.now()-S.micStartedAt)/1000;
