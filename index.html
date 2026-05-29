@@ -319,7 +319,7 @@ function stopMic(){
   S.micListening=false;S.micCandidates=[];S.micStable=null;
   $("micBtn").textContent="🎤 开始监听";$("micBtn").classList.remove("live");
   if(!S.buf){$("analyzeBtn").disabled=true;$("playBtn").disabled=true}
-  $("status").textContent=S.buf?"◈ 音频就绪":"◈ 等待操作";drawWaveform()}
+  $("status").textContent=S.buf?"◈ 音频就绪":"◈ 等待操作";if(!S.buf)resizeCanvas();drawWaveform()}
 
 // ============ BASIC PITCH FILE ANALYSIS ============
 const CT_FILE=[{n:"",i:[0,4,7]},{n:"m",i:[0,3,7]},{n:"dim",i:[0,3,6]},{n:"aug",i:[0,4,8]},{n:"sus2",i:[0,2,7]},{n:"sus4",i:[0,5,7]},{n:"7",i:[0,4,7,10]},{n:"m7",i:[0,3,7,10]},{n:"maj7",i:[0,4,7,11]},{n:"dim7",i:[0,3,6,9]},{n:"m7b5",i:[0,3,6,10]}];
@@ -370,7 +370,11 @@ function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(
   mg.forEach(m=>m.chord.confidence=m._c.reduce((a,b)=>a+b,0)/m._c.length);return mg.filter(m=>m.en-m.st>=.3&&m.chord.confidence>.2)}
 
 // ============ UI ============
-function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;c.height=Math.round(box.clientWidth*.10);drawWaveform()}
+function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;
+  const hasAudio=S.buf||S.micListening;
+  c.height=hasAudio?Math.round(box.clientWidth*.10):Math.round(box.clientWidth*.025);
+  c.style.display=hasAudio?"block":"none";
+  drawWaveform()}
 function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
   if(S.res.length===0){$("emptyState").textContent="未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent="0 段";return}
