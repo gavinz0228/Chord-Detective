@@ -433,8 +433,10 @@ function stopPlay(){if(S.raf)cancelAnimationFrame(S.raf);if(S.src){try{S.src.sto
 
 // ============ EVENTS ============
 async function handleFile(file){S.fn=file.name;const ab=await file.arrayBuffer();const actx=new AudioContext();S.buf=await actx.decodeAudioData(ab);actx.close();
+  resizeCanvas();
   $("fileInfo").innerHTML=`<strong>${file.name}</strong><span>${S.buf.duration.toFixed(1)}s · ${S.buf.sampleRate}Hz · ${S.buf.numberOfChannels}ch</span>`;
-  $("status").textContent="◈ 音频就绪";if(S.ml){$("analyzeBtn").disabled=false;$("playBtn").disabled=false}setTimeout(resizeCanvas,50)}
+  $("status").textContent="◈ 音频就绪";if(S.ml){$("analyzeBtn").disabled=false;$("playBtn").disabled=false}
+  setTimeout(resizeCanvas,100)}
 async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent="加载中...";pb.querySelector("div").style.width="30%";
   try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent="✓ 就绪";S.ml=true;$("status").textContent="◈ 模型就绪";$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf){$("analyzeBtn").disabled=false;$("playBtn").disabled=false}}catch(e){pt.textContent="失败: "+e.message;$("status").textContent="◈ 加载失败";btn.disabled=false}}
 
