@@ -185,7 +185,7 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
     <div class="wave-ctrls" id="waveCtrls">
       <button class="btn btn-full btn-play" id="playBtn" disabled><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M8 5v14l11-7z"></path></svg> <span id="playLabel">播放音频</span></button>
     </div>
-    <div class="wave-leg"><span><i class="ldot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></i>波形</span><span><i class="ldot" style="background:var(--magenta);box-shadow:0 0 6px var(--magenta)"></i>位置</span><span><i class="ldot" style="background:rgba(168,85,247,0.3)"></i>和弦段</span></div>
+    <div class="wave-leg" id="waveLeg"><span><i class="ldot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></i>波形</span><span><i class="ldot" style="background:var(--magenta);box-shadow:0 0 6px var(--magenta)"></i>位置</span><span><i class="ldot" style="background:rgba(168,85,247,0.3)"></i>和弦段</span></div>
   </div>
 
   <div class="results-panel">
@@ -372,8 +372,12 @@ function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(
 // ============ UI ============
 function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;
   const hasAudio=S.buf||S.micListening;
-  c.height=hasAudio?Math.round(box.clientWidth*.10):Math.round(box.clientWidth*.025);
-  c.style.display=hasAudio?"block":"none";
+  c.height=hasAudio?Math.round(box.clientWidth*.10):0;
+  box.style.display=hasAudio?"block":"none";
+  $("waveCtrls").style.display=hasAudio?"block":"none";
+  $("waveLeg").style.display=hasAudio?"block":"none";
+  $("playhead").style.display=hasAudio?"block":"none";
+  $("timeTooltip").style.display=hasAudio?"block":"none";
   drawWaveform()}
 function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
