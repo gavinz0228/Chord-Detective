@@ -46,6 +46,13 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 .hero-status::before{content:"";position:absolute;inset:0;
   background:linear-gradient(135deg,transparent 30%,rgba(0,229,255,0.05) 50%,transparent 70%);animation:shimmer 3s linear infinite}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes skeleton{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.hero-status.analyzing{border-color:rgba(0,229,255,0.45);box-shadow:0 0 30px rgba(0,229,255,0.18),0 16px 48px rgba(0,0,0,0.4)}
+.hero-status.analyzing::after{content:"";display:inline-block;width:10px;height:10px;border:2px solid rgba(0,229,255,0.25);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;margin-left:10px;vertical-align:middle}
+.skeleton-row{display:grid;grid-template-columns:90px 80px 60px 1fr 70px;gap:16px;padding:14px 16px;border-bottom:1px solid var(--bdr);align-items:center}
+.skeleton-row div{height:14px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0.02) 25%,rgba(0,229,255,0.06) 50%,rgba(255,255,255,0.02) 75%);background-size:200% 100%;animation:skeleton 1.8s ease-in-out infinite}
+.skeleton-row div:last-child{height:3px;border-radius:99px}
 
 .glass{background:var(--glass);border:1px solid var(--bdr);border-radius:var(--r);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:22px;margin-bottom:18px}
@@ -354,7 +361,8 @@ function mixMono(b){if(b.numberOfChannels===1)return new Float32Array(b.getChann
 function cn(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]+c.suffix}
 
 async function analyzeFile(){
-  if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").textContent="◈ 检测中...";
+  if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").classList.add("analyzing");$("status").textContent="◈ 检测中...";
+  showSkeleton();
   $("status").textContent="◈ 预处理...";
   const mono=mixMono(S.buf);const oc=new OfflineAudioContext(1,Math.ceil(mono.length*SR/S.buf.sampleRate),SR);
   const src=oc.createBufferSource();const b=oc.createBuffer(1,mono.length,S.buf.sampleRate);b.getChannelData(0).set(mono);src.buffer=b;src.connect(oc.destination);src.start();
@@ -365,13 +373,20 @@ async function analyzeFile(){
     const inp=new Float32Array(AW);inp.set(fr.subarray(0,Math.min(AW,fr.length)));const t=tf.tensor(inp,[1,AW,1]);const res=S.model.execute(t,["Identity_1","Identity_2","Identity"]);const no=15;
     let uF=res[0].slice([0,no,0],[-1,res[0].shape[1]-2*no,-1]).reshape([-1,res[0].shape[2]]),uO=res[1].slice([0,no,0],[-1,res[1].shape[1]-2*no,-1]).reshape([-1,res[1].shape[2]]);
     const fA=await uF.array(),oA=await uO.array();t.dispose();res.forEach(t=>t.dispose());const ns=otnp(fA,oA,.5,.3,5,true),off=i*(HS/256);ns.forEach(n=>n.sf+=off);allN.push(...ns);
-    $("status").textContent="◈ AI推理 "+Math.round((i/nF)*100)+"%";await zz(0)}
-  const tn=ntt(allN);$("status").textContent="◈ 和弦匹配...";const ws=.5,du=mono.length/S.buf.sampleRate,cs=[];
+    $("status").textContent="◈ AI推理 "+Math.round((i/nF)*100)+"%";updateSkeleton(Math.round((i/nF)*100));await zz(0)}
+  const tn=ntt(allN);$("status").textContent="◈ 和弦匹配...";
+  const ws=.5,du=mono.length/S.buf.sampleRate,cs=[];
   for(let t=0;t<du;t+=ws){const te=t+ws,ap=new Set();for(const n of tn)if(n.st<te&&n.st+n.dur>t)ap.add(((n.pm%12)+12)%12);if(ap.size>0)cs.push({st:t,en:te,chord:dcpc(ap),pcs:[...ap]})}
-  S.res=mergeRes(cs);$("status").textContent="◈ 完成";renderRes();drawWaveform()}
+  S.res=mergeRes(cs);hideSkeleton();$("status").classList.remove("analyzing");$("status").textContent="◈ 完成";renderRes();drawWaveform()}
 
 function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(p&&cn(p.chord)===cn(c.chord)){p.en=c.en;p._c=(p._c||[p.chord.confidence]).concat(c.chord.confidence)}else mg.push({...c,_c:[c.chord.confidence]})}
   mg.forEach(m=>m.chord.confidence=m._c.reduce((a,b)=>a+b,0)/m._c.length);return mg.filter(m=>m.en-m.st>=.3&&m.chord.confidence>.2)}
+
+function showSkeleton(){
+  $("emptyState").style.display="none";const sk=$("skeletonBody")||(()=>{const d=document.createElement("div");d.id="skeletonBody";$("resultBody").parentNode.insertBefore(d,$("resultBody"));$("resultBody").style.display="none";return d})();
+  sk.innerHTML="";for(let i=0;i<5;i++){sk.innerHTML+=`<div class="skeleton-row"><div></div><div></div><div></div><div></div><div></div></div>`}}
+function updateSkeleton(pct){const sk=$("skeletonBody");if(sk)sk.style.opacity=Math.max(.3,1-pct/100)}
+function hideSkeleton(){const sk=$("skeletonBody");if(sk){sk.remove();$("resultBody").style.display=""}}
 
 // ============ UI ============
 function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;
