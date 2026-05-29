@@ -370,7 +370,7 @@ function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(
   mg.forEach(m=>m.chord.confidence=m._c.reduce((a,b)=>a+b,0)/m._c.length);return mg.filter(m=>m.en-m.st>=.3&&m.chord.confidence>.2)}
 
 // ============ UI ============
-function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;c.height=Math.round(box.clientWidth*.16);drawWaveform()}
+function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;c.height=Math.round(box.clientWidth*.10);drawWaveform()}
 function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
   if(S.res.length===0){$("emptyState").textContent="未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent="0 段";return}
