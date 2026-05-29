@@ -263,9 +263,11 @@ async function toggleMic(){
     S.micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     S.micSource=S.ctx.createMediaStreamSource(S.micStream);
     S.micAnalyser=S.ctx.createAnalyser();S.micAnalyser.fftSize=32768;S.micAnalyser.smoothingTimeConstant=0.18;
+    // Re-read: browser may silently cap fftSize
+    const actualFft=S.micAnalyser.fftSize;
     S.micSilentGain=S.ctx.createGain();S.micSilentGain.gain.value=0;
     S.micSource.connect(S.micAnalyser);S.micAnalyser.connect(S.micSilentGain);S.micSilentGain.connect(S.ctx.destination);
-    S.micFrame=new Float32Array(S.micAnalyser.fftSize);S.micStartedAt=performance.now();
+    S.micFrame=new Float32Array(actualFft);S.micStartedAt=performance.now();
     resizeCanvas();
     S.micListening=true;S.micCandidates=[];S.micStable=null;S.res=[];S.buf=null;
     $("fileInfo").innerHTML="<strong>麦克风监听中</strong><span>请弹奏清晰的和弦声音</span>";
@@ -279,7 +281,7 @@ function listenMicFrame(){
   if(!S.micListening||!S.micAnalyser||!S.micFrame)return;
   S.micAnalyser.getFloatTimeDomainData(S.micFrame);
   const rms=frameRms(S.micFrame);
-  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";$("status").textContent=rms<.0001?"◈ 等待声音":"◈ 输入偏低";drawWaveform();return}
+  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";$("status").textContent=rms<.0001?"◈ 等待声音":"◈ 输入偏低";$("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)}`;drawWaveform();return}
   const chroma=chromaFromFrame(S.micFrame,S.ctx.sampleRate);
   const chord=detectChordMic(chroma),bass=detectBass(chroma),tn=topChromaNotes(chroma,5);
   const now=(performance.now()-S.micStartedAt)/1000;
@@ -287,6 +289,7 @@ function listenMicFrame(){
   const stable=updateMicStability(seg);if(stable)appendMicSegment(stable);
   $("nowChord").textContent=stable?cnMic(stable.chord):cnMic(chord);
   $("nowNoteCount").textContent=(stable?stable.pcs.length:tn.length)+" 个";$("status").textContent="◈ 正在监听";
+  $("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)} SR:${S.ctx.sampleRate}`;
   renderRes();drawWaveform()}
 
 function cnMic(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]+c.suffix}
