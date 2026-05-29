@@ -201,7 +201,7 @@ const zz=ms=>new Promise(r=>setTimeout(r,ms));
 
 // STATE
 const S={ctx:null,buf:null,fn:"",model:null,ml:false,res:[],playing:false,sa:0,pa:0,raf:null,src:null,
-  micStream:null,micSource:null,micAnalyser:null,micSilentGain:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"file"};
+  micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"file"};
 
 // ============ FFT (for mic mode) ============
 function nearestPow2(v){return 2**Math.round(Math.log2(Math.max(2,v)))}
@@ -263,10 +263,11 @@ async function toggleMic(){
     S.micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     S.micSource=S.ctx.createMediaStreamSource(S.micStream);
     S.micAnalyser=S.ctx.createAnalyser();S.micAnalyser.fftSize=32768;S.micAnalyser.smoothingTimeConstant=0.18;
-    // Re-read: browser may silently cap fftSize
     const actualFft=S.micAnalyser.fftSize;
-    S.micSilentGain=S.ctx.createGain();S.micSilentGain.gain.value=0;
-    S.micSource.connect(S.micAnalyser);S.micAnalyser.connect(S.micSilentGain);S.micSilentGain.connect(S.ctx.destination);
+    // Connect source -> analyser only. Do NOT connect to destination.
+    // iOS Safari kills the graph when gain=0 is downstream,
+    // and not connecting avoids feedback naturally.
+    S.micSource.connect(S.micAnalyser);
     S.micFrame=new Float32Array(actualFft);S.micStartedAt=performance.now();
     resizeCanvas();
     S.micListening=true;S.micCandidates=[];S.micStable=null;S.res=[];S.buf=null;
@@ -308,9 +309,9 @@ function appendMicSegment(seg){
 
 function stopMic(){
   if(S.micTimer)clearInterval(S.micTimer);S.micTimer=null;
-  if(S.micSilentGain)S.micSilentGain.disconnect();if(S.micSource)S.micSource.disconnect();
+  if(S.micSource)S.micSource.disconnect();
   if(S.micStream)S.micStream.getTracks().forEach(t=>t.stop());
-  S.micStream=null;S.micSource=null;S.micAnalyser=null;S.micSilentGain=null;S.micFrame=null;
+  S.micStream=null;S.micSource=null;S.micAnalyser=null;S.micFrame=null;
   S.micListening=false;S.micCandidates=[];S.micStable=null;
   $("micBtn").textContent="🎤 开始监听";$("micBtn").classList.remove("live");
   if(!S.buf){$("analyzeBtn").disabled=true;$("playBtn").disabled=true}
