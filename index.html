@@ -37,6 +37,7 @@ select{-webkit-appearance:none;appearance:none}
 h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacing:-.04em;margin-bottom:14px;
   background:linear-gradient(160deg,#fff 10%,var(--cyan) 45%,var(--purple) 85%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-logo{vertical-align:middle;margin-right:12px;filter:drop-shadow(0 0 12px rgba(0,229,255,0.4))}
 .hero-sub{max-width:540px;color:var(--dim);font-size:15px;line-height:1.7}
 .hero-status{flex-shrink:0;min-width:200px;padding:18px 24px;border-radius:var(--r);
   background:var(--glass);border:1px solid var(--bdr);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -151,7 +152,7 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
 <body>
 <div class="app">
   <header class="hero">
-    <div class="hero-left"><div class="hero-badge"><span class="dot"></span>CHORDDETECTIVE</div><h1>和弦侦查员</h1><p class="hero-sub">上传歌曲或麦克风实时检测和弦。Spotify Basic Pitch + FFT chroma 双引擎。</p></div>
+      <div class="hero-left"><div class="hero-badge"><span class="dot"></span>CHORDDETECTIVE</div><h1><img class="hero-logo" src="favicon.svg" alt="" width="48" height="48">和弦侦查员</h1><p class="hero-sub">上传歌曲或麦克风实时检测和弦。Spotify Basic Pitch + FFT chroma 双引擎。</p></div>
     <div class="hero-status" id="status">◈ 等待操作</div>
   </header>
 
