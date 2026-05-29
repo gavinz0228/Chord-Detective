@@ -118,6 +118,10 @@ tbody tr.playing-row{background:rgba(0,229,255,0.06);border-left-color:var(--mag
 
 .res-hdr{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px 20px 0}
 .res-hdr h2{font-size:16px;font-weight:700}.res-hdr .cnt{color:var(--muted);font-size:13px;font-family:var(--mono)}
+.transpose-ctrl{display:flex;align-items:center;gap:4px}.tx-btn{padding:3px 7px;border:1px solid var(--bdr);border-radius:4px;background:rgba(255,255,255,0.02);color:var(--dim);font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .15s}
+.tx-btn:hover{background:rgba(0,229,255,0.08);color:var(--cyan);border-color:rgba(0,229,255,0.3)}
+.tx-btn.on{background:rgba(0,229,255,0.12);color:var(--cyan);border-color:var(--cyan);font-weight:700}
+.tx-label{color:var(--muted);font-size:10px;margin-left:6px;font-family:var(--mono)}
 .res-wrap{max-height:460px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:12px 16px;border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
@@ -184,7 +188,7 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
   </div>
 
   <div class="results-panel">
-    <div class="res-hdr"><h2>识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
+    <div class="res-hdr"><h2>识别结果</h2><div class="transpose-ctrl" id="transposeCtrl"><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">±0</button><button class="tx-btn" data-d="+1">+1</button><button class="tx-btn" data-d="+2">+2</button><button class="tx-btn" data-d="+5">+5</button><span class="tx-label">变调</span></div><span class="cnt" id="resultCount">0 段</span></div>
     <div class="res-wrap"><table><thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>音符</th><th>可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">上传音频 → 自动检测和弦</div></div>
   </div>
 </div>
@@ -200,7 +204,7 @@ const zz=ms=>new Promise(r=>setTimeout(r,ms));
 
 // STATE
 const S={ctx:null,buf:null,fn:"",model:null,ml:false,res:[],playing:false,sa:0,pa:0,raf:null,src:null,
-  micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"file"};
+  micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"file",transpose:0};
 
 // ============ FFT (for mic mode) ============
 function nearestPow2(v){return 2**Math.round(Math.log2(Math.max(2,v)))}
@@ -377,15 +381,16 @@ function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.c
   // Compact header when idle
   $("waveHdr").style.padding=hasAudio?"16px 20px 0":"8px 20px 8px";
   drawWaveform()}
+function tr(pc){return((pc+S.transpose)%12+12)%12}
 function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
   if(S.res.length===0){$("emptyState").textContent="未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent="0 段";return}
   $("emptyState").style.display="none";$("resultCount").textContent=S.res.length+" 段";
-  for(const r of S.res){const tr=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
-    tr.setAttribute("data-st",st);tr.setAttribute("data-en",en);
-    tr.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[r.chord.root]}${r.chord.suffix||""}</span></td><td>${n[r.chord.root]}</td><td><div class="notes">${r.pcs.map(p=>`<span class="note">${n[p]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
-    tr.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(tr)}
-  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[f.chord.root]+(f.chord.suffix||"");$("nowNoteCount").textContent=f.pcs.length+" 个";$("keyGuess").textContent=f.pcs.length>=2?n[f.pcs[0]]+" 调":"—"}}
+  for(const r of S.res){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
+    trEl.setAttribute("data-st",st);trEl.setAttribute("data-en",en);
+    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${r.pcs.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
+    trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
+  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=f.pcs.length+" 个";$("keyGuess").textContent=f.pcs.length>=2?n[tr(f.pcs[0])]+" 调":"—"}}
 
 function drawWaveform(){
   const c=$("waveCanvas"),ctx=c.getContext("2d"),w=c.width,h=c.height;if(!w||!h)return;ctx.clearRect(0,0,w,h);
@@ -417,7 +422,7 @@ function seekTo(t){if(!S.buf)return;playAt(t)}
 function upPh(){const el=(S.playing?S.ctx.currentTime-S.sa:S.pa),du=S.buf.duration,pr=cl(el/du,0,1),box=$("canvasBox"),ph=$("playhead"),tt=$("timeTooltip");
   ph.style.left=pr*box.clientWidth+"px";ph.style.opacity="1";tt.textContent=ft(el);tt.style.left=ph.style.left;tt.style.opacity="1";
   let found=false;
-  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=n[r.chord.root]+(r.chord.suffix||"");$("nowNoteCount").textContent=r.pcs.length+" 个";found=true;break}}
+  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=n[tr(r.chord.root)]+(r.chord.suffix||"");$("nowNoteCount").textContent=r.pcs.length+" 个";found=true;break}}
   // highlight currently-playing row
   const rows=$("resultBody").querySelectorAll("tr");rows.forEach(tr=>{const st=parseFloat(tr.getAttribute("data-st")),en=parseFloat(tr.getAttribute("data-en"));tr.classList.toggle("playing-row",el>=st&&el<en)});
   if(S.playing){S.raf=requestAnimationFrame(upPh);$("liveDot").classList.add("on")}else{ph.style.opacity="0";tt.style.opacity="0";$("liveDot").classList.remove("on");rows.forEach(tr=>tr.classList.remove("playing-row"))}}
@@ -445,6 +450,7 @@ dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if
 $("loadModelBtn").addEventListener("click",loadModel);
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
 $("notationSelect").addEventListener("change",renderRes);
+$("transposeCtrl").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeCtrl").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
 window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{resizeCanvas();setTimeout(loadModel,400)});
 </script>
