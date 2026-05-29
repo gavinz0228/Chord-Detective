@@ -284,8 +284,8 @@ async function toggleMic(){
     // and not connecting avoids feedback naturally.
     S.micSource.connect(S.micAnalyser);
     S.micFrame=new Float32Array(actualFft);S.micStartedAt=performance.now();
-    resizeCanvas();
     S.micListening=true;S.micCandidates=[];S.micStable=null;S.res=[];S.buf=null;
+    resizeCanvas();
     $("fileInfo").innerHTML="<strong>麦克风监听中</strong><span>请弹奏清晰的和弦声音</span>";
     $("emptyState").textContent="等待麦克风和弦输入...";$("playBtn").disabled=true;
     $("keyGuess").textContent="—";renderRes();
