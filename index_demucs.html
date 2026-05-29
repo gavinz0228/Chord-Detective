@@ -111,7 +111,6 @@ canvas { width: 100%; height: 100%; display: block; }
 
 .disclaimer { margin-top: 14px; color: var(--muted); line-height: 1.55; font-size: 13px; }
 
-.button-row { display: grid; grid-template-columns: 1fr 46px; gap: 10px; }
 .icon-btn { padding: 0; background: linear-gradient(135deg, #191b1f, #30343a); box-shadow: 0 14px 28px rgba(25,27,31,0.18); }
 
 @media (max-width: 1000px) { header, main { grid-template-columns: 1fr; } .controls { position: static; } }
@@ -176,11 +175,7 @@ canvas { width: 100%; height: 100%; display: block; }
           <option value="sharp">音名：升号 C, C#, D...</option>
           <option value="flat">音名：降号 C, Db, D...</option>
         </select>
-        <div class="button-row" style="margin-top:14px">
-          <button class="btn" id="analyzeBtn" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12h4l3 8 4-16 3 8h4"></path></svg>
-            分析选中音轨
-          </button>
+        <div style="margin-top:14px; text-align:center">
           <button class="btn icon-btn" id="playBtn" disabled title="播放/暂停">
             <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
           </button>
@@ -277,7 +272,7 @@ const els = {
   loadModelBtn: byId('loadModelBtn'), modelProgressBar: byId('modelProgressBar'),
   modelProgressText: byId('modelProgressText'),
   trackSection: byId('trackSection'), trackList: byId('trackList'),
-  analyzeBtn: byId('analyzeBtn'), playBtn: byId('playBtn'), playIcon: byId('playIcon'),
+  playBtn: byId('playBtn'), playIcon: byId('playIcon'),
   status: byId('status'), waveCanvas: byId('waveCanvas'),
   playhead: byId('playhead'), timeTooltip: byId('timeTooltip'),
   windowRange: byId('windowRange'), windowValue: byId('windowValue'),
@@ -356,7 +351,6 @@ async function loadFile(file) {
   state.audioContext = state.audioContext || new AudioContext();
   state.buffer = await state.audioContext.decodeAudioData(ab);
   els.fileInfo.innerHTML = `<strong>${esc(file.name)}</strong><span>${fmtTime(state.buffer.duration)} · ${(file.size/1024/1024).toFixed(1)} MB · ${state.buffer.numberOfChannels}ch ${state.buffer.sampleRate}Hz</span>`;
-  els.analyzeBtn.disabled = true;
   els.playBtn.disabled = true;
   if (state.modelLoaded) {
     setStatus('自动分离中');
@@ -472,7 +466,6 @@ function selectTrack(trackName) {
   state.pausedAt = 0;
   renderResults();
   drawWaveform();
-  els.analyzeBtn.disabled = false;
   els.playBtn.disabled = false;
   els.nowChord.textContent = '-';
   els.nowNote.textContent = '-';
@@ -484,7 +477,6 @@ function selectTrack(trackName) {
 // ============================================================
 // Chord Analysis (same pipeline as original)
 // ============================================================
-els.analyzeBtn.addEventListener('click', analyze);
 els.playBtn.addEventListener('click', togglePlay);
 window.addEventListener('resize', drawWaveform);
 
@@ -688,7 +680,6 @@ function avgChroma(a, b) { const o = new Float32Array(12); for (let i = 0; i < 1
 async function analyze() {
   if (!state.buffer) return;
   stopPlayback();
-  els.analyzeBtn.disabled = true;
   setStatus('分析中');
   await nextFrame();
 
@@ -714,7 +705,6 @@ async function analyze() {
   state.results = mergeSegments(smoothResults(results, Number(els.smoothRange.value)));
   renderResults(); drawWaveform(); guessKey();
   setStatus('识别完成');
-  els.analyzeBtn.disabled = false;
 }
 
 function guessKey() {
