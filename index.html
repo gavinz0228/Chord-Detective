@@ -53,6 +53,10 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
   background:linear-gradient(135deg,rgba(0,229,255,0.14),rgba(168,85,247,0.09));color:var(--cyan);margin-bottom:14px}
 .card-label{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;font-family:var(--mono)}
 
+.card-main{margin-bottom:18px}
+.nested-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.nested-card{background:rgba(255,255,255,0.015);border:1px solid var(--bdr);border-radius:var(--rs);padding:16px}
+
 .tabs{display:flex;gap:3px;margin-bottom:10px;padding:3px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--bdr)}
 .tab{flex:1;padding:9px 0;border-radius:6px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all .25s}
 .tab:hover{color:var(--dim)}.tab.on{background:rgba(0,229,255,0.1);color:var(--cyan);border-color:rgba(0,229,255,0.2)}
@@ -133,7 +137,7 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%238892a8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 8px center;background-size:14px;padding-right:28px}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.05);border-radius:99px}
-@media(max-width:1000px){.steps{grid-template-columns:1fr}.hero{flex-direction:column}.metrics{flex-wrap:wrap}.met-div{display:none}}
+@media(max-width:1000px){.hero{flex-direction:column}.metrics{flex-wrap:wrap}.met-div{display:none}.nested-row{grid-template-columns:1fr}}
 @media(max-width:600px){.app{width:min(100vw - 20px,1500px)}.met .v{font-size:24px}.met:first-child .v{font-size:32px}}
 </style>
 </head>
@@ -144,29 +148,29 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
     <div class="hero-status" id="status">◈ 等待操作</div>
   </header>
 
-  <section class="steps">
-    <div class="glass">
+  <div class="glass card-main">
       <div class="card-num">01</div><div class="card-label">输入源</div>
       <div class="tabs" id="inputTabs"><div class="tab on" data-mode="file">📁 文件上传</div><div class="tab" data-mode="mic">🎤 麦克风</div></div>
       <div id="fileSection">
         <label class="dropzone" id="dropZone" for="fileInput"><input id="fileInput" type="file" accept="audio/*"><span><strong>⬆ 选择或拖入</strong><span>mp3 · wav · m4a · flac</span></span></label>
         <div class="meta" id="fileInfo"><strong>—</strong><span>未选择文件</span></div>
+        <div class="nested-row" id="fileCards">
+          <div class="nested-card">
+            <div class="card-num">02</div><div class="card-label">AI 引擎</div>
+            <button class="btn btn-full btn-model" id="loadModelBtn">◆ 加载模型 (725KB)</button>
+            <div class="progress" id="modelBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="modelText"></div>
+            <div class="model-ok" id="modelBadge" style="display:none"><span class="model-dot" id="modelDot"></span><span style="color:var(--green);font-size:12px;font-family:var(--mono)">模型已就绪</span></div>
+          </div>
+          <div class="nested-card">
+            <div class="card-num">03</div><div class="card-label">检测与播放</div>
+            <button class="btn btn-full btn-analyze" id="analyzeBtn" disabled>检测和弦</button>
+            <div class="progress" id="analyzeBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="analyzeText"></div>
+          </div>
+        </div>
       </div>
       <div class="mic-zone" id="micSection"><button class="mic-btn" id="micBtn">🎤 开始监听</button><div class="mic-info" id="micStatus">点击按钮，弹奏和弦即可识别</div></div>
+      <div style="margin-top:12px"><select id="notationSelect"><option value="sharp">升号 C C# D...</option><option value="flat">降号 C Db D...</option></select></div>
     </div>
-    <div class="glass">
-      <div class="card-num">02</div><div class="card-label">AI 引擎</div>
-      <button class="btn btn-full btn-model" id="loadModelBtn">◆ 加载模型 (725KB)</button>
-      <div class="progress" id="modelBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="modelText"></div>
-      <div class="model-ok" id="modelBadge" style="display:none"><span class="model-dot" id="modelDot"></span><span style="color:var(--green);font-size:12px;font-family:var(--mono)">模型已就绪</span></div>
-    </div>
-    <div class="glass">
-      <div class="card-num">03</div><div class="card-label">检测与播放</div>
-      <button class="btn btn-full btn-analyze" id="analyzeBtn" disabled>检测和弦</button>
-      <div class="progress" id="analyzeBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="analyzeText"></div>
-      <div style="margin-top:10px"><select id="notationSelect"><option value="sharp">升号 C C# D...</option><option value="flat">降号 C Db D...</option></select></div>
-    </div>
-  </section>
 
   <div class="metrics">
     <div class="met"><div class="l">当前和弦</div><div class="v" id="nowChord">—</div></div><div class="met-div"></div>
@@ -425,7 +429,8 @@ async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("mo
 
 $("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;
   $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=tab.dataset.mode;
-  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");stopMic()}else{$("fileSection").style.display="none";$("micSection").classList.add("show")}});
+  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic()}
+  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none"}});
 $("fileInput").addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0])});
 const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
