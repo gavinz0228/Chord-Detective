@@ -372,7 +372,7 @@ function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(
 // ============ UI ============
 function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;
   const hasAudio=S.buf||S.micListening;
-  const h=hasAudio?Math.round(box.clientWidth*.10):0;
+  const h=hasAudio?Math.round(box.clientWidth*.18):0;
   c.height=h;c.style.height=h+'px';
   box.style.display=hasAudio?"block":"none";
   $("waveCtrls").style.display=hasAudio?"block":"none";
