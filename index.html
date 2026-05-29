@@ -389,12 +389,13 @@ function updateSkeleton(pct){const sk=$("skeletonBody");if(sk)sk.style.opacity=M
 function hideSkeleton(){const sk=$("skeletonBody");if(sk){sk.remove();$("resultBody").style.display=""}}
 
 // ============ UI ============
-function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");c.width=box.clientWidth;
+function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");
   const hasAudio=S.buf||S.micListening;
+  box.style.display=hasAudio?"block":"none";
+  c.width=box.clientWidth;
   const h=hasAudio?Math.round(box.clientWidth*.18):0;
   c.height=h;c.style.height=h+'px';
-  box.style.display=hasAudio?"block":"none";
-  $("waveCtrls").style.display=hasAudio?"block":"none";
+  $("waveCtrls").style.display=(hasAudio&&!S.micListening)?"block":"none";
   $("waveLeg").style.display=hasAudio?"block":"none";
   $("playhead").style.display=hasAudio?"block":"none";
   $("timeTooltip").style.display=hasAudio?"block":"none";
@@ -462,8 +463,8 @@ async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("mo
 
 $("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;
   $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=tab.dataset.mode;
-  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic()}
-  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none"}});
+  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic();resizeCanvas()}
+  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();resizeCanvas()}});
 $("fileInput").addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0])});
 const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
