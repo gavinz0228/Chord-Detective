@@ -55,7 +55,6 @@ main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; ali
 .btn:hover { transform: translateY(-1px); filter: brightness(0.96); }
 .btn:disabled { cursor: not-allowed; opacity: 0.48; transform: none; }
 .btn-full { width: 100%; margin-top: 10px; }
-.btn-separate { background: linear-gradient(135deg, var(--accent-2), #a83f29); box-shadow: 0 14px 28px rgba(211,93,53,0.28); }
 
 .progress-bar { width: 100%; height: 8px; border-radius: 99px; background: #ddd5c4; overflow: hidden; margin-top: 8px; }
 .progress-bar div { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent)); transition: width 0.3s; border-radius: 99px; }
@@ -125,7 +124,7 @@ canvas { width: 100%; height: 100%; display: block; }
     <div>
       <div class="brandline">ChordDetective + Demucs</div>
       <h1>和弦侦查员</h1>
-      <p class="subhead">上传歌曲 → AI 分离乐器/人声 → 选择音轨 → 浏览器端和弦分析。基于 Meta HTDemucs + ONNX Runtime Web。</p>
+      <p class="subhead">上传歌曲 → 加载模型 → AI 自动分离乐器并分析和弦。基于 Meta HTDemucs + ONNX Runtime Web。</p>
     </div>
     <div class="status-pill" id="status">等待操作</div>
   </header>
@@ -151,17 +150,9 @@ canvas { width: 100%; height: 100%; display: block; }
         <div class="progress-text" id="modelProgressText"></div>
       </div>
 
-      <!-- Separate -->
-      <div class="panel-section">
-        <div class="section-label">3. 分离音轨</div>
-        <button class="btn btn-full btn-separate" id="separateBtn" disabled>开始分离 (4轨: 鼓/贝斯/乐器/人声)</button>
-        <div class="progress-bar" id="sepProgressBar" style="display:none"><div style="width:0%"></div></div>
-        <div class="progress-text" id="sepProgressText"></div>
-      </div>
-
       <!-- Track selection -->
       <div class="panel-section" id="trackSection" style="display:none">
-        <div class="section-label">4. 选择音轨 → 分析和弦</div>
+        <div class="section-label">3. 分离完成 — 选择音轨分析</div>
         <div class="track-list" id="trackList"></div>
       </div>
 
@@ -229,7 +220,7 @@ canvas { width: 100%; height: 100%; display: block; }
             <tbody id="resultBody"></tbody>
           </table>
         </div>
-        <div class="empty" id="emptyState">上传音频 → 加载模型 → 分离 → 选择音轨 → 分析和弦</div>
+        <div class="empty" id="emptyState">上传音频 → 加载模型 → 自动分离 + 分析和弦</div>
       </section>
     </section>
   </main>
@@ -285,8 +276,6 @@ const els = {
   fileInput: byId('fileInput'), dropZone: byId('dropZone'), fileInfo: byId('fileInfo'),
   loadModelBtn: byId('loadModelBtn'), modelProgressBar: byId('modelProgressBar'),
   modelProgressText: byId('modelProgressText'),
-  separateBtn: byId('separateBtn'), sepProgressBar: byId('sepProgressBar'),
-  sepProgressText: byId('sepProgressText'),
   trackSection: byId('trackSection'), trackList: byId('trackList'),
   analyzeBtn: byId('analyzeBtn'), playBtn: byId('playBtn'), playIcon: byId('playIcon'),
   status: byId('status'), waveCanvas: byId('waveCanvas'),
@@ -316,13 +305,11 @@ els.loadModelBtn.addEventListener('click', async () => {
       ort,
       onProgress: (p) => {
         const pct = Math.round((p.progress ?? p) * 100);
-        // Update model loading bar during load, separation bar during separate
         if (!state.modelLoaded) {
           els.modelProgressBar.querySelector('div').style.width = pct + '%';
           els.modelProgressText.textContent = `下载中 ${pct}%`;
         } else {
-          els.sepProgressBar.querySelector('div').style.width = pct + '%';
-          els.sepProgressText.textContent = `分离中 ${pct}%`;
+          els.modelProgressText.textContent = `分离中 ${pct}%`;
         }
       },
       onLog: (phase, msg) => {
@@ -335,9 +322,10 @@ els.loadModelBtn.addEventListener('click', async () => {
     state.modelLoaded = true;
     els.loadModelBtn.textContent = '模型已加载 ✓';
     els.modelProgressBar.querySelector('div').style.width = '100%';
-    els.modelProgressText.textContent = '就绪，可以分离音轨';
-    els.separateBtn.disabled = !state.buffer;
+    els.modelProgressText.textContent = state.buffer ? '正在自动分离...' : '就绪，上传歌曲即可自动分离';
     setStatus('模型就绪');
+    // Auto-separate if file already loaded
+    if (state.buffer) runSeparation();
   } catch (err) {
     els.loadModelBtn.textContent = '加载失败，重试';
     els.loadModelBtn.disabled = false;
@@ -368,21 +356,23 @@ async function loadFile(file) {
   state.audioContext = state.audioContext || new AudioContext();
   state.buffer = await state.audioContext.decodeAudioData(ab);
   els.fileInfo.innerHTML = `<strong>${esc(file.name)}</strong><span>${fmtTime(state.buffer.duration)} · ${(file.size/1024/1024).toFixed(1)} MB · ${state.buffer.numberOfChannels}ch ${state.buffer.sampleRate}Hz</span>`;
-  els.separateBtn.disabled = !state.modelLoaded;
   els.analyzeBtn.disabled = true;
   els.playBtn.disabled = true;
-  setStatus(state.modelLoaded ? '可分离' : '已载入');
+  if (state.modelLoaded) {
+    setStatus('自动分离中');
+    runSeparation();
+  } else {
+    setStatus('已载入（请先加载模型）');
+  }
   drawWaveform();
 }
 
 // ============================================================
-// Separation
+// Separation (called automatically after upload if model ready)
 // ============================================================
-els.separateBtn.addEventListener('click', async () => {
+async function runSeparation() {
   if (!state.buffer || !state.processor) return;
-  els.separateBtn.disabled = true;
-  els.sepProgressBar.style.display = 'block';
-  els.sepProgressText.textContent = '分离中...';
+  els.modelProgressText.textContent = 'AI 分离中...';
   setStatus('AI 分离中');
 
   try {
@@ -393,7 +383,7 @@ els.separateBtn.addEventListener('click', async () => {
     // Resample to 44100 if needed
     let left = ch0, right = ch1;
     if (state.buffer.sampleRate !== 44100) {
-      els.sepProgressText.textContent = '重采样到 44100Hz...';
+      els.modelProgressText.textContent = '重采样到 44100Hz...';
       const numCh = Math.min(state.buffer.numberOfChannels, 2);
       const targetLen = Math.ceil(state.buffer.duration * 44100);
       const oc = new OfflineAudioContext(numCh, targetLen, 44100);
@@ -411,7 +401,7 @@ els.separateBtn.addEventListener('click', async () => {
       right = new Float32Array(left);
     }
 
-    els.sepProgressText.textContent = 'Demucs 推理中... (可能需要 1-5 分钟)';
+    els.modelProgressText.textContent = 'Demucs 推理中... (可能需要 1-5 分钟)';
 
     const result = await state.processor.separate(left, right);
 
@@ -447,18 +437,18 @@ els.separateBtn.addEventListener('click', async () => {
       el.addEventListener('click', () => selectTrack(el.dataset.track));
     });
     els.trackSection.style.display = 'block';
-    els.sepProgressBar.querySelector('div').style.width = '100%';
-    els.sepProgressText.textContent = '分离完成！选择音轨';
-    els.separateBtn.textContent = '重新分离';
-    els.separateBtn.disabled = false;
-    setStatus('分离完成');
+    els.modelProgressText.textContent = '分离完成 → 自动分析和弦...';
+    setStatus('分离完成 → 自动分析');
+
+    // Auto-select "other" track and analyze
+    selectTrack('other');
+    await analyze();
   } catch (err) {
-    els.sepProgressText.textContent = '错误: ' + err.message;
-    els.separateBtn.disabled = false;
+    els.modelProgressText.textContent = '错误: ' + err.message;
     setStatus('分离失败');
     console.error(err);
   }
-});
+}
 
 // Track selection
 function selectTrack(trackName) {
@@ -487,7 +477,8 @@ function selectTrack(trackName) {
   els.nowChord.textContent = '-';
   els.nowNote.textContent = '-';
   els.keyGuess.textContent = '-';
-  setStatus(`已选: ${trackName}`);
+  setStatus(`已选: ${trackName} → 分析中`);
+  analyze();
 };
 
 // ============================================================
