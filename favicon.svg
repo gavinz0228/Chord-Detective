@@ -5,15 +5,18 @@
       <stop offset="100%" stop-color="#a855f7"/>
     </linearGradient>
   </defs>
-  <!-- Circle bg -->
-  <circle cx="32" cy="32" r="29" fill="rgba(0,229,255,0.06)" stroke="url(#g)" stroke-width="2"/>
+  <circle cx="32" cy="32" r="29" fill="rgba(0,229,255,0.06)" stroke="url(#g)" stroke-width="2.5"/>
   
-  <!-- Eighth note: stem -->
-  <line x1="42" y1="12" x2="42" y2="44" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Double eighth note: stem 1 -->
+  <line x1="24" y1="12" x2="24" y2="46" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <!-- Note head 1 -->
+  <ellipse cx="17" cy="46" rx="8" ry="6" fill="url(#g)" transform="rotate(-15, 17, 46)"/>
   
-  <!-- Note head -->
-  <ellipse cx="34" cy="44" rx="8" ry="6" fill="url(#g)" transform="rotate(-15, 34, 44)"/>
+  <!-- Stem 2 -->
+  <line x1="44" y1="20" x2="44" y2="46" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <!-- Note head 2 -->
+  <ellipse cx="37" cy="46" rx="8" ry="6" fill="url(#g)" transform="rotate(-15, 37, 46)"/>
   
-  <!-- Flag -->
-  <path d="M42 12 Q52 16 48 24 Q44 20 42 18" fill="url(#g)"/>
+  <!-- Beam connecting both -->
+  <line x1="24" y1="12" x2="44" y2="20" stroke="#00e5ff" stroke-width="4" stroke-linecap="round"/>
 </svg>
