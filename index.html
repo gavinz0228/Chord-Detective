@@ -118,10 +118,13 @@ tbody tr.playing-row{background:rgba(0,229,255,0.06);border-left-color:var(--mag
 
 .res-hdr{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px 20px 0}
 .res-hdr h2{font-size:16px;font-weight:700}.res-hdr .cnt{color:var(--muted);font-size:13px;font-family:var(--mono)}
-.transpose-ctrl{display:flex;align-items:center;gap:4px}.tx-btn{padding:3px 7px;border:1px solid var(--bdr);border-radius:4px;background:rgba(255,255,255,0.02);color:var(--dim);font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .15s}
-.tx-btn:hover{background:rgba(0,229,255,0.08);color:var(--cyan);border-color:rgba(0,229,255,0.3)}
-.tx-btn.on{background:rgba(0,229,255,0.12);color:var(--cyan);border-color:var(--cyan);font-weight:700}
-.tx-label{color:var(--muted);font-size:10px;margin-left:6px;font-family:var(--mono)}
+.transpose-bar{display:flex;align-items:center;justify-content:center;gap:0;padding:14px 20px 8px}
+.tx-btn{padding:8px 0;border:1px solid var(--bdr);background:rgba(255,255,255,0.015);color:var(--dim);font-size:13px;font-family:var(--mono);cursor:pointer;transition:all .18s;flex:1;text-align:center;min-width:0}
+.tx-btn:first-child{border-radius:6px 0 0 6px}.tx-btn:last-child{border-radius:0 6px 6px 0}
+.tx-btn:hover{background:rgba(0,229,255,0.06);color:var(--cyan);border-color:rgba(0,229,255,0.25);z-index:1}
+.tx-btn.on{background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(168,85,247,0.12));color:var(--cyan);border-color:rgba(0,229,255,0.4);font-weight:700;box-shadow:0 0 14px rgba(0,229,255,0.15),inset 0 0 8px rgba(0,229,255,0.06);z-index:2}
+.tx-label{color:var(--dim);font-size:11px;font-family:var(--mono);margin:0 10px 0 4px;flex:none}
+.tx-val{display:inline-block;min-width:28px;padding:4px 10px;border-radius:5px;background:rgba(0,229,255,0.1);color:var(--cyan);font-weight:900;font-size:18px;font-family:var(--mono);margin-left:8px;flex:none}
 .res-wrap{max-height:460px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:12px 16px;border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
@@ -188,7 +191,8 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
   </div>
 
   <div class="results-panel">
-    <div class="res-hdr"><h2>识别结果</h2><div class="transpose-ctrl" id="transposeCtrl"><button class="tx-btn" data-d="-6">−6</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">±0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><span class="tx-label">变调</span></div><span class="cnt" id="resultCount">0 段</span></div>
+    <div class="res-hdr"><h2>识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
+    <div class="transpose-bar" id="transposeBar"><span class="tx-label">变调</span><button class="tx-btn on" data-d="0">0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-6">−6</button><span class="tx-val" id="txVal">±0</span></div>
     <div class="res-wrap"><table><thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>音符</th><th>可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">上传音频 → 自动检测和弦</div></div>
   </div>
 </div>
@@ -450,7 +454,7 @@ dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if
 $("loadModelBtn").addEventListener("click",loadModel);
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
 $("notationSelect").addEventListener("change",renderRes);
-$("transposeCtrl").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeCtrl").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));renderRes();drawWaveform()});
+$("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
 window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{resizeCanvas();setTimeout(loadModel,400)});
 </script>
