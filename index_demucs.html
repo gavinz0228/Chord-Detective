@@ -151,31 +151,9 @@ canvas { width: 100%; height: 100%; display: block; }
 
       <!-- Track selection -->
       <div class="panel-section" id="trackSection" style="display:none">
-        <div class="section-label">3. 分离完成 — 选择音轨分析</div>
+        <div class="section-label">分离音轨</div>
         <div class="track-list" id="trackList"></div>
-      </div>
-
-      <!-- Analysis params -->
-      <div class="panel-section">
-        <div class="section-label">和弦分析参数</div>
-        <label style="display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted);">
-          时间片 <strong id="windowValue">1.5 秒</strong>
-          <input id="windowRange" type="range" min="0.75" max="4" step="0.25" value="1.5">
-        </label>
-        <label style="display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted);">
-          和弦稳定度 <strong id="smoothValue">中</strong>
-          <input id="smoothRange" type="range" min="0" max="2" step="1" value="1">
-        </label>
-        <select id="extensionSensitivitySelect" style="width:100%;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(255,255,255,0.76);">
-          <option value="low">非三和弦敏感度：低</option>
-          <option value="medium" selected>非三和弦敏感度：中</option>
-          <option value="high">非三和弦敏感度：高</option>
-        </select>
-        <select id="notationSelect" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px;background:rgba(255,255,255,0.76);">
-          <option value="sharp">音名：升号 C, C#, D...</option>
-          <option value="flat">音名：降号 C, Db, D...</option>
-        </select>
-        <div style="margin-top:14px; text-align:center">
+        <div style="margin-top:12px; text-align:center">
           <button class="btn icon-btn" id="playBtn" disabled title="播放/暂停">
             <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
           </button>
@@ -189,7 +167,7 @@ canvas { width: 100%; height: 100%; display: block; }
           <div class="metric"><span>主音名</span><strong id="nowNote">-</strong></div>
           <div class="metric"><span>调性感</span><strong id="keyGuess">-</strong></div>
         </div>
-        <p class="disclaimer">分离需 ~172MB 模型（首次下载后缓存）。WebGPU 加速约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离后选 <b>其他乐器</b> 或 <b>贝斯</b> 音轨做和弦分析最准。</p>
+        <p class="disclaimer">分离需 ~172MB 模型（首次下载后缓存）。WebGPU 加速约 30-60 秒/首；CPU WASM 约 3-8 分钟。分析使用 <b>其他乐器</b> 音轨，可在上方切换。</p>
       </div>
     </aside>
 
@@ -275,10 +253,6 @@ const els = {
   playBtn: byId('playBtn'), playIcon: byId('playIcon'),
   status: byId('status'), waveCanvas: byId('waveCanvas'),
   playhead: byId('playhead'), timeTooltip: byId('timeTooltip'),
-  windowRange: byId('windowRange'), windowValue: byId('windowValue'),
-  smoothRange: byId('smoothRange'), smoothValue: byId('smoothValue'),
-  extensionSensitivitySelect: byId('extensionSensitivitySelect'),
-  notationSelect: byId('notationSelect'),
   resultBody: byId('resultBody'), emptyState: byId('emptyState'),
   resultCount: byId('resultCount'), nowChord: byId('nowChord'),
   nowNote: byId('nowNote'), keyGuess: byId('keyGuess')
@@ -502,9 +476,7 @@ els.waveCanvas.addEventListener('mousemove', (e) => {
 });
 els.waveCanvas.addEventListener('mouseleave', () => { els.timeTooltip.style.opacity = '0'; });
 
-els.windowRange.addEventListener('input', () => { els.windowValue.textContent = `${Number(els.windowRange.value).toFixed(2).replace(/\.00$/,'')} 秒`; });
-els.smoothRange.addEventListener('input', () => { els.smoothValue.textContent = ['低','中','高'][Number(els.smoothRange.value)]; });
-els.notationSelect.addEventListener('change', () => { renderResults(); drawWaveform(); updateNow(); });
+window.addEventListener('resize', drawWaveform);
 
 function mixToMono(buf) {
   const len = buf.length;
@@ -577,9 +549,7 @@ function scoreChordTemplate(chroma, root, tpl) {
 }
 
 function getExtSens() {
-  const v = els.extensionSensitivitySelect.value;
-  if (v === 'high') return { extMin:0.42, extRatio:0.5, extGap:0, extPen:0.12, susThirdMax:0.42, susRatio:1.18, susMin:0.38, susGap:0, susPen:0.12 };
-  if (v === 'low') return { extMin:0.62, extRatio:0.82, extGap:0.2, extPen:0.55, susThirdMax:0.12, susRatio:2.6, susMin:0.76, susGap:0.2, susPen:0.55 };
+  // Hardcoded 'medium' sensitivity (was editable via UI slider)
   return { extMin:0.5, extRatio:0.62, extGap:0.02, extPen:0.22, susThirdMax:0.34, susRatio:1.45, susMin:0.48, susGap:0.03, susPen:0.2 };
 }
 
@@ -685,7 +655,7 @@ async function analyze() {
 
   const mono = mixToMono(state.buffer);
   const sr = state.buffer.sampleRate;
-  const wSec = Number(els.windowRange.value);
+  const wSec = 1.5;
   const hopSize = Math.max(1, Math.floor(sr * wSec));
   const fftSize = Math.max(2048, Math.min(32768, nearestPow2(hopSize)));
   const results = [];
@@ -702,7 +672,7 @@ async function analyze() {
     if (results.length % 16 === 0) { setStatus(`分析 ${Math.min(99, Math.round(start/mono.length*100))}%`); await nextFrame(); }
   }
 
-  state.results = mergeSegments(smoothResults(results, Number(els.smoothRange.value)));
+  state.results = mergeSegments(smoothResults(results, 1));
   renderResults(); drawWaveform(); guessKey();
   setStatus('识别完成');
 }
