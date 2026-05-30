@@ -133,6 +133,11 @@ tbody tr.playing-row{background:rgba(0,229,255,0.06);border-left-color:var(--mag
 .tx-btn.on{background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(168,85,247,0.12));color:var(--cyan);border-color:rgba(0,229,255,0.4);font-weight:700;box-shadow:0 0 14px rgba(0,229,255,0.15),inset 0 0 8px rgba(0,229,255,0.06);z-index:2}
 .tx-label{color:var(--dim);font-size:11px;font-family:var(--mono);margin:0 10px 0 4px;flex:none}
 .tx-val{display:inline-block;min-width:28px;padding:4px 10px;border-radius:5px;background:rgba(0,229,255,0.1);color:var(--cyan);font-weight:900;font-size:18px;font-family:var(--mono);margin-left:8px;flex:none}
+.conf-bar{display:flex;align-items:center;gap:10px;padding:4px 20px 10px}
+.conf-label{color:var(--dim);font-size:11px;font-family:var(--mono);flex:none}
+.conf-bar input[type=range]{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.06);border-radius:2px;outline:none;cursor:pointer}
+.conf-bar input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cyan);border:2px solid rgba(0,229,255,0.3);box-shadow:0 0 10px rgba(0,229,255,0.3);cursor:pointer}
+.conf-val{color:var(--cyan);font-size:13px;font-weight:700;font-family:var(--mono);min-width:36px;text-align:right}
 .res-wrap{max-height:700px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:12px 16px;border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
@@ -201,6 +206,7 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
   <div class="results-panel">
     <div class="res-hdr"><h2>识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
     <div class="transpose-bar" id="transposeBar"><span class="tx-label">变调</span><button class="tx-btn" data-d="-6">−6</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><span class="tx-val" id="txVal">±0</span></div>
+    <div class="conf-bar" id="confBar"><span class="conf-label">最低可信度</span><input type="range" id="confRange" min="0" max="100" value="0" step="5"><span class="conf-val" id="confVal">0%</span></div>
     <div class="res-wrap"><table><thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>音符</th><th>可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">上传音频 → 自动检测和弦</div></div>
   </div>
 </div>
@@ -405,9 +411,11 @@ function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");
 function tr(pc){return((pc+S.transpose)%12+12)%12}
 function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
-  if(S.res.length===0){$("emptyState").textContent="未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent="0 段";return}
-  $("emptyState").style.display="none";$("resultCount").textContent=S.res.length+" 段";
-  for(const r of S.res){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
+  const thresh=parseInt($("confRange").value)/100;
+  const filtered=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
+  if(filtered.length===0){$("emptyState").textContent=thresh>0?`未检测到可信度≥${Math.round(thresh*100)}%的和弦`:"未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent=`0 / ${S.res.length} 段`;return}
+  $("emptyState").style.display="none";$("resultCount").textContent=filtered.length===S.res.length?`${S.res.length} 段`:`${filtered.length} / ${S.res.length} 段`;
+  for(const r of filtered){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
     trEl.setAttribute("data-st",st);trEl.setAttribute("data-en",en);
     trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${r.pcs.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
     trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
@@ -433,8 +441,10 @@ function drawWaveform(){
   }
 
   const mono=S.buf?mixMono(S.buf):null;if(!mono)return;const du=mono.length/S.buf.sampleRate;
-  for(const r of S.res){const x1=(r.st/du)*w,x2=(r.en/du)*w;ctx.fillStyle="rgba(168,85,247,0.06)";ctx.fillRect(x1,0,x2-x1,h)}
-  for(const r of S.res){const x1=(r.st/du)*w;ctx.beginPath();ctx.strokeStyle="rgba(168,85,247,0.15)";ctx.lineWidth=.8;ctx.setLineDash([4,10]);ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.stroke();ctx.setLineDash([])}
+  const thresh=parseInt($("confRange").value)/100;
+  const visible=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
+  for(const r of visible){const x1=(r.st/du)*w,x2=(r.en/du)*w;ctx.fillStyle="rgba(168,85,247,0.06)";ctx.fillRect(x1,0,x2-x1,h)}
+  for(const r of visible){const x1=(r.st/du)*w;ctx.beginPath();ctx.strokeStyle="rgba(168,85,247,0.15)";ctx.lineWidth=.8;ctx.setLineDash([4,10]);ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.stroke();ctx.setLineDash([])}
   const step=Math.max(1,Math.floor(mono.length/w));ctx.lineWidth=1.3;ctx.shadowColor="#00e5ff";ctx.shadowBlur=6;
   ctx.beginPath();ctx.strokeStyle="rgba(0,229,255,0.5)";for(let x=0;x<w;x++){let mx=0;const st=x*step;for(let i=0;i<step&&st+i<mono.length;i++)mx=Math.max(mx,mono[st+i]);const y=h/2-mx*h/2*.8;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.shadowBlur=0;
   ctx.beginPath();ctx.strokeStyle="rgba(255,255,255,0.03)";ctx.lineWidth=.5;ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke()}
@@ -471,6 +481,7 @@ dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if
 $("loadModelBtn").addEventListener("click",loadModel);
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
 $("notationSelect").addEventListener("change",renderRes);
+$("confRange").addEventListener("input",()=>{$("confVal").textContent=$("confRange").value+"%";renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
 window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{resizeCanvas();setTimeout(loadModel,400)});
