@@ -153,6 +153,7 @@ tbody tr:hover{background:rgba(0,229,255,0.03);border-left-color:var(--cyan)}
   background:linear-gradient(135deg,rgba(0,229,255,0.1),rgba(168,85,247,0.08));border:1px solid rgba(0,229,255,0.16);color:var(--cyan);font-weight:800;font-size:15px;font-family:var(--mono)}
 .notes{display:flex;flex-wrap:wrap;gap:4px}
 .note{padding:3px 6px;border-radius:4px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.13);color:var(--purple);font-size:11px;font-weight:600;font-family:var(--mono)}
+.note-miss{padding:3px 6px;border-radius:4px;background:transparent;border:1px dashed rgba(255,255,255,0.12);color:rgba(255,255,255,0.25);font-size:11px;font-weight:400;font-family:var(--mono)}
 .cbar{width:80px;height:3px;border-radius:99px;background:rgba(255,255,255,0.05);overflow:hidden}
 .cbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 6px rgba(0,229,255,0.25);transition:width .5s}
 .empty{text-align:center;padding:56px 20px;color:var(--muted);font-size:13px}
@@ -384,6 +385,7 @@ function dcpc(pcs){if(pcs.size===0)return{root:0,suffix:"",confidence:0};let b={
 
 function mixMono(b){if(b.numberOfChannels===1)return new Float32Array(b.getChannelData(0));const m=new Float32Array(b.length);for(let c=0;c<b.numberOfChannels;c++){const d=b.getChannelData(c);for(let i=0;i<b.length;i++)m[i]+=d[i]}for(let i=0;i<m.length;i++)m[i]/=b.numberOfChannels;return m}
 function cn(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]+c.suffix}
+function chordExpected(chord){const t=CT_FILE.find(t=>t.n===chord.suffix);return t?t.i.map(iv=>(chord.root+iv)%12):[]}
 
 async function analyzeFile(){
   if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").classList.add("analyzing");$("status").textContent="◈ 检测中...";
@@ -436,7 +438,8 @@ function renderRes(){
   $("emptyState").style.display="none";$("resultCount").textContent=filtered.length===S.res.length?`${S.res.length} 段`:`${filtered.length} / ${S.res.length} 段`;
   for(const r of filtered){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
     trEl.setAttribute("data-st",st);trEl.setAttribute("data-en",en);
-    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${r.pcs.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
+    const expected=chordExpected(r.chord),missing=expected.filter(ep=>!r.pcs.some(p=>((p%12)+12)%12===((ep%12)+12)%12));
+    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${r.pcs.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
     trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
   const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=f.pcs.length+" 个";$("keyGuess").textContent=f.pcs.length>=2?n[tr(f.pcs[0])]+" 调":"—"}}
 
