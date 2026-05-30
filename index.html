@@ -380,7 +380,7 @@ function mft(f){const WO=(256/SR)*(172-(SR*2-256)/256)+.0018;return(f*256)/SR-WO
 function ntt(n){return n.map(n=>{const s=mft(n.sf);return{...n,st:s,dur:mft(n.sf+n.df)-s}})}
 function dcpc(pcs){if(pcs.size===0)return{root:0,suffix:"",confidence:0};let b={root:0,suffix:"",confidence:-Infinity};
   for(let r=0;r<12;r++)for(const t of CT_FILE){const tp=new Set(t.i.map(iv=>(r+iv)%12));let m=0,e=0;for(const pc of pcs)tp.has(pc)?m++:e++;
-    const s=(m/tp.size)-e*.15-(t.i.length>3?.05:0);if(s>b.confidence)b={root:r,suffix:t.n,confidence:cl(s,0,1)}}return b}
+    const s=(m/tp.size)-e*.15-(t.i.length>3?.05:0)+(pcs.has(r)&&m<tp.size?.005:0);if(s>b.confidence)b={root:r,suffix:t.n,confidence:cl(s,0,1)}}return b}
 
 function mixMono(b){if(b.numberOfChannels===1)return new Float32Array(b.getChannelData(0));const m=new Float32Array(b.length);for(let c=0;c<b.numberOfChannels;c++){const d=b.getChannelData(c);for(let i=0;i<b.length;i++)m[i]+=d[i]}for(let i=0;i<m.length;i++)m[i]/=b.numberOfChannels;return m}
 function cn(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]+c.suffix}

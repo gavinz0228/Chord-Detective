@@ -45,7 +45,8 @@ def dcpc(pcs):
                     m += 1
                 else:
                     e += 1
-            s = (m / len(tp)) - e * 0.15 - (0.05 if len(t["i"]) > 3 else 0)
+            root_bonus = 0.005 if (r in pcs and m < len(tp)) else 0
+            s = (m / len(tp)) - e * 0.15 - (0.05 if len(t["i"]) > 3 else 0) + root_bonus
             if s > best["confidence"]:
                 best = {
                     "root": r,
@@ -312,7 +313,32 @@ check("G7 blues {7,11,2,5}", {7, 11, 2, 5}, 7, "7", min_conf=0.8)
 check("C5 w harmonic bleed {0,4,7}", {0, 4, 7}, 0, "", min_conf=0.9)
 
 # ═══════════════════════════════════════════════════════════
-section("12. TEMPLATE COVERAGE")
+section("12. ROOT-PRESENCE BONUS — prefer chords whose root is in the input")
+
+# The classic bug: {A,G,Bb} was misdetected as Dsus4 because D isn't in the input
+# With the 0.005 root-presence bonus, Gm should win (G IS in {A,G,Bb})
+check("A,G,Bb → Gm (not Dsus4) {9,7,10}", {9, 7, 10}, 7, "m", min_conf=0.5)
+
+# But perfect Dsus4 {D,G,A} should still be Dsus4
+check("D,G,A → Dsus4 (perfect) {2,7,9}", {2, 7, 9}, 2, "sus4", min_conf=0.9)
+
+# Power chord {C,G} → root C is present, should be C major
+check("C power {0,7} → C (root bonus)", {0, 7}, 0, "", min_conf=0.5)
+
+# {E,G,Bb} = Edim = {4,7,10}. Root E=4, G=7 both in input.
+# Edim: m=3, e=0, no bonus (perfect). G7 missing B? No...
+# Actually {4,7,10} = Edim perfectly. The bonus doesn't apply.
+check("Edim {4,7,10}", {4, 7, 10}, 4, "dim", min_conf=0.9)
+
+# {C,Eb,Gb,A} = Cdim7 = {0,3,6,9}. Roots: C(0) in input.
+check("Cdim7 root bonus {0,3,6,9}", {0, 3, 6, 9}, 0, "dim7", min_conf=0.8)
+
+# {2,5,9} = D,F,A = Dm. Also could be F {5,9,0} → missing 0.
+# Dm: m=3, e=0, no bonus. Dm wins correctly.
+check("Dm {2,5,9} root present", {2, 5, 9}, 2, "m", min_conf=0.9)
+
+# ═══════════════════════════════════════════════════════════
+section("13. TEMPLATE COVERAGE")
 
 template_hits = {t["n"]: 0 for t in CT}
 for t in CT:
@@ -330,7 +356,7 @@ for name, count in template_hits.items():
         FAIL += 1
 
 # ═══════════════════════════════════════════════════════════
-section("13. DETERMINISM — same input → same output")
+section("14. DETERMINISM — same input → same output")
 
 for _ in range(10):
     r1 = dcpc({0, 4, 7, 10})
@@ -340,7 +366,7 @@ PASS += 1
 print(f"  ✓ dcpc() is deterministic (10 runs, same output)")
 
 # ═══════════════════════════════════════════════════════════
-section("14. CONFIDENCE MONOTONICITY — more matching notes → higher confidence")
+section("15. CONFIDENCE MONOTONICITY — more matching notes → higher confidence")
 
 # Perfect triad should have higher confidence than same triad with an extra note
 c_triad = dcpc({0, 4, 7})
