@@ -497,7 +497,7 @@ const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
 $("loadModelBtn").addEventListener("click",loadModel);
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
-$("floatBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});
+$("floatBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(S.pa||0)});
 $("notationSelect").addEventListener("change",renderRes);
 $("confRange").addEventListener("input",()=>{$("confVal").textContent=$("confRange").value+"%";renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
