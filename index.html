@@ -159,6 +159,14 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.05);border-radius:99px}
 @media(max-width:1000px){.hero{flex-direction:column}.metrics{flex-wrap:wrap}.met-div{display:none}.nested-row{grid-template-columns:1fr}}
 @media(max-width:600px){.app{width:min(100vw - 20px,1500px)}.met .v{font-size:24px}.met:first-child .v{font-size:32px}}
+.float-btn{position:fixed;bottom:28px;right:28px;z-index:100;width:56px;height:56px;border-radius:50%;
+  background:var(--glass);border:1.5px solid var(--bdr);backdrop-filter:blur(20px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.04);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.float-btn:hover{transform:scale(1.08);border-color:var(--cyan);box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 24px rgba(0,229,255,0.2)}
+.float-btn.playing{background:rgba(0,229,255,0.1);border-color:rgba(0,229,255,0.4);box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 32px rgba(0,229,255,0.25)}
+.float-btn svg{width:22px;height:22px;fill:var(--cyan)}
+@media(max-width:768px){.float-btn{bottom:20px;right:20px;width:48px;height:48px}.float-btn svg{width:18px;height:18px}}
 </style>
 </head>
 <body>
@@ -210,6 +218,10 @@ select{width:100%;padding:9px 11px;border-radius:var(--rs);background:rgba(255,2
     <div class="res-wrap"><table><thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>音符</th><th>可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">上传音频 → 自动检测和弦</div></div>
   </div>
 </div>
+
+<button class="float-btn" id="floatBtn" style="display:none" title="播放/暂停">
+  <svg id="floatIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
 
@@ -458,28 +470,31 @@ function upPh(){const el=(S.playing?S.ctx.currentTime-S.sa:S.pa),du=S.buf.durati
   const rows=$("resultBody").querySelectorAll("tr");rows.forEach(tr=>{const st=parseFloat(tr.getAttribute("data-st")),en=parseFloat(tr.getAttribute("data-en"));tr.classList.toggle("playing-row",el>=st&&el<en)});
   if(S.playing){S.raf=requestAnimationFrame(upPh);$("liveDot").classList.add("on")}else{ph.style.opacity="0";tt.style.opacity="0";$("liveDot").classList.remove("on");rows.forEach(tr=>tr.classList.remove("playing-row"))}}
 function playAt(t){if(!S.buf)return;stopPlay();S.ctx=new AudioContext();S.src=S.ctx.createBufferSource();S.src.buffer=S.buf;S.src.connect(S.ctx.destination);
-  S.src.start(0,t);S.sa=S.ctx.currentTime-t;S.playing=true;$("playIcon").innerHTML='<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';$("playLabel").textContent="暂停";upPh()}
+  S.src.start(0,t);S.sa=S.ctx.currentTime-t;S.playing=true;$("playIcon").innerHTML='<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';$("playLabel").textContent="暂停";
+  $("floatIcon").innerHTML='<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';$("floatBtn").classList.add("playing");upPh()}
 function stopPlay(){if(S.raf)cancelAnimationFrame(S.raf);if(S.src){try{S.src.stop()}catch(e){}}S.src=null;if(S.playing)S.pa=S.ctx?S.ctx.currentTime-S.sa:0;S.playing=false;
-  $("playIcon").innerHTML='<path d="M8 5v14l11-7z"></path>';$("playLabel").textContent="播放音频"}
+  $("playIcon").innerHTML='<path d="M8 5v14l11-7z"></path>';$("playLabel").textContent="播放音频";
+  $("floatIcon").innerHTML='<path d="M8 5v14l11-7z"></path>';$("floatBtn").classList.remove("playing")}
 
 // ============ EVENTS ============
 async function handleFile(file){S.fn=file.name;const ab=await file.arrayBuffer();const actx=new AudioContext();S.buf=await actx.decodeAudioData(ab);actx.close();
   resizeCanvas();
   $("fileInfo").innerHTML=`<strong>${file.name}</strong><span>${S.buf.duration.toFixed(1)}s · ${S.buf.sampleRate}Hz · ${S.buf.numberOfChannels}ch</span>`;
-  $("status").textContent="◈ 音频就绪";if(S.ml){$("playBtn").disabled=false;$("status").textContent="◈ 自动检测中...";analyzeFile()}
+  $("status").textContent="◈ 音频就绪";if(S.ml){$("playBtn").disabled=false;$("floatBtn").style.display="flex";$("status").textContent="◈ 自动检测中...";analyzeFile()}
   setTimeout(resizeCanvas,100)}
 async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent="加载中...";pb.querySelector("div").style.width="30%";
-  try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent="✓ 就绪";S.ml=true;$("status").textContent="◈ 模型就绪";$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf){$("playBtn").disabled=false;$("status").textContent="◈ 自动检测中...";analyzeFile()}}catch(e){pt.textContent="失败: "+e.message;$("status").textContent="◈ 加载失败";btn.disabled=false}}
+  try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent="✓ 就绪";S.ml=true;$("status").textContent="◈ 模型就绪";$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf){$("playBtn").disabled=false;$("floatBtn").style.display="flex";$("status").textContent="◈ 自动检测中...";analyzeFile()}}catch(e){pt.textContent="失败: "+e.message;$("status").textContent="◈ 加载失败";btn.disabled=false}}
 
 $("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;
   $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=tab.dataset.mode;
-  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic();resizeCanvas()}
-  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();resizeCanvas()}});
+  if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic();if(S.buf)$("floatBtn").style.display="flex";resizeCanvas()}
+  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();$("floatBtn").style.display="none";resizeCanvas()}});
 $("fileInput").addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0])});
 const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
 $("loadModelBtn").addEventListener("click",loadModel);
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});$("micBtn").addEventListener("click",toggleMic);
+$("floatBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(0)});
 $("notationSelect").addEventListener("change",renderRes);
 $("confRange").addEventListener("input",()=>{$("confVal").textContent=$("confRange").value+"%";renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
