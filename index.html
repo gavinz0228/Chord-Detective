@@ -580,11 +580,12 @@ async function setVocalReduction(enabled){if(!S.origBuf)return;stopPlay(true);S.
 async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent="加载中...";pb.querySelector("div").style.width="30%";
   try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent="✓ 就绪";S.ml=true;$("status").textContent="◈ 模型就绪";$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf&&!S.res.length){$("playBtn").disabled=false;$("floatBtn").style.display="flex";$("status").textContent="◈ 自动检测中...";analyzeFile()}}catch(e){pt.textContent="失败: "+e.message;$("status").textContent="◈ 加载失败";btn.disabled=false}}
 
-$("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;
-  if(tab.dataset.mode==="demucs"){stopMic();return}
-  $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=tab.dataset.mode;
+function showInputMode(mode,updateUrl=true){const tab=$("inputTabs").querySelector(`[data-mode="${mode}"]`);if(!tab||mode==="demucs")return;
+  $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=mode;
+  if(updateUrl){const url=new URL(location.href);if(mode==="file")url.searchParams.set("mode","file");else url.searchParams.delete("mode");history.replaceState(null,"",url)}
   if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic();if(S.buf)$("floatBtn").style.display="flex";resizeCanvas()}
-  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();$("floatBtn").style.display="none";resizeCanvas()}});
+  else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();$("floatBtn").style.display="none";resizeCanvas()}}
+$("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;if(tab.dataset.mode==="demucs"){stopMic();return}showInputMode(tab.dataset.mode)});
 $("fileInput").addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0])});
 const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
@@ -598,7 +599,7 @@ $("notationSelect").addEventListener("change",renderRes);
 $("confRange").addEventListener("input",()=>{const pct=$("confRange").value;$("confVal").textContent=pct+"%";$("confRange").style.setProperty("--slider-pct",pct+"%");renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
-window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{resizeCanvas();refreshSavedSongs();setTimeout(loadModel,400)});
+window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{const requestedMode=new URLSearchParams(location.search).get("mode");if(requestedMode==="file"||requestedMode==="mic")showInputMode(requestedMode,false);resizeCanvas();refreshSavedSongs();setTimeout(loadModel,400)});
 </script>
 </body>
 </html>

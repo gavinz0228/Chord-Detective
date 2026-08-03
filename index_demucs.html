@@ -36,9 +36,22 @@ h1 { margin: 0; max-width: 780px; font-size: clamp(34px,5.8vw,68px); line-height
 .header-actions { justify-self: end; display: grid; gap: 8px; }
 .back-link { color: rgba(255,250,240,0.78); text-decoration: none; font-size: 13px; text-align: right; }
 .back-link:hover { color: #fffaf0; }
+.mode-compare { display: grid; grid-template-columns: 190px minmax(0,1fr) minmax(0,1fr); margin: 0 0 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.52); border-radius: 8px; background: rgba(255,252,244,0.94); box-shadow: var(--shadow); }
+.compare-intro, .compare-choice { padding: 16px 18px; }
+.compare-intro { display: grid; align-content: center; background: #191b1f; color: #fffaf0; }
+.compare-intro span { color: var(--gold); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.compare-intro strong { margin-top: 6px; font-size: 18px; line-height: 1.2; }
+.compare-choice + .compare-choice { border-left: 1px solid var(--line); }
+.compare-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.compare-head strong { font-size: 15px; }
+.compare-head a { color: inherit; text-decoration-color: rgba(25,27,31,0.28); text-underline-offset: 3px; }
+.compare-tag { flex: none; padding: 3px 7px; border-radius: 4px; background: rgba(49,92,157,0.1); color: var(--accent-3); font-size: 10px; font-weight: 700; }
+.compare-choice.current .compare-tag { background: rgba(15,139,125,0.12); color: #087267; }
+.compare-choice p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.compare-tip { grid-column: 2 / -1; padding: 10px 18px; border-top: 1px solid var(--line); background: rgba(216,164,49,0.08); color: #5d502e; font-size: 12px; line-height: 1.45; }
 
-main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; align-items: start; }
-.panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.58); border-radius: 8px; box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; align-items: start; min-width: 0; }
+.panel { min-width: 0; background: var(--panel); border: 1px solid rgba(255,255,255,0.58); border-radius: 8px; box-shadow: var(--shadow); backdrop-filter: blur(18px); }
 .controls { position: sticky; top: 18px; overflow: hidden; }
 
 /* ===== LEFT COLUMN ===== */
@@ -79,7 +92,7 @@ main { display: grid; grid-template-columns: 440px minmax(0,1fr); gap: 20px; ali
 .track-item.selected .track-action { color: var(--ink); }
 
 /* ===== RIGHT COLUMN ===== */
-.workspace { display: grid; gap: 18px; }
+.workspace { display: grid; min-width: 0; gap: 18px; }
 
 .canvas-wrap { position: relative; aspect-ratio: 2.2; min-height: 260px; border-bottom: 1px solid var(--line); background: #fbfaf6; cursor: pointer; }
 canvas { width: 100%; height: 100%; display: block; }
@@ -117,23 +130,181 @@ canvas { width: 100%; height: 100%; display: block; }
 
 .icon-btn { padding: 0; background: linear-gradient(135deg, #191b1f, #30343a); box-shadow: 0 14px 28px rgba(25,27,31,0.18); }
 
-@media (max-width: 1000px) { header, main { grid-template-columns: 1fr; } .controls { position: static; } }
-@media (max-width: 640px) { .app { width: min(100vw - 20px, 1400px); padding-top: 16px; } .readout { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { header, main { grid-template-columns: 1fr; } .controls { position: static; } .controls, .workspace { width: 100%; min-width: 0; } .mode-compare { grid-template-columns: 1fr 1fr; } .compare-intro { grid-column: 1 / -1; } .compare-tip { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .app { width: min(100vw - 20px, 1400px); padding-top: 16px; } .readout { grid-template-columns: 1fr; } .canvas-wrap { height: 220px; min-height: 0; aspect-ratio: auto; } .mode-compare { grid-template-columns: 1fr; } .compare-intro { grid-column: auto; } .compare-choice + .compare-choice { border-left: 0; border-top: 1px solid var(--line); } .compare-tip { grid-column: auto; } }
+</style>
+<style>
+/* Shared warm-studio visual language with the main ChordDetective page. */
+:root {
+  color-scheme: dark;
+  --bg: #0f0f0e; --surface: #141311; --panel: #1a1917; --panel-2: #121210;
+  --ink: #f5f0e7; --dim: #aaa59b; --muted: #777269; --line: rgba(246,238,220,0.1);
+  --accent: #63c995; --accent-2: #f06c5b; --accent-3: #a78bfa; --gold: #f2b84b;
+  --shadow: 0 16px 36px rgba(0,0,0,0.24);
+  font-family: "SF Pro Display", Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { letter-spacing: 0; }
+body { overflow-x: hidden; background: linear-gradient(180deg, #151411 0, #0f0f0e 360px); color: var(--ink); }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: linear-gradient(rgba(242,184,75,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(242,184,75,0.025) 1px, transparent 1px); background-size: 56px 56px; }
+button, input, select { color: inherit; }
+.app { width: min(1280px, calc(100vw - 40px)); padding: 26px 0 48px; }
+
+header.topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 0 22px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.brand-lockup { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.brand-home { flex: none; width: 56px; height: 56px; }
+.brand-home img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 7px 14px rgba(240,108,91,0.2)); }
+.brandline { margin: 0 0 5px; color: var(--gold); font-size: 10px; font-weight: 800; font-family: "SF Mono", ui-monospace, monospace; }
+.brandline::before { display: none; }
+h1 { margin: 0; max-width: none; font-size: 38px; line-height: 1.05; font-weight: 850; }
+.subhead { max-width: 680px; margin: 7px 0 0; color: var(--dim); font-size: 14px; line-height: 1.55; }
+.header-actions { flex: none; justify-self: auto; display: flex; align-items: center; gap: 10px; }
+.back-link { min-height: 42px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid var(--line); border-radius: 7px; color: var(--dim); text-decoration: none; font-size: 13px; }
+.back-link:hover { border-color: rgba(242,184,75,0.28); color: var(--gold); }
+.status-pill { justify-self: auto; min-width: 160px; padding: 12px 14px; border: 1px solid rgba(242,184,75,0.2); border-radius: 7px; background: #1c1a17; color: #f4c76d; box-shadow: none; font-size: 13px; font-weight: 700; font-family: "SF Mono", ui-monospace, monospace; }
+
+.mode-nav { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 5px; margin: 18px 0 12px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #11110f; }
+.mode-link { min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid transparent; border-radius: 6px; color: #8d8981; text-decoration: none; }
+.mode-link:hover { background: rgba(255,255,255,0.035); color: #d7d0c3; }
+.mode-link.current { border-color: rgba(167,139,250,0.34); background: rgba(167,139,250,0.12); color: #d2c6ff; }
+.mode-icon { flex: none; font-size: 18px; }
+.mode-copy { min-width: 0; display: grid; gap: 3px; }
+.mode-copy strong { font-size: 13px; line-height: 1.2; }
+.mode-copy small { color: var(--muted); font-size: 10px; font-family: "SF Mono", ui-monospace, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mode-link.current small { color: #bba8ff; }
+
+.mode-compare { grid-template-columns: 170px minmax(0,1fr) minmax(0,1fr); margin-bottom: 18px; border-color: var(--line); background: var(--panel); box-shadow: none; }
+.compare-intro { background: #151412; color: var(--ink); }
+.compare-intro span { color: var(--gold); }
+.compare-intro strong { font-size: 16px; }
+.compare-choice + .compare-choice { border-color: var(--line); }
+.compare-head strong { color: var(--ink); }
+.compare-head a { color: inherit; text-decoration-color: rgba(242,184,75,0.35); }
+.compare-tag { background: rgba(242,184,75,0.1); color: #f4c76d; }
+.compare-choice.current .compare-tag { background: rgba(167,139,250,0.12); color: #c8b8ff; }
+.compare-choice p { color: var(--dim); }
+.compare-tip { border-color: var(--line); background: rgba(99,201,149,0.06); color: #99c8ae; }
+
+main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
+.panel { border-color: var(--line); background: rgba(26,25,23,0.96); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+.controls { top: 16px; }
+.panel-section { padding: 17px; }
+.panel-section + .panel-section { border-color: var(--line); }
+.section-label { color: var(--muted); font-size: 10px; font-family: "SF Mono", ui-monospace, monospace; }
+.drop { min-height: 132px; border: 1px dashed rgba(242,184,75,0.28); background: linear-gradient(135deg, rgba(242,184,75,0.055), transparent 58%), #131210; color: var(--ink); }
+.drop:hover, .drop.dragging { border-color: var(--gold); background: rgba(242,184,75,0.07); outline: 0; }
+.drop span { color: var(--muted); }
+.drop strong { color: #f4c76d; }
+.file-info { border-color: var(--line); background: #151412; color: var(--ink); }
+.file-info strong { color: var(--ink); }
+.file-info span { color: var(--muted); }
+.btn { border: 1px solid rgba(167,139,250,0.28); background: rgba(167,139,250,0.13); color: #d8ceff; box-shadow: none; }
+.btn:hover { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.18); filter: none; }
+.btn:disabled { opacity: 0.38; }
+.progress-bar { height: 5px; background: rgba(255,255,255,0.06); }
+.progress-bar div { background: linear-gradient(90deg, var(--accent-3), var(--accent-2)); }
+.progress-text { color: var(--muted); }
+
+.track-list { gap: 7px; }
+.track-item { border-color: var(--line); background: #151412; color: var(--dim); }
+.track-item:hover { border-color: rgba(99,201,149,0.35); background: rgba(99,201,149,0.06); }
+.track-item.selected { border-color: rgba(99,201,149,0.45); background: rgba(99,201,149,0.11); color: #9fe2bd; }
+.track-icon { border-radius: 6px; }
+.track-icon.drums { background: #c65d50; }.track-icon.bass { background: #5274b8; }.track-icon.other { background: #4ba77a; }.track-icon.vocals { background: #bd9040; }
+.track-action { color: var(--accent); }
+.track-item.selected .track-action { color: #9fe2bd; }
+.icon-btn { width: 44px; min-height: 44px; padding: 0; border-color: rgba(240,108,91,0.32); background: rgba(240,108,91,0.11); color: #ff9b8d; }
+
+.readout { grid-template-columns: 1.25fr 1fr 1fr; gap: 7px; }
+.metric, .metric:first-child { min-height: 78px; padding: 11px; border-color: var(--line); background: #151412; }
+.metric span { color: var(--muted); font-size: 10px; }
+.metric strong { color: #bba8ff; font-size: 20px; }
+.metric:first-child strong { color: #f4c76d; font-size: 28px; }
+.metric:nth-child(3) strong { color: #7dd8a9; }
+.disclaimer { color: var(--muted); font-size: 11px; }
+
+.workspace { gap: 16px; }
+.wave-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.wave-title { display: grid; gap: 3px; }
+.wave-title span { color: var(--muted); font-size: 10px; font-family: "SF Mono", ui-monospace, monospace; }
+.wave-title strong { color: var(--ink); font-size: 15px; }
+.local-badge { padding: 4px 8px; border-radius: 4px; background: rgba(99,201,149,0.09); color: #86d5aa; font-size: 10px; font-weight: 700; }
+.canvas-wrap { min-height: 240px; border-color: var(--line); background: #11110f; }
+.playhead { background: var(--accent-2); box-shadow: 0 0 16px rgba(240,108,91,0.55); }
+.time-tooltip { background: #251c19; color: #ffc1b6; }
+.legend { color: var(--muted); }
+.section-head { padding: 16px 17px 4px; }
+.section-head h2 { color: var(--ink); font-size: 16px; }
+.section-head span { color: var(--muted); }
+.table { color: var(--dim); }
+.table th, .table td { border-color: var(--line); }
+.table th { background: #151412; color: var(--muted); font-size: 10px; font-family: "SF Mono", ui-monospace, monospace; }
+.table tr:hover td { background: rgba(242,184,75,0.035); }
+.chord-tag { border-radius: 5px; background: rgba(242,184,75,0.1); color: #f4c76d; }
+.note { background: rgba(99,201,149,0.09); color: #7dd8a9; }
+.confidence { height: 5px; background: rgba(255,255,255,0.06); }
+.confidence div { background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+.empty { border-color: var(--line); color: var(--muted); }
+
+@media (max-width: 900px) {
+  header.topbar { align-items: flex-start; }
+  .mode-compare { grid-template-columns: 1fr 1fr; }
+  .compare-intro, .compare-tip { grid-column: 1 / -1; }
+  main { grid-template-columns: 1fr; }
+  .controls { position: static; }
+}
+@media (max-width: 640px) {
+  .app { width: min(100vw - 20px, 1280px); padding-top: 16px; }
+  header.topbar { display: grid; gap: 14px; }
+  .brand-home { width: 44px; height: 44px; }
+  h1 { font-size: 30px; }
+  .subhead { font-size: 13px; }
+  .header-actions { width: 100%; }
+  .back-link, .status-pill { flex: 1; justify-content: center; min-width: 0; text-align: center; }
+  .mode-nav { grid-template-columns: 1fr; }
+  .mode-link { min-height: 52px; }
+  .mode-compare { grid-template-columns: 1fr; }
+  .compare-intro, .compare-tip { grid-column: auto; }
+  .compare-choice + .compare-choice { border-left: 0; border-top: 1px solid var(--line); }
+  .readout { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .canvas-wrap { height: 210px; min-height: 0; aspect-ratio: auto; }
+}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div>
-      <div class="brandline">ChordDetective + Demucs</div>
-      <h1>和弦侦查员</h1>
-      <p class="subhead">上传歌曲 → 加载模型 → AI 自动分离乐器并分析和弦。基于 Meta HTDemucs + ONNX Runtime Web。</p>
+  <header class="topbar">
+    <div class="brand-lockup">
+      <a class="brand-home" href="index.html" aria-label="返回 ChordDetective 主页"><img src="favicon.svg" alt="" width="56" height="56"></a>
+      <div>
+      <div class="brandline">CHORDDETECTIVE / 和弦侦查员</div>
+      <h1>AI 音轨分离</h1>
+      <p class="subhead">当前页会先把完整歌曲分离成独立音轨，再从你选择的音轨识别和弦。基于 Meta HTDemucs + ONNX Runtime Web。</p>
+      </div>
     </div>
     <div class="header-actions">
-      <a class="back-link" href="index.html">← 返回主页</a>
+      <a class="back-link" href="index.html">← 主页</a>
       <div class="status-pill" id="status">等待操作</div>
     </div>
   </header>
+
+  <nav class="mode-nav" aria-label="和弦识别模式">
+    <a class="mode-link" href="index.html?mode=mic"><span class="mode-icon">🎤</span><span class="mode-copy"><strong>麦克风</strong><small>实时识别 · 默认</small></span></a>
+    <a class="mode-link" href="index.html?mode=file"><span class="mode-icon">♪</span><span class="mode-copy"><strong>快速文件分析</strong><small>直接分析 · 低资源</small></span></a>
+    <div class="mode-link current" aria-current="page"><span class="mode-icon">◆</span><span class="mode-copy"><strong>AI 音轨分离</strong><small>Demucs · 当前模式</small></span></div>
+  </nav>
+
+  <section class="mode-compare" aria-label="主页快速模式与 Demucs 音轨分离模式对比">
+    <div class="compare-intro"><span>模式对比</span><strong>两种模式怎么选</strong></div>
+    <div class="compare-choice">
+      <div class="compare-head"><strong><a href="index.html?mode=file">主页快速模式</a></strong><span class="compare-tag">直接分析</span></div>
+      <p>支持麦克风实时识别或上传歌曲。Basic Pitch / FFT 直接分析完整混音；“快速降低人声”仅做立体声中置抵消，不会生成独立音轨。模型约 725KB，启动更快。</p>
+    </div>
+    <div class="compare-choice current">
+      <div class="compare-head"><strong>当前 Demucs 页面</strong><span class="compare-tag">先分离</span></div>
+      <p>仅分析上传文件。先用 172MB HTDemucs 分离鼓组、贝斯、其他乐器和人声，再从当前选择的音轨识别；默认使用“其他乐器”。更耗时和内存，但复杂混音通常更干净。</p>
+    </div>
+    <div class="compare-tip">弹奏乐器、需要实时反馈或快速扫歌，请用主页；人声和鼓声遮盖和声、需要指定音轨时，再使用当前页面。</div>
+  </section>
 
   <main>
     <!-- ===== LEFT: Upload + Separation ===== -->
@@ -174,22 +345,23 @@ canvas { width: 100%; height: 100%; display: block; }
           <div class="metric"><span>主音名</span><strong id="nowNote">-</strong></div>
           <div class="metric"><span>调性感</span><strong id="keyGuess">-</strong></div>
         </div>
-        <p class="disclaimer">分离需 ~172MB 模型（首次下载后缓存）。WebGPU 加速约 30-60 秒/首；CPU WASM 约 3-8 分钟。分析使用 <b>其他乐器</b> 音轨，可在上方切换。</p>
+        <p class="disclaimer">首次使用需下载约 172MB 模型，之后由浏览器缓存。WebGPU 约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离完成后默认分析 <b>其他乐器</b>；点击鼓组、贝斯或人声会清空当前结果，并改用所选音轨重新识别。</p>
       </div>
     </aside>
 
     <!-- ===== RIGHT: Waveform + Results ===== -->
     <section class="workspace">
       <section class="panel">
+        <div class="wave-head"><div class="wave-title"><span>当前分析音轨</span><strong id="trackTitle">等待上传与分离</strong></div><span class="local-badge">本地处理</span></div>
         <div class="canvas-wrap">
           <canvas id="waveCanvas" width="1200" height="540"></canvas>
           <div class="time-tooltip" id="timeTooltip">0:00</div>
           <div class="playhead" id="playhead"></div>
         </div>
         <div class="legend">
-          <span><i class="swatch" style="background:#0e7c7b"></i>波形</span>
-          <span><i class="swatch" style="background:#d35d35"></i>播放位置</span>
-          <span><i class="swatch" style="background:#2d5f9a"></i>和弦段落</span>
+          <span><i class="swatch" style="background:#f2b84b"></i>波形</span>
+          <span><i class="swatch" style="background:#f06c5b"></i>播放位置</span>
+          <span><i class="swatch" style="background:#a78bfa"></i>和弦段落</span>
         </div>
       </section>
       <section class="panel">
@@ -241,6 +413,7 @@ const CHORD_TEMPLATES = [
   { suffix: "m7", intervals: [0,3,7,10], weight: [1,0.82,0.78,0.64] },
   { suffix: "maj7", intervals: [0,4,7,11], weight: [1,0.82,0.78,0.6] }
 ];
+const TRACK_NAMES = { drums: '鼓组', bass: '贝斯', other: '其他乐器', vocals: '人声' };
 
 const state = {
   audioContext: null,
@@ -261,7 +434,7 @@ const els = {
   status: byId('status'), waveCanvas: byId('waveCanvas'),
   playhead: byId('playhead'), timeTooltip: byId('timeTooltip'),
   resultBody: byId('resultBody'), emptyState: byId('emptyState'),
-  resultCount: byId('resultCount'), nowChord: byId('nowChord'),
+  resultCount: byId('resultCount'), trackTitle: byId('trackTitle'), nowChord: byId('nowChord'),
   nowNote: byId('nowNote'), keyGuess: byId('keyGuess')
 };
 
@@ -326,6 +499,8 @@ async function loadFile(file) {
   state.originalFileName = file.name;
   state.results = [];
   state.separatedTracks = null;
+  state.currentTrack = null;
+  els.trackTitle.textContent = '等待音轨分离';
   renderResults();
   els.trackSection.style.display = 'none';
   setStatus('解码中');
@@ -416,9 +591,8 @@ async function runSeparation() {
     els.modelProgressText.textContent = '分离完成 → 自动分析和弦...';
     setStatus('分离完成 → 自动分析');
 
-    // Auto-select "other" track and analyze
+    // Auto-select "other"; selectTrack() starts analysis.
     selectTrack('other');
-    await analyze();
   } catch (err) {
     els.modelProgressText.textContent = '错误: ' + err.message;
     setStatus('分离失败');
@@ -433,6 +607,7 @@ function selectTrack(trackName) {
   document.querySelectorAll('.track-item').forEach(el => el.classList.remove('selected'));
   document.querySelector(`[data-track="${trackName}"]`).classList.add('selected');
   state.currentTrack = trackName;
+  els.trackTitle.textContent = TRACK_NAMES[trackName] || trackName;
 
   // Build AudioBuffer from separated track
   const track = state.separatedTracks[trackName];
@@ -729,15 +904,15 @@ function drawWaveform() {
   const ctx = c.getContext('2d');
   const w = c.width, h = c.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = '#fbfaf6'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#11110f'; ctx.fillRect(0, 0, w, h);
 
   // Grid
-  ctx.strokeStyle = 'rgba(104,112,120,0.14)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(242,184,75,0.055)'; ctx.lineWidth = 1;
   for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0, h*i/6); ctx.lineTo(w, h*i/6); ctx.stroke(); }
   for (let i = 1; i < 12; i++) { ctx.beginPath(); ctx.moveTo(w*i/12, 0); ctx.lineTo(w*i/12, h); ctx.stroke(); }
 
   if (!state.buffer) {
-    ctx.fillStyle = '#687078'; ctx.font = `${16*s}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillStyle = '#777269'; ctx.font = `${16*s}px sans-serif`; ctx.textAlign = 'center';
     ctx.fillText('音频波形会显示在这里', w/2, h/2); return;
   }
 
@@ -746,10 +921,10 @@ function drawWaveform() {
     state.results.forEach((seg, idx) => {
       const x = seg.start / state.buffer.duration * w;
       const width = Math.max(1, (seg.end - seg.start) / state.buffer.duration * w);
-      ctx.fillStyle = idx % 2 ? 'rgba(45,95,154,0.10)' : 'rgba(14,124,123,0.10)';
+      ctx.fillStyle = idx % 2 ? 'rgba(167,139,250,0.08)' : 'rgba(99,201,149,0.07)';
       ctx.fillRect(x, 0, width, h);
       if (width > 42 * s) {
-        ctx.fillStyle = 'rgba(31,36,40,0.62)'; ctx.font = `${12*s}px sans-serif`; ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(245,240,231,0.68)'; ctx.font = `${12*s}px sans-serif`; ctx.textAlign = 'left';
         ctx.fillText(chordName(seg.chord), x + 8*s, 22*s);
       }
     });
@@ -759,7 +934,7 @@ function drawWaveform() {
   const data = state.buffer.getChannelData(0);
   const step = Math.ceil(data.length / w);
   const amp = h * 0.38;
-  ctx.beginPath(); ctx.strokeStyle = '#0e7c7b'; ctx.lineWidth = 2 * s;
+  ctx.beginPath(); ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2 * s;
   for (let x = 0; x < w; x++) {
     let min = 1, max = -1;
     const start = x * step;
@@ -772,7 +947,7 @@ function drawWaveform() {
   const vt = visibleTime();
   if (state.buffer && vt > 0) {
     const px = vt / state.buffer.duration * w;
-    ctx.beginPath(); ctx.strokeStyle = 'rgba(211,93,53,0.7)'; ctx.lineWidth = 2*s; ctx.setLineDash([6*s, 4*s]);
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(240,108,91,0.78)'; ctx.lineWidth = 2*s; ctx.setLineDash([6*s, 4*s]);
     ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke(); ctx.setLineDash([]);
   }
 }
