@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>ChordDetective + Demucs / 和弦侦查员</title>
+<title data-i18n="pageTitle">ChordDetective + Demucs / 和弦侦查员</title>
 <style>
 :root {
   color-scheme: light;
@@ -161,8 +161,9 @@ h1 { margin: 0; max-width: none; font-size: 38px; line-height: 1.05; font-weight
 .back-link { min-height: 42px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid var(--line); border-radius: 7px; color: var(--dim); text-decoration: none; font-size: 13px; }
 .back-link:hover { border-color: rgba(242,184,75,0.28); color: var(--gold); }
 .status-pill { justify-self: auto; min-width: 160px; padding: 12px 14px; border: 1px solid rgba(242,184,75,0.2); border-radius: 7px; background: #1c1a17; color: #f4c76d; box-shadow: none; font-size: 13px; font-weight: 700; font-family: "SF Mono", ui-monospace, monospace; }
+.language-select { min-height: 42px; padding: 0 34px 0 12px; border: 1px solid var(--line); border-radius: 7px; background: #1c1a17; color: var(--dim); font-size: 13px; font-weight: 700; cursor: pointer; }
 
-.mode-nav { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 5px; margin: 18px 0 12px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #11110f; }
+.mode-nav { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 5px; margin: 18px 0 12px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #11110f; }
 .mode-link { min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid transparent; border-radius: 6px; color: #8d8981; text-decoration: none; }
 .mode-link:hover { background: rgba(255,255,255,0.035); color: #d7d0c3; }
 .mode-link.current { border-color: rgba(167,139,250,0.34); background: rgba(167,139,250,0.12); color: #d2c6ff; }
@@ -259,7 +260,7 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
   h1 { font-size: 30px; }
   .subhead { font-size: 13px; }
   .header-actions { width: 100%; }
-  .back-link, .status-pill { flex: 1; justify-content: center; min-width: 0; text-align: center; }
+  .back-link, .status-pill, .language-select { flex: 1; justify-content: center; min-width: 0; text-align: center; }
   .mode-nav { grid-template-columns: 1fr; }
   .mode-link { min-height: 52px; }
   .mode-compare { grid-template-columns: 1fr; }
@@ -269,41 +270,44 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
   .canvas-wrap { height: 210px; min-height: 0; aspect-ratio: auto; }
 }
 </style>
+<link rel="stylesheet" href="cafe-theme.css">
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <div class="brand-lockup">
-      <a class="brand-home" href="index.html" aria-label="返回 ChordDetective 主页"><img src="favicon.svg" alt="" width="56" height="56"></a>
+      <a class="brand-home" href="index.html" data-i18n-aria-label="backHomeLabel" aria-label="返回 ChordDetective 主页"><img src="favicon.svg" alt="" width="56" height="56"></a>
       <div>
       <div class="brandline">CHORDDETECTIVE / 和弦侦查员</div>
-      <h1>AI 音轨分离</h1>
-      <p class="subhead">当前页会先把完整歌曲分离成独立音轨，再从你选择的音轨识别和弦。基于 Meta HTDemucs + ONNX Runtime Web。</p>
+      <h1 data-i18n="pageHeading">AI 音轨分离</h1>
+      <p class="subhead" data-i18n="subhead">当前页会先把完整歌曲分离成独立音轨，再从你选择的音轨识别和弦。基于 Meta HTDemucs + ONNX Runtime Web。</p>
       </div>
     </div>
     <div class="header-actions">
-      <a class="back-link" href="index.html">← 主页</a>
+      <select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="en">English</option></select>
+      <a class="back-link" href="index.html" data-i18n="home">← 主页</a>
       <div class="status-pill" id="status">等待操作</div>
     </div>
   </header>
 
-  <nav class="mode-nav" aria-label="和弦识别模式">
-    <a class="mode-link" href="index.html?mode=mic"><span class="mode-icon">🎤</span><span class="mode-copy"><strong>麦克风</strong><small>实时识别 · 默认</small></span></a>
-    <a class="mode-link" href="index.html?mode=file"><span class="mode-icon">♪</span><span class="mode-copy"><strong>快速文件分析</strong><small>直接分析 · 低资源</small></span></a>
-    <div class="mode-link current" aria-current="page"><span class="mode-icon">◆</span><span class="mode-copy"><strong>AI 音轨分离</strong><small>Demucs · 当前模式</small></span></div>
+  <nav class="mode-nav" data-i18n-aria-label="modeNavLabel" aria-label="和弦识别模式">
+    <a class="mode-link" href="index.html?mode=mic"><span class="mode-icon">🎤</span><span class="mode-copy"><strong data-i18n="microphone">麦克风</strong><small data-i18n="micNote">实时识别 · 默认</small></span></a>
+    <a class="mode-link" href="index.html?mode=file"><span class="mode-icon">♪</span><span class="mode-copy"><strong data-i18n="quickFile">快速文件分析</strong><small data-i18n="fileNote">直接分析 · 低资源</small></span></a>
+    <div class="mode-link current" aria-current="page"><span class="mode-icon">◆</span><span class="mode-copy"><strong data-i18n="stemSeparation">AI 音轨分离</strong><small data-i18n="currentMode">Demucs · 当前模式</small></span></div>
+    <a class="mode-link" href="transpose.html"><span class="mode-icon">↕</span><span class="mode-copy"><strong data-i18n="audioTranspose">音频转调</strong><small data-i18n="transposeNote">转换 · 下载 WAV</small></span></a>
   </nav>
 
-  <section class="mode-compare" aria-label="主页快速模式与 Demucs 音轨分离模式对比">
-    <div class="compare-intro"><span>模式对比</span><strong>两种模式怎么选</strong></div>
+  <section class="mode-compare" data-i18n-aria-label="comparisonLabel" aria-label="主页快速模式与 Demucs 音轨分离模式对比">
+    <div class="compare-intro"><span data-i18n="modeComparison">模式对比</span><strong data-i18n="howToChoose">两种模式怎么选</strong></div>
     <div class="compare-choice">
-      <div class="compare-head"><strong><a href="index.html?mode=file">主页快速模式</a></strong><span class="compare-tag">直接分析</span></div>
-      <p>支持麦克风实时识别或上传歌曲。Basic Pitch / FFT 直接分析完整混音；“快速降低人声”仅做立体声中置抵消，不会生成独立音轨。模型约 725KB，启动更快。</p>
+      <div class="compare-head"><strong><a href="index.html?mode=file" data-i18n="mainQuickMode">主页快速模式</a></strong><span class="compare-tag" data-i18n="directAnalysis">直接分析</span></div>
+      <p data-i18n="quickDescription">支持麦克风实时识别或上传歌曲。Basic Pitch / FFT 直接分析完整混音；“快速降低人声”仅做立体声中置抵消，不会生成独立音轨。模型约 725KB，启动更快。</p>
     </div>
     <div class="compare-choice current">
-      <div class="compare-head"><strong>当前 Demucs 页面</strong><span class="compare-tag">先分离</span></div>
-      <p>仅分析上传文件。先用 172MB HTDemucs 分离鼓组、贝斯、其他乐器和人声，再从当前选择的音轨识别；默认使用“其他乐器”。更耗时和内存，但复杂混音通常更干净。</p>
+      <div class="compare-head"><strong data-i18n="currentDemucsPage">当前 Demucs 页面</strong><span class="compare-tag" data-i18n="separateFirst">先分离</span></div>
+      <p data-i18n="demucsDescription">仅分析上传文件。先用 172MB HTDemucs 分离鼓组、贝斯、其他乐器和人声，再从当前选择的音轨识别；默认使用“其他乐器”。更耗时和内存，但复杂混音通常更干净。</p>
     </div>
-    <div class="compare-tip">弹奏乐器、需要实时反馈或快速扫歌，请用主页；人声和鼓声遮盖和声、需要指定音轨时，再使用当前页面。</div>
+    <div class="compare-tip" data-i18n="modeTip">弹奏乐器、需要实时反馈或快速扫歌，请用主页；人声和鼓声遮盖和声、需要指定音轨时，再使用当前页面。</div>
   </section>
 
   <main>
@@ -311,28 +315,28 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
     <aside class="panel controls">
       <!-- Upload -->
       <div class="panel-section">
-        <div class="section-label">1. 上传音频</div>
+        <div class="section-label" data-i18n="uploadStep">1. 上传音频</div>
         <label class="drop" id="dropZone" for="fileInput">
           <input id="fileInput" type="file" accept="audio/*">
-          <span><strong>选择或拖入音频</strong><span>mp3 / wav / m4a / flac</span></span>
+          <span><strong data-i18n="chooseAudio">选择或拖入音频</strong><span>mp3 / wav / m4a / flac</span></span>
         </label>
-        <div class="file-info" id="fileInfo"><strong>未载入</strong><span>上传一首歌曲开始</span></div>
+        <div class="file-info" id="fileInfo"><strong data-i18n="notLoaded">未载入</strong><span data-i18n="uploadToStart">上传一首歌曲开始</span></div>
       </div>
 
       <!-- Model -->
       <div class="panel-section">
-        <div class="section-label">2. 加载 AI 模型</div>
-        <button class="btn btn-full" id="loadModelBtn">下载并加载 Demucs 模型 (172MB)</button>
+        <div class="section-label" data-i18n="loadStep">2. 加载 AI 模型</div>
+        <button class="btn btn-full" id="loadModelBtn" data-i18n="loadDemucs">下载并加载 Demucs 模型 (172MB)</button>
         <div class="progress-bar" id="modelProgressBar" style="display:none"><div style="width:0%"></div></div>
         <div class="progress-text" id="modelProgressText"></div>
       </div>
 
       <!-- Track selection -->
       <div class="panel-section" id="trackSection" style="display:none">
-        <div class="section-label">分离音轨</div>
+        <div class="section-label" data-i18n="separatedTracks">分离音轨</div>
         <div class="track-list" id="trackList"></div>
         <div style="margin-top:12px; text-align:center">
-          <button class="btn icon-btn" id="playBtn" disabled title="播放/暂停">
+          <button class="btn icon-btn" id="playBtn" disabled data-i18n-title="playPause" title="播放/暂停">
             <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
           </button>
         </div>
@@ -341,38 +345,38 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
       <!-- Live readout -->
       <div class="panel-section">
         <div class="readout">
-          <div class="metric"><span>当前和弦</span><strong id="nowChord">-</strong></div>
-          <div class="metric"><span>主音名</span><strong id="nowNote">-</strong></div>
-          <div class="metric"><span>调性感</span><strong id="keyGuess">-</strong></div>
+          <div class="metric"><span data-i18n="currentChord">当前和弦</span><strong id="nowChord">-</strong></div>
+          <div class="metric"><span data-i18n="pitchName">主音名</span><strong id="nowNote">-</strong></div>
+          <div class="metric"><span data-i18n="keySense">调性感</span><strong id="keyGuess">-</strong></div>
         </div>
-        <p class="disclaimer">首次使用需下载约 172MB 模型，之后由浏览器缓存。WebGPU 约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离完成后默认分析 <b>其他乐器</b>；点击鼓组、贝斯或人声会清空当前结果，并改用所选音轨重新识别。</p>
+        <p class="disclaimer" data-i18n="disclaimer">首次使用需下载约 172MB 模型，之后由浏览器缓存。WebGPU 约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离完成后默认分析其他乐器；点击鼓组、贝斯或人声会清空当前结果，并改用所选音轨重新识别。</p>
       </div>
     </aside>
 
     <!-- ===== RIGHT: Waveform + Results ===== -->
     <section class="workspace">
       <section class="panel">
-        <div class="wave-head"><div class="wave-title"><span>当前分析音轨</span><strong id="trackTitle">等待上传与分离</strong></div><span class="local-badge">本地处理</span></div>
+        <div class="wave-head"><div class="wave-title"><span data-i18n="currentTrack">当前分析音轨</span><strong id="trackTitle">等待上传与分离</strong></div><span class="local-badge" data-i18n="localProcessing">本地处理</span></div>
         <div class="canvas-wrap">
           <canvas id="waveCanvas" width="1200" height="540"></canvas>
           <div class="time-tooltip" id="timeTooltip">0:00</div>
           <div class="playhead" id="playhead"></div>
         </div>
         <div class="legend">
-          <span><i class="swatch" style="background:#f2b84b"></i>波形</span>
-          <span><i class="swatch" style="background:#f06c5b"></i>播放位置</span>
-          <span><i class="swatch" style="background:#a78bfa"></i>和弦段落</span>
+          <span><i class="swatch" style="background:var(--accent)"></i><span data-i18n="waveform">波形</span></span>
+          <span><i class="swatch" style="background:var(--accent-2)"></i><span data-i18n="playPosition">播放位置</span></span>
+          <span><i class="swatch" style="background:var(--accent-3)"></i><span data-i18n="chordSegments">和弦段落</span></span>
         </div>
       </section>
       <section class="panel">
-        <div class="section-head"><h2>识别结果</h2><span id="resultCount">0 段</span></div>
+        <div class="section-head"><h2 data-i18n="results">识别结果</h2><span id="resultCount">0 段</span></div>
         <div style="overflow-x:auto">
           <table class="table">
-            <thead><tr><th>时间</th><th>和弦</th><th>低音</th><th>主音名</th><th>可能音</th><th>可信度</th></tr></thead>
+            <thead><tr><th data-i18n="time">时间</th><th data-i18n="chord">和弦</th><th data-i18n="bass">低音</th><th data-i18n="pitchName">主音名</th><th data-i18n="possibleNotes">可能音</th><th data-i18n="confidence">可信度</th></tr></thead>
             <tbody id="resultBody"></tbody>
           </table>
         </div>
-        <div class="empty" id="emptyState">上传音频 → 加载模型 → 自动分离 + 分析和弦</div>
+        <div class="empty" id="emptyState" data-i18n="emptyWorkflow">上传音频 → 加载模型 → 自动分离 + 分析和弦</div>
       </section>
     </section>
   </main>
@@ -390,12 +394,41 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
 }
 </script>
 
+<script src="i18n.js"></script>
 <script type="module">
 // ============================================================
 // Imports
 // ============================================================
 import * as ort from 'onnxruntime-web';
 import { DemucsProcessor, CONSTANTS } from 'demucs-web';
+
+ChordI18n.register({
+  en: {
+    pageTitle:"ChordDetective · AI Stem Separation", backHomeLabel:"Back to ChordDetective home", pageHeading:"AI Stem Separation", subhead:"Separate a full song into independent stems, then detect chords from the stem you choose. Powered by Meta HTDemucs and ONNX Runtime Web.", languageLabel:"Language", home:"← Home",
+    modeNavLabel:"Audio tools", microphone:"Microphone", micNote:"Live detection · Default", quickFile:"Quick file analysis", fileNote:"Direct analysis · Low resources", stemSeparation:"AI stem separation", currentMode:"Demucs · Current mode", audioTranspose:"Audio transposer", transposeNote:"Convert · Download WAV",
+    comparisonLabel:"Comparison of quick analysis and Demucs stem separation", modeComparison:"Mode comparison", howToChoose:"Which mode should I use?", mainQuickMode:"Main quick mode", directAnalysis:"Direct analysis", quickDescription:"Use live microphone detection or upload a song. Basic Pitch and FFT analyze the full mix directly. Quick vocal reduction only applies stereo center cancellation and does not create separate stems. The 725KB model starts faster.",
+    currentDemucsPage:"Current Demucs page", separateFirst:"Separate first", demucsDescription:"Uploaded files only. The 172MB HTDemucs model separates drums, bass, other instruments, and vocals before detecting chords from your selected stem. Other instruments is selected by default. It uses more time and memory, but usually produces a cleaner signal for complex mixes.", modeTip:"Use the main page for live playing, instant feedback, or a quick song scan. Use this page when vocals or drums mask the harmony, or when you need a specific stem.",
+    uploadStep:"1. Upload audio", chooseAudio:"Choose or drop audio", notLoaded:"Not loaded", uploadToStart:"Upload a song to begin", loadStep:"2. Load AI model", loadDemucs:"Download and load Demucs model (172MB)", separatedTracks:"Separated stems", playPause:"Play/Pause",
+    currentChord:"Current chord", pitchName:"Pitch", keySense:"Key", disclaimer:"The first use downloads about 172MB, then the browser caches the model. WebGPU takes about 30–60 seconds per song; CPU WASM about 3–8 minutes. Other instruments is analyzed by default. Choosing drums, bass, or vocals clears the current result and detects again from that stem.",
+    currentTrack:"Current analysis stem", localProcessing:"Local processing", waveform:"Waveform", playPosition:"Play position", chordSegments:"Chord segments", results:"Detection results", time:"Time", chord:"Chord", bass:"Bass", possibleNotes:"Possible notes", confidence:"Confidence", emptyWorkflow:"Upload audio → load model → separate stems + detect chords",
+    statusWaiting:"Waiting", downloadingModel:"Downloading model...", connecting:"Connecting to Hugging Face...", downloadProgress:"Downloading {pct}%", separationProgress:"Separating {pct}%", modelLoaded:"Model loaded ✓", autoSeparating:"Separating automatically...", readyUpload:"Ready. Upload a song to separate it", statusModelReady:"Model ready", retryLoad:"Load failed. Retry", error:"Error: {message}", statusModelLoadFailed:"Model load failed",
+    waitingSeparation:"Waiting for stem separation", statusDecoding:"Decoding", statusAutoSeparating:"Separating automatically", statusLoadedLoadModel:"Loaded (load the model next)", aiSeparating:"AI separation in progress...", statusAiSeparating:"AI separation in progress", resampling:"Resampling to 44100Hz...", demucsInference:"Demucs inference... (may take 1–5 minutes)",
+    trackDrums:"🥁 Drums", trackBass:"🎸 Bass", trackOther:"🎹 Other instruments", trackVocals:"🎤 Vocals", analyzeChord:"→ Detect chords", separationComplete:"Separation complete → detecting chords...", statusSeparationComplete:"Separated → detecting", statusSeparationFailed:"Separation failed", selectedAnalyzing:"Selected: {track} → analyzing", statusAnalyzing:"Analyzing", analysisProgress:"Analyzing {pct}%", statusComplete:"Detection complete", major:"major", minor:"minor", segments:"{count} segments", filteredSegments:"{shown} / {total} segments", waveformPlaceholder:"Audio waveform will appear here", initialTrack:"Waiting for upload and separation"
+  },
+  "zh-CN": {
+    pageTitle:"ChordDetective + Demucs / 和弦侦查员", backHomeLabel:"返回 ChordDetective 主页", pageHeading:"AI 音轨分离", subhead:"当前页会先把完整歌曲分离成独立音轨，再从你选择的音轨识别和弦。基于 Meta HTDemucs + ONNX Runtime Web。", languageLabel:"语言", home:"← 主页",
+    modeNavLabel:"音频工具", microphone:"麦克风", micNote:"实时识别 · 默认", quickFile:"快速文件分析", fileNote:"直接分析 · 低资源", stemSeparation:"AI 音轨分离", currentMode:"Demucs · 当前模式", audioTranspose:"音频转调", transposeNote:"转换 · 下载 WAV",
+    comparisonLabel:"主页快速模式与 Demucs 音轨分离模式对比", modeComparison:"模式对比", howToChoose:"两种模式怎么选", mainQuickMode:"主页快速模式", directAnalysis:"直接分析", quickDescription:"支持麦克风实时识别或上传歌曲。Basic Pitch / FFT 直接分析完整混音；“快速降低人声”仅做立体声中置抵消，不会生成独立音轨。模型约 725KB，启动更快。",
+    currentDemucsPage:"当前 Demucs 页面", separateFirst:"先分离", demucsDescription:"仅分析上传文件。先用 172MB HTDemucs 分离鼓组、贝斯、其他乐器和人声，再从当前选择的音轨识别；默认使用“其他乐器”。更耗时和内存，但复杂混音通常更干净。", modeTip:"弹奏乐器、需要实时反馈或快速扫歌，请用主页；人声和鼓声遮盖和声、需要指定音轨时，再使用当前页面。",
+    uploadStep:"1. 上传音频", chooseAudio:"选择或拖入音频", notLoaded:"未载入", uploadToStart:"上传一首歌曲开始", loadStep:"2. 加载 AI 模型", loadDemucs:"下载并加载 Demucs 模型 (172MB)", separatedTracks:"分离音轨", playPause:"播放/暂停",
+    currentChord:"当前和弦", pitchName:"主音名", keySense:"调性感", disclaimer:"首次使用需下载约 172MB 模型，之后由浏览器缓存。WebGPU 约 30-60 秒/首；CPU WASM 约 3-8 分钟。分离完成后默认分析其他乐器；点击鼓组、贝斯或人声会清空当前结果，并改用所选音轨重新识别。",
+    currentTrack:"当前分析音轨", localProcessing:"本地处理", waveform:"波形", playPosition:"播放位置", chordSegments:"和弦段落", results:"识别结果", time:"时间", chord:"和弦", bass:"低音", possibleNotes:"可能音", confidence:"可信度", emptyWorkflow:"上传音频 → 加载模型 → 自动分离 + 分析和弦",
+    statusWaiting:"等待操作", downloadingModel:"正在下载模型...", connecting:"连接 HuggingFace...", downloadProgress:"下载中 {pct}%", separationProgress:"分离中 {pct}%", modelLoaded:"模型已加载 ✓", autoSeparating:"正在自动分离...", readyUpload:"就绪，上传歌曲即可自动分离", statusModelReady:"模型就绪", retryLoad:"加载失败，重试", error:"错误: {message}", statusModelLoadFailed:"模型加载失败",
+    waitingSeparation:"等待音轨分离", statusDecoding:"解码中", statusAutoSeparating:"自动分离中", statusLoadedLoadModel:"已载入（请先加载模型）", aiSeparating:"AI 分离中...", statusAiSeparating:"AI 分离中", resampling:"重采样到 44100Hz...", demucsInference:"Demucs 推理中... (可能需要 1-5 分钟)",
+    trackDrums:"🥁 鼓组", trackBass:"🎸 贝斯", trackOther:"🎹 其他乐器", trackVocals:"🎤 人声", analyzeChord:"→ 分析和弦", separationComplete:"分离完成 → 自动分析和弦...", statusSeparationComplete:"分离完成 → 自动分析", statusSeparationFailed:"分离失败", selectedAnalyzing:"已选: {track} → 分析中", statusAnalyzing:"分析中", analysisProgress:"分析 {pct}%", statusComplete:"识别完成", major:"大调", minor:"小调", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", waveformPlaceholder:"音频波形会显示在这里", initialTrack:"等待上传与分离"
+  }
+});
+const t = (key, params) => ChordI18n.t(key, params);
 
 // ============================================================
 // Chord detection (same as original)
@@ -413,8 +446,6 @@ const CHORD_TEMPLATES = [
   { suffix: "m7", intervals: [0,3,7,10], weight: [1,0.82,0.78,0.64] },
   { suffix: "maj7", intervals: [0,4,7,11], weight: [1,0.82,0.78,0.6] }
 ];
-const TRACK_NAMES = { drums: '鼓组', bass: '贝斯', other: '其他乐器', vocals: '人声' };
-
 const state = {
   audioContext: null,
   buffer: null, fileName: "", originalFileName: "", source: null,
@@ -422,7 +453,8 @@ const state = {
   results: [], raf: null, currentTrack: null,
   // Demucs state
   processor: null, modelLoaded: false,
-  separatedTracks: null
+  separatedTracks: null,
+  statusKey: 'statusWaiting', statusParams: {}, progressKey: '', progressParams: {}, modelButtonKey: 'loadDemucs'
 };
 
 const els = {
@@ -439,15 +471,30 @@ const els = {
 };
 
 function byId(id) { return document.getElementById(id); }
+function localizedTrackName(track) { return t(`track${track[0].toUpperCase()}${track.slice(1)}`).replace(/^[^\s]+\s/, ''); }
+function setStatus(key, params = {}) { state.statusKey = key; state.statusParams = params; els.status.textContent = t(key, params); }
+function setProgress(key, params = {}) { state.progressKey = key; state.progressParams = params; els.modelProgressText.textContent = t(key, params); }
+function setModelButton(key) { state.modelButtonKey = key; els.loadModelBtn.textContent = t(key); }
+function renderTrackList() {
+  if (!state.separatedTracks) return;
+  els.trackList.innerHTML = CONSTANTS.TRACKS.map((track, index) => `
+    <div class="track-item${state.currentTrack === track ? ' selected' : ''}" data-track="${track}">
+      <div class="track-icon ${track}">${index + 1}</div>
+      <span class="track-name">${t(`track${track[0].toUpperCase()}${track.slice(1)}`)}</span>
+      <span class="track-action">${t('analyzeChord')}</span>
+    </div>
+  `).join('');
+  els.trackList.querySelectorAll('.track-item').forEach(el => el.addEventListener('click', () => selectTrack(el.dataset.track)));
+}
 
 // ============================================================
 // Demucs Model Loading
 // ============================================================
 els.loadModelBtn.addEventListener('click', async () => {
   els.loadModelBtn.disabled = true;
-  els.loadModelBtn.textContent = '正在下载模型...';
+  setModelButton('downloadingModel');
   els.modelProgressBar.style.display = 'block';
-  els.modelProgressText.textContent = '连接 HuggingFace...';
+  setProgress('connecting');
 
   try {
     state.processor = new DemucsProcessor({
@@ -456,9 +503,9 @@ els.loadModelBtn.addEventListener('click', async () => {
         const pct = Math.round((p.progress ?? p) * 100);
         if (!state.modelLoaded) {
           els.modelProgressBar.querySelector('div').style.width = pct + '%';
-          els.modelProgressText.textContent = `下载中 ${pct}%`;
+          setProgress('downloadProgress', { pct });
         } else {
-          els.modelProgressText.textContent = `分离中 ${pct}%`;
+          setProgress('separationProgress', { pct });
         }
       },
       onLog: (phase, msg) => {
@@ -469,17 +516,17 @@ els.loadModelBtn.addEventListener('click', async () => {
     const modelUrl = CONSTANTS.DEFAULT_MODEL_URL; // HuggingFace CDN
     await state.processor.loadModel(modelUrl);
     state.modelLoaded = true;
-    els.loadModelBtn.textContent = '模型已加载 ✓';
+    setModelButton('modelLoaded');
     els.modelProgressBar.querySelector('div').style.width = '100%';
-    els.modelProgressText.textContent = state.buffer ? '正在自动分离...' : '就绪，上传歌曲即可自动分离';
-    setStatus('模型就绪');
+    setProgress(state.buffer ? 'autoSeparating' : 'readyUpload');
+    setStatus('statusModelReady');
     // Auto-separate if file already loaded
     if (state.buffer) runSeparation();
   } catch (err) {
-    els.loadModelBtn.textContent = '加载失败，重试';
+    setModelButton('retryLoad');
     els.loadModelBtn.disabled = false;
-    els.modelProgressText.textContent = '错误: ' + err.message;
-    setStatus('模型加载失败');
+    setProgress('error', { message: err.message });
+    setStatus('statusModelLoadFailed');
     console.error(err);
   }
 });
@@ -500,20 +547,20 @@ async function loadFile(file) {
   state.results = [];
   state.separatedTracks = null;
   state.currentTrack = null;
-  els.trackTitle.textContent = '等待音轨分离';
+  els.trackTitle.textContent = t('waitingSeparation');
   renderResults();
   els.trackSection.style.display = 'none';
-  setStatus('解码中');
+  setStatus('statusDecoding');
   const ab = await file.arrayBuffer();
   state.audioContext = state.audioContext || new AudioContext();
   state.buffer = await state.audioContext.decodeAudioData(ab);
   els.fileInfo.innerHTML = `<strong>${esc(file.name)}</strong><span>${fmtTime(state.buffer.duration)} · ${(file.size/1024/1024).toFixed(1)} MB · ${state.buffer.numberOfChannels}ch ${state.buffer.sampleRate}Hz</span>`;
   els.playBtn.disabled = true;
   if (state.modelLoaded) {
-    setStatus('自动分离中');
+    setStatus('statusAutoSeparating');
     runSeparation();
   } else {
-    setStatus('已载入（请先加载模型）');
+    setStatus('statusLoadedLoadModel');
   }
   drawWaveform();
 }
@@ -523,8 +570,8 @@ async function loadFile(file) {
 // ============================================================
 async function runSeparation() {
   if (!state.buffer || !state.processor) return;
-  els.modelProgressText.textContent = 'AI 分离中...';
-  setStatus('AI 分离中');
+  setProgress('aiSeparating');
+  setStatus('statusAiSeparating');
 
   try {
     // Convert to mono or extract stereo channels
@@ -534,7 +581,7 @@ async function runSeparation() {
     // Resample to 44100 if needed
     let left = ch0, right = ch1;
     if (state.buffer.sampleRate !== 44100) {
-      els.modelProgressText.textContent = '重采样到 44100Hz...';
+      setProgress('resampling');
       const numCh = Math.min(state.buffer.numberOfChannels, 2);
       const targetLen = Math.ceil(state.buffer.duration * 44100);
       const oc = new OfflineAudioContext(numCh, targetLen, 44100);
@@ -552,7 +599,7 @@ async function runSeparation() {
       right = new Float32Array(left);
     }
 
-    els.modelProgressText.textContent = 'Demucs 推理中... (可能需要 1-5 分钟)';
+    setProgress('demucsInference');
 
     const result = await state.processor.separate(left, right);
 
@@ -574,28 +621,16 @@ async function runSeparation() {
     state.separatedTracks = result;
 
     // Build track UI
-    const tracks = CONSTANTS.TRACKS;
-    const zhNames = { drums: '🥁 鼓组', bass: '🎸 贝斯', other: '🎹 其他乐器', vocals: '🎤 人声' };
-    els.trackList.innerHTML = tracks.map((t, i) => `
-      <div class="track-item" data-track="${t}">
-        <div class="track-icon ${t}">${(i+1)}</div>
-        <span class="track-name">${zhNames[t]}</span>
-        <span class="track-action">→ 分析和弦</span>
-      </div>
-    `).join('');
-    // Use addEventListener instead of inline onclick (module scope)
-    els.trackList.querySelectorAll('.track-item').forEach(el => {
-      el.addEventListener('click', () => selectTrack(el.dataset.track));
-    });
+    renderTrackList();
     els.trackSection.style.display = 'block';
-    els.modelProgressText.textContent = '分离完成 → 自动分析和弦...';
-    setStatus('分离完成 → 自动分析');
+    setProgress('separationComplete');
+    setStatus('statusSeparationComplete');
 
     // Auto-select "other"; selectTrack() starts analysis.
     selectTrack('other');
   } catch (err) {
-    els.modelProgressText.textContent = '错误: ' + err.message;
-    setStatus('分离失败');
+    setProgress('error', { message: err.message });
+    setStatus('statusSeparationFailed');
     console.error(err);
   }
 }
@@ -607,7 +642,7 @@ function selectTrack(trackName) {
   document.querySelectorAll('.track-item').forEach(el => el.classList.remove('selected'));
   document.querySelector(`[data-track="${trackName}"]`).classList.add('selected');
   state.currentTrack = trackName;
-  els.trackTitle.textContent = TRACK_NAMES[trackName] || trackName;
+  els.trackTitle.textContent = localizedTrackName(trackName);
 
   // Build AudioBuffer from separated track
   const track = state.separatedTracks[trackName];
@@ -627,7 +662,7 @@ function selectTrack(trackName) {
   els.nowChord.textContent = '-';
   els.nowNote.textContent = '-';
   els.keyGuess.textContent = '-';
-  setStatus(`已选: ${trackName} → 分析中`);
+  setStatus('selectedAnalyzing', { track: localizedTrackName(trackName) });
   analyze();
 };
 
@@ -833,7 +868,7 @@ function avgChroma(a, b) { const o = new Float32Array(12); for (let i = 0; i < 1
 async function analyze() {
   if (!state.buffer) return;
   stopPlayback();
-  setStatus('分析中');
+  setStatus('statusAnalyzing');
   await nextFrame();
 
   const mono = mixToMono(state.buffer);
@@ -852,12 +887,12 @@ async function analyze() {
       chord: detectChord(chroma), pitch: detectPitch(slice, sr),
       bass: detectBass(chroma), topNotes: topChromaNotes(chroma, 5)
     });
-    if (results.length % 16 === 0) { setStatus(`分析 ${Math.min(99, Math.round(start/mono.length*100))}%`); await nextFrame(); }
+    if (results.length % 16 === 0) { setStatus('analysisProgress', { pct: Math.min(99, Math.round(start/mono.length*100)) }); await nextFrame(); }
   }
 
   state.results = mergeSegments(smoothResults(results, 1));
   renderResults(); drawWaveform(); guessKey();
-  setStatus('识别完成');
+  setStatus('statusComplete');
 }
 
 function guessKey() {
@@ -870,17 +905,17 @@ function guessKey() {
   for (let root = 0; root < 12; root++) {
     let sM = 0, sm = 0;
     for (let i = 0; i < 12; i++) { sM += total[(root+i)%12] * major[i]; sm += total[(root+i)%12] * minor[i]; }
-    if (sM > best.score) best = { root, mode: '大调', score: sM };
-    if (sm > best.score) best = { root, mode: '小调', score: sm };
+    if (sM > best.score) best = { root, mode: 'major', score: sM };
+    if (sm > best.score) best = { root, mode: 'minor', score: sm };
   }
-  els.keyGuess.textContent = `${noteName(best.root)} ${best.mode}`;
+  els.keyGuess.textContent = `${noteName(best.root)} ${t(best.mode)}`;
 }
 
 function renderResults() {
   const vt = visibleTime();
   const filtered = vt > 0 ? state.results.filter(s => s.start <= vt) : state.results;
   els.resultBody.innerHTML = '';
-  els.resultCount.textContent = vt > 0 ? `${filtered.length} / ${state.results.length} 段` : `${state.results.length} 段`;
+  els.resultCount.textContent = vt > 0 ? t('filteredSegments', { shown: filtered.length, total: state.results.length }) : t('segments', { count: state.results.length });
   els.emptyState.style.display = state.results.length ? 'none' : 'block';
   [...filtered].reverse().forEach(s => {
     const tr = document.createElement('tr');
@@ -904,16 +939,16 @@ function drawWaveform() {
   const ctx = c.getContext('2d');
   const w = c.width, h = c.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = '#11110f'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#f5f6ef'; ctx.fillRect(0, 0, w, h);
 
   // Grid
-  ctx.strokeStyle = 'rgba(242,184,75,0.055)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(35,84,72,0.10)'; ctx.lineWidth = 1;
   for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0, h*i/6); ctx.lineTo(w, h*i/6); ctx.stroke(); }
   for (let i = 1; i < 12; i++) { ctx.beginPath(); ctx.moveTo(w*i/12, 0); ctx.lineTo(w*i/12, h); ctx.stroke(); }
 
   if (!state.buffer) {
     ctx.fillStyle = '#777269'; ctx.font = `${16*s}px sans-serif`; ctx.textAlign = 'center';
-    ctx.fillText('音频波形会显示在这里', w/2, h/2); return;
+    ctx.fillText(t('waveformPlaceholder'), w/2, h/2); return;
   }
 
   // Chord segments
@@ -921,10 +956,10 @@ function drawWaveform() {
     state.results.forEach((seg, idx) => {
       const x = seg.start / state.buffer.duration * w;
       const width = Math.max(1, (seg.end - seg.start) / state.buffer.duration * w);
-      ctx.fillStyle = idx % 2 ? 'rgba(167,139,250,0.08)' : 'rgba(99,201,149,0.07)';
+      ctx.fillStyle = idx % 2 ? 'rgba(35,84,72,0.06)' : 'rgba(99,201,149,0.07)';
       ctx.fillRect(x, 0, width, h);
       if (width > 42 * s) {
-        ctx.fillStyle = 'rgba(245,240,231,0.68)'; ctx.font = `${12*s}px sans-serif`; ctx.textAlign = 'left';
+        ctx.fillStyle = '#48604e'; ctx.font = `${12*s}px sans-serif`; ctx.textAlign = 'left';
         ctx.fillText(chordName(seg.chord), x + 8*s, 22*s);
       }
     });
@@ -934,7 +969,7 @@ function drawWaveform() {
   const data = state.buffer.getChannelData(0);
   const step = Math.ceil(data.length / w);
   const amp = h * 0.38;
-  ctx.beginPath(); ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2 * s;
+  ctx.beginPath(); ctx.strokeStyle = '#235448'; ctx.lineWidth = 2 * s;
   for (let x = 0; x < w; x++) {
     let min = 1, max = -1;
     const start = x * step;
@@ -1031,12 +1066,25 @@ function noteName(pc) {
 function fmtTime(s) { const m = Math.floor(s/60); const sec = Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`; }
 function nearestPow2(v) { return 2 ** Math.round(Math.log2(Math.max(2, v))); }
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-function setStatus(t) { els.status.textContent = t; }
 function nextFrame() { return new Promise(r => requestAnimationFrame(r)); }
 function esc(v) { return v.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 
 // Init
+setStatus('statusWaiting');
+setModelButton('loadDemucs');
+els.trackTitle.textContent = t('initialTrack');
 drawWaveform();
+window.addEventListener('chorddetective:languagechange', () => {
+  setStatus(state.statusKey, state.statusParams);
+  if (state.progressKey) setProgress(state.progressKey, state.progressParams);
+  setModelButton(state.modelButtonKey);
+  renderTrackList();
+  if (state.currentTrack) els.trackTitle.textContent = localizedTrackName(state.currentTrack);
+  else els.trackTitle.textContent = state.buffer ? t('waitingSeparation') : t('initialTrack');
+  renderResults();
+  guessKey();
+  drawWaveform();
+});
 </script>
 </body>
 </html>

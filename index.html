@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>ChordDetective / 和弦侦查员</title>
+<title data-i18n="pageTitle">ChordDetective / 和弦侦查员</title>
 <style>
 :root{--bg:#04060a;--glass:rgba(10,13,20,0.78);--bdr:rgba(255,255,255,0.07);--bdr-glow:rgba(0,229,255,0.25);
   --ink:#e6e9f2;--dim:#8892a8;--muted:#556078;--cyan:#00e5ff;--purple:#a855f7;--magenta:#ec4899;--green:#22d3a0;
@@ -50,6 +50,8 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 @keyframes skeleton{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .hero-status.analyzing{border-color:rgba(0,229,255,0.45);box-shadow:0 0 30px rgba(0,229,255,0.18),0 16px 48px rgba(0,0,0,0.4)}
 .hero-status.analyzing::after{content:"";display:inline-block;width:10px;height:10px;border:2px solid rgba(0,229,255,0.25);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;margin-left:10px;vertical-align:middle}
+.hero-actions{display:flex;align-items:stretch;gap:8px;flex-shrink:0}
+.language-select{width:auto;min-width:112px;padding:0 34px 0 12px;border:1px solid var(--bdr);border-radius:var(--r);background:#1c1a17;color:var(--dim);font-size:13px;font-weight:700;cursor:pointer}
 .skeleton-row{display:grid;grid-template-columns:90px 80px 60px 1fr 70px;gap:16px;padding:14px 16px;border-bottom:1px solid var(--bdr);align-items:center}
 .skeleton-row div{height:14px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0.02) 25%,rgba(0,229,255,0.06) 50%,rgba(255,255,255,0.02) 75%);background-size:200% 100%;animation:skeleton 1.8s ease-in-out infinite}
 .skeleton-row div:last-child{height:3px;border-radius:99px}
@@ -66,7 +68,7 @@ h1{font-size:clamp(40px,6.5vw,72px);line-height:.9;font-weight:900;letter-spacin
 .nested-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 .nested-card{background:rgba(255,255,255,0.015);border:1px solid var(--bdr);border-radius:var(--rs);padding:16px}
 
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:10px;padding:4px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--bdr)}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:10px;padding:4px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid var(--bdr)}
 .tab{min-width:0;min-height:58px;padding:8px 10px;border-radius:6px;text-align:left;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;background:transparent;text-decoration:none;transition:all .25s;display:flex;align-items:center;gap:9px}
 .tab-icon{font-size:18px;line-height:1;flex:none}.tab-copy{min-width:0;display:grid;gap:3px}.tab-title{color:inherit;line-height:1.2}.tab-note{font-size:10px;font-weight:500;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tab:hover{color:var(--dim);background:rgba(255,255,255,0.025)}.tab.on{background:rgba(0,229,255,0.1);color:var(--cyan);border-color:rgba(0,229,255,0.2)}
@@ -208,6 +210,7 @@ h1{font-size:64px;letter-spacing:0;background:linear-gradient(110deg,#fff8ea 5%,
 .tab[data-mode="mic"].on{background:rgba(99,201,149,.12);border-color:rgba(99,201,149,.3);color:#83ddb0}
 .tab[data-mode="file"].on{background:rgba(242,184,75,.12);border-color:rgba(242,184,75,.3);color:#f4c76d}
 .tab-demucs .tab-note{color:#bba8ff}.tab-demucs:hover{color:#c9baff;border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.09)}
+.tab-transpose .tab-note{color:#ff9b8d}.tab-transpose:hover{color:#ffb0a5;border-color:rgba(240,108,91,.32);background:rgba(240,108,91,.08)}
 .dropzone:hover{border-color:rgba(242,184,75,.38);background:rgba(242,184,75,.035)}
 .dropzone.drag{border-color:var(--cyan);background:rgba(242,184,75,.06);box-shadow:0 0 24px rgba(242,184,75,.12)}
 .meta,.vocal-tools,.mini-btn,select{background:#1b1a18}.vocal-toggle input{accent-color:var(--green)}
@@ -235,72 +238,106 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
 .float-btn:hover{border-color:#f2b84b;box-shadow:0 10px 34px rgba(0,0,0,.55),0 0 28px rgba(242,184,75,.18)}
 .float-btn.playing{background:#261b18;border-color:rgba(240,108,91,.65);box-shadow:0 10px 34px rgba(0,0,0,.55),0 0 26px rgba(240,108,91,.2)}
 .float-btn svg{fill:var(--cyan);filter:drop-shadow(0 0 5px rgba(242,184,75,.34))}.float-btn.playing svg{fill:var(--magenta)}
-@media(max-width:600px){h1{font-size:42px}.app{width:min(100vw - 20px,1280px)}.hero{padding-bottom:18px}}
+@media(max-width:600px){h1{font-size:42px}.app{width:min(100vw - 20px,1280px)}.hero{padding-bottom:18px}.hero-actions{width:100%}.hero-status{flex:1;min-width:0}.language-select{flex:none;width:118px;min-width:118px}}
 </style>
+<link rel="stylesheet" href="cafe-theme.css">
 </head>
 <body>
 <div class="app">
   <header class="hero">
-      <div class="hero-left"><div class="hero-badge"><span class="dot"></span>CHORDDETECTIVE</div><h1><img class="hero-logo" src="favicon.svg" alt="" width="48" height="48">和弦侦查员</h1><p class="hero-sub">上传歌曲或麦克风实时检测和弦。Spotify Basic Pitch + FFT chroma 双引擎。</p></div>
-    <div class="hero-status" id="status">◈ 等待操作</div>
+      <div class="hero-left"><div class="hero-badge"><span class="dot"></span>CHORDDETECTIVE</div><h1><img class="hero-logo" src="favicon.svg" alt="" width="48" height="48"><span data-i18n="brandName">和弦侦查员</span></h1><p class="hero-sub" data-i18n="heroSub">上传歌曲或麦克风实时检测和弦。Spotify Basic Pitch + FFT chroma 双引擎。</p></div>
+    <div class="hero-actions"><select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="en">English</option></select><div class="hero-status" id="status">◈ 等待操作</div></div>
   </header>
 
   <div class="glass card-main">
-      <div class="card-num">01</div><div class="card-label">输入源</div>
+      <div class="card-num">01</div><div class="card-label" data-i18n="inputSource">输入源</div>
       <div class="tabs" id="inputTabs">
-        <button class="tab on" type="button" data-mode="mic"><span class="tab-icon">🎤</span><span class="tab-copy"><span class="tab-title">麦克风</span><span class="tab-note">实时 · 默认</span></span></button>
-        <button class="tab" type="button" data-mode="file"><span class="tab-icon">♪</span><span class="tab-copy"><span class="tab-title">文件上传</span><span class="tab-note">快速分析 · 低资源</span></span></button>
-        <a class="tab tab-demucs" data-mode="demucs" href="index_demucs.html"><span class="tab-icon">◆</span><span class="tab-copy"><span class="tab-title">AI 音轨分离</span><span class="tab-note">Demucs · 高资源</span></span></a>
+        <button class="tab on" type="button" data-mode="mic"><span class="tab-icon">🎤</span><span class="tab-copy"><span class="tab-title" data-i18n="microphone">麦克风</span><span class="tab-note" data-i18n="micNote">实时 · 默认</span></span></button>
+        <button class="tab" type="button" data-mode="file"><span class="tab-icon">♪</span><span class="tab-copy"><span class="tab-title" data-i18n="fileUpload">文件上传</span><span class="tab-note" data-i18n="fileNote">快速分析 · 低资源</span></span></button>
+        <a class="tab tab-demucs" data-mode="demucs" href="index_demucs.html"><span class="tab-icon">◆</span><span class="tab-copy"><span class="tab-title" data-i18n="stemSeparation">AI 音轨分离</span><span class="tab-note" data-i18n="demucsNote">Demucs · 高资源</span></span></a>
+        <a class="tab tab-transpose" data-mode="transpose" href="transpose.html"><span class="tab-icon">↕</span><span class="tab-copy"><span class="tab-title" data-i18n="audioTranspose">音频转调</span><span class="tab-note" data-i18n="transposeNote">转换 · 下载 WAV</span></span></a>
       </div>
       <div id="fileSection" style="display:none">
-        <label class="dropzone" id="dropZone" for="fileInput"><input id="fileInput" type="file" accept="audio/*"><span><strong>⬆ 选择或拖入</strong><span>mp3 · wav · m4a · flac</span></span></label>
-        <div class="meta" id="fileInfo"><strong>—</strong><span>未选择文件</span></div>
-        <div class="saved-row"><select id="savedSongs"><option value="">本地歌曲历史</option></select><button class="mini-btn" id="deleteSaved" type="button" title="删除记录" disabled>×</button></div>
-        <div class="vocal-tools"><label class="vocal-toggle"><input id="vocalReduce" type="checkbox" disabled><span>快速降低人声</span></label></div>
+        <label class="dropzone" id="dropZone" for="fileInput"><input id="fileInput" type="file" accept="audio/*"><span><strong data-i18n="chooseAudio">⬆ 选择或拖入</strong><span>mp3 · wav · m4a · flac</span></span></label>
+        <div class="meta" id="fileInfo"><strong>—</strong><span data-i18n="noFile">未选择文件</span></div>
+        <div class="saved-row"><select id="savedSongs"><option value="" data-i18n="songHistory">本地歌曲历史</option></select><button class="mini-btn" id="deleteSaved" type="button" data-i18n-title="deleteRecord" title="删除记录" disabled>×</button></div>
+        <div class="vocal-tools"><label class="vocal-toggle"><input id="vocalReduce" type="checkbox" disabled><span data-i18n="reduceVocals">快速降低人声</span></label></div>
         <div class="nested-row" id="fileCards">
           <div class="nested-card" style="grid-column:1/-1">
-            <div class="card-num">02</div><div class="card-label">AI 引擎</div>
-            <button class="btn btn-full btn-model" id="loadModelBtn">◆ 加载模型 (725KB)</button>
+            <div class="card-num">02</div><div class="card-label" data-i18n="aiEngine">AI 引擎</div>
+            <button class="btn btn-full btn-model" id="loadModelBtn" data-i18n="loadModel">◆ 加载模型 (725KB)</button>
             <div class="progress" id="modelBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="modelText"></div>
-            <div class="model-ok" id="modelBadge" style="display:none"><span class="model-dot" id="modelDot"></span><span style="color:var(--green);font-size:12px;font-family:var(--mono)">模型已就绪</span></div>
+            <div class="model-ok" id="modelBadge" style="display:none"><span class="model-dot" id="modelDot"></span><span style="color:var(--green);font-size:12px;font-family:var(--mono)" data-i18n="modelReady">模型已就绪</span></div>
           </div>
         </div>
       </div>
-      <div class="mic-zone show" id="micSection"><button class="mic-btn" id="micBtn">🎤 开始监听</button><div class="mic-info" id="micStatus">点击按钮，弹奏和弦即可识别</div></div>
-      <div style="margin-top:12px"><select id="notationSelect"><option value="sharp">升号 C C# D...</option><option value="flat">降号 C Db D...</option></select></div>
+      <div class="mic-zone show" id="micSection"><button class="mic-btn" id="micBtn">🎤 开始监听</button><div class="mic-info" id="micStatus" data-i18n="micHelp">点击按钮，弹奏和弦即可识别</div></div>
+      <div style="margin-top:12px"><select id="notationSelect"><option value="sharp" data-i18n="sharpNotation">升号 C C# D...</option><option value="flat" data-i18n="flatNotation">降号 C Db D...</option></select></div>
     </div>
 
   <div class="metrics">
-    <div class="met"><div class="l">当前和弦</div><div class="v" id="nowChord">—</div></div><div class="met-div"></div>
-    <div class="met"><div class="l">音符数</div><div class="v" id="nowNoteCount">—</div></div><div class="met-div"></div>
-    <div class="met"><div class="l">调性</div><div class="v" id="keyGuess">—</div></div><div class="met-div"></div>
-    <div class="met-note">⚡ 725KB · 本地推理 · 双引擎</div>
+    <div class="met"><div class="l" data-i18n="currentChord">当前和弦</div><div class="v" id="nowChord">—</div></div><div class="met-div"></div>
+    <div class="met"><div class="l" data-i18n="noteCount">音符数</div><div class="v" id="nowNoteCount">—</div></div><div class="met-div"></div>
+    <div class="met"><div class="l" data-i18n="key">调性</div><div class="v" id="keyGuess">—</div></div><div class="met-div"></div>
+    <div class="met-note" data-i18n="engineSummary">⚡ 725KB · 本地推理 · 双引擎</div>
   </div>
 
   <div class="wave-panel">
-    <div class="wave-hdr" id="waveHdr"><h2>声波图谱</h2><span class="live-dot" id="liveDot"></span></div>
+    <div class="wave-hdr" id="waveHdr"><h2 data-i18n="waveformMap">声波图谱</h2><span class="live-dot" id="liveDot"></span></div>
     <div class="canvas-box" id="canvasBox"><canvas id="waveCanvas"></canvas><div class="time-chip" id="timeTooltip">0:00</div><div class="playhead" id="playhead"></div></div>
     <div class="wave-ctrls" id="waveCtrls">
       <button class="btn btn-full btn-play" id="playBtn" disabled><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M8 5v14l11-7z"></path></svg> <span id="playLabel">播放音频</span></button>
     </div>
-    <div class="wave-leg" id="waveLeg"><span><i class="ldot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></i>波形</span><span><i class="ldot" style="background:var(--magenta);box-shadow:0 0 6px var(--magenta)"></i>位置</span><span><i class="ldot" style="background:rgba(168,85,247,0.3)"></i>和弦段</span></div>
+    <div class="wave-leg" id="waveLeg"><span><i class="ldot" style="background:var(--cyan);box-shadow:0 0 6px var(--cyan)"></i><span data-i18n="waveform">波形</span></span><span><i class="ldot" style="background:var(--magenta);box-shadow:0 0 6px var(--magenta)"></i><span data-i18n="position">位置</span></span><span><i class="ldot" style="background:rgba(168,85,247,0.3)"></i><span data-i18n="chordSegments">和弦段</span></span></div>
   </div>
 
   <div class="results-panel">
-    <div class="res-hdr"><h2>识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
-    <div class="transpose-bar" id="transposeBar"><span class="tx-label">变调</span><button class="tx-btn" data-d="-6">−6</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><span class="tx-val" id="txVal">±0</span></div>
-    <div class="conf-bar" id="confBar"><span class="conf-label">最低可信度</span><input type="range" id="confRange" min="0" max="100" value="0" step="5"><span class="conf-val" id="confVal">0%</span></div>
-    <div class="res-wrap" id="resultScroll"><table><thead><tr><th>时间</th><th>和弦</th><th>根音</th><th>音符</th><th>可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">点击开始监听 → 弹奏和弦</div></div>
+    <div class="res-hdr"><h2 data-i18n="results">识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
+    <div class="transpose-bar" id="transposeBar"><span class="tx-label" data-i18n="transpose">变调</span><button class="tx-btn" data-d="-6">−6</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><span class="tx-val" id="txVal">±0</span></div>
+    <div class="conf-bar" id="confBar"><span class="conf-label" data-i18n="minimumConfidence">最低可信度</span><input type="range" id="confRange" min="0" max="100" value="0" step="5"><span class="conf-val" id="confVal">0%</span></div>
+    <div class="res-wrap" id="resultScroll"><table><thead><tr><th data-i18n="time">时间</th><th data-i18n="chord">和弦</th><th data-i18n="root">根音</th><th data-i18n="notes">音符</th><th data-i18n="confidence">可信度</th></tr></thead><tbody id="resultBody"></tbody></table><div class="empty" id="emptyState">点击开始监听 → 弹奏和弦</div></div>
   </div>
 </div>
 
-<button class="float-btn" id="floatBtn" style="display:none" title="播放/暂停">
+<button class="float-btn" id="floatBtn" style="display:none" data-i18n-title="playPause" title="播放/暂停">
   <svg id="floatIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
 </button>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
+<script src="i18n.js"></script>
 
 <script>
+ChordI18n.register({
+  en: {
+    pageTitle:"ChordDetective · Chord Detection", brandName:"ChordDetective", heroSub:"Detect chords from uploaded songs or your microphone with Spotify Basic Pitch and FFT chroma.", languageLabel:"Language",
+    inputSource:"Input source", microphone:"Microphone", micNote:"Live · Default", fileUpload:"Upload file", fileNote:"Fast analysis · Low resources", stemSeparation:"AI stem separation", demucsNote:"Demucs · High resources", audioTranspose:"Audio transposer", transposeNote:"Convert · Download WAV",
+    chooseAudio:"⬆ Choose or drop audio", noFile:"No file selected", songHistory:"Local song history", deleteRecord:"Delete saved song", reduceVocals:"Quick vocal reduction", aiEngine:"AI engine", loadModel:"◆ Load model (725KB)", modelReady:"Model ready",
+    micHelp:"Press start, then play a chord", sharpNotation:"Sharps C C# D...", flatNotation:"Flats C Db D...", currentChord:"Current chord", noteCount:"Notes", key:"Key", engineSummary:"⚡ 725KB · Local processing · Dual engine",
+    waveformMap:"Waveform", playAudio:"Play audio", pause:"Pause", waveform:"Waveform", position:"Position", chordSegments:"Chord segments", results:"Detection results", transpose:"Transpose", minimumConfidence:"Minimum confidence",
+    time:"Time", chord:"Chord", root:"Root", notes:"Notes", confidence:"Confidence", playPause:"Play/Pause",
+    statusWaiting:"◈ Waiting", statusListening:"◈ Listening", statusPermission:"◈ Permission error", statusWaitingSound:"◈ Waiting for sound", statusLowInput:"◈ Input too low", statusAudioReady:"◈ Audio ready",
+    statusDetecting:"◈ Detecting...", statusPreprocessing:"◈ Preprocessing...", statusInference:"◈ AI inference...", statusInferenceProgress:"◈ AI inference {pct}%", statusMatching:"◈ Matching chords...", statusComplete:"◈ Complete",
+    statusRestored:"◈ Analysis restored", statusAutoDetecting:"◈ Auto-detecting...", statusVocalReduced:"◈ Vocals reduced; detecting again...", statusOriginalAudio:"◈ Original audio; detecting again...", statusModelReady:"◈ Model ready", statusLoadFailed:"◈ Load failed",
+    micActive:"Microphone active", playClearChord:"Play a clear chord", waitingMicInput:"Waiting for microphone chord input...", stopListening:"⏹ Stop listening", startListening:"🎤 Start listening", permissionDenied:"Permission denied: {message}",
+    noChordConfidence:"No chords found at or above {pct}% confidence", noChords:"No chords detected", segments:"{count} segments", filteredSegments:"{shown} / {total} segments", noteUnits:"{count} notes", keyValue:"{note} key",
+    loading:"Loading...", ready:"✓ Ready", failed:"Failed: {message}", emptyMic:"Press Start Listening → play a chord", emptyFile:"Upload a song to begin"
+  },
+  "zh-CN": {
+    pageTitle:"ChordDetective / 和弦侦查员", brandName:"和弦侦查员", heroSub:"上传歌曲或麦克风实时检测和弦。Spotify Basic Pitch + FFT chroma 双引擎。", languageLabel:"语言",
+    inputSource:"输入源", microphone:"麦克风", micNote:"实时 · 默认", fileUpload:"文件上传", fileNote:"快速分析 · 低资源", stemSeparation:"AI 音轨分离", demucsNote:"Demucs · 高资源", audioTranspose:"音频转调", transposeNote:"转换 · 下载 WAV",
+    chooseAudio:"⬆ 选择或拖入", noFile:"未选择文件", songHistory:"本地歌曲历史", deleteRecord:"删除记录", reduceVocals:"快速降低人声", aiEngine:"AI 引擎", loadModel:"◆ 加载模型 (725KB)", modelReady:"模型已就绪",
+    micHelp:"点击按钮，弹奏和弦即可识别", sharpNotation:"升号 C C# D...", flatNotation:"降号 C Db D...", currentChord:"当前和弦", noteCount:"音符数", key:"调性", engineSummary:"⚡ 725KB · 本地推理 · 双引擎",
+    waveformMap:"声波图谱", playAudio:"播放音频", pause:"暂停", waveform:"波形", position:"位置", chordSegments:"和弦段", results:"识别结果", transpose:"变调", minimumConfidence:"最低可信度",
+    time:"时间", chord:"和弦", root:"根音", notes:"音符", confidence:"可信度", playPause:"播放/暂停",
+    statusWaiting:"◈ 等待操作", statusListening:"◈ 正在监听", statusPermission:"◈ 权限错误", statusWaitingSound:"◈ 等待声音", statusLowInput:"◈ 输入偏低", statusAudioReady:"◈ 音频就绪",
+    statusDetecting:"◈ 检测中...", statusPreprocessing:"◈ 预处理...", statusInference:"◈ AI 推理中...", statusInferenceProgress:"◈ AI推理 {pct}%", statusMatching:"◈ 和弦匹配...", statusComplete:"◈ 完成",
+    statusRestored:"◈ 已恢复分析结果", statusAutoDetecting:"◈ 自动检测中...", statusVocalReduced:"◈ 已降低中置人声，重新检测中...", statusOriginalAudio:"◈ 原始音频，重新检测中...", statusModelReady:"◈ 模型就绪", statusLoadFailed:"◈ 加载失败",
+    micActive:"麦克风监听中", playClearChord:"请弹奏清晰的和弦声音", waitingMicInput:"等待麦克风和弦输入...", stopListening:"⏹ 停止监听", startListening:"🎤 开始监听", permissionDenied:"权限被拒: {message}",
+    noChordConfidence:"未检测到可信度≥{pct}%的和弦", noChords:"未检测到和弦", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", noteUnits:"{count} 个", keyValue:"{note} 调",
+    loading:"加载中...", ready:"✓ 就绪", failed:"失败: {message}", emptyMic:"点击开始监听 → 弹奏和弦", emptyFile:"上传歌曲开始分析"
+  }
+});
+const t=(key,params)=>ChordI18n.t(key,params);
 const NS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],NF=["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
 const BP_URL="https://cdn.jsdelivr.net/npm/@spotify/basic-pitch/model/model.json";
 const SR=22050,AFPS=Math.floor(22050/256),MO=21;
@@ -309,7 +346,9 @@ const zz=ms=>new Promise(r=>setTimeout(r,ms));
 
 // STATE
 const S={ctx:null,buf:null,origBuf:null,audioData:null,fn:"",fileSize:0,songId:"",vocalReduced:false,model:null,ml:false,res:[],playing:false,sa:0,pa:0,raf:null,src:null,playToken:0,activeSt:null,
-  micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"mic",transpose:0};
+  micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"mic",transpose:0,statusKey:"statusWaiting",statusParams:{}};
+function setStatus(key,params={}){S.statusKey=key;S.statusParams=params;$("status").textContent=t(key,params)}
+function updateMicButton(){$("micBtn").textContent=t(S.micListening?"stopListening":"startListening");$("micBtn").classList.toggle("live",S.micListening)}
 
 // ============ FFT (for mic mode) ============
 function nearestPow2(v){return 2**Math.round(Math.log2(Math.max(2,v)))}
@@ -379,25 +418,24 @@ async function toggleMic(){
     S.micFrame=new Float32Array(actualFft);S.micStartedAt=performance.now();
     S.micListening=true;S.micCandidates=[];S.micStable=null;S.res=[];S.buf=null;
     resizeCanvas();
-    $("fileInfo").innerHTML="<strong>麦克风监听中</strong><span>请弹奏清晰的和弦声音</span>";
-    $("emptyState").textContent="等待麦克风和弦输入...";$("playBtn").disabled=true;
+    $("fileInfo").innerHTML=`<strong>${t("micActive")}</strong><span>${t("playClearChord")}</span>`;
+    $("emptyState").textContent=t("waitingMicInput");$("playBtn").disabled=true;
     $("keyGuess").textContent="—";renderRes();
-    $("micBtn").textContent="⏹ 停止监听";$("micBtn").classList.add("live");
-    $("status").textContent="◈ 正在监听";listenMicFrame();S.micTimer=setInterval(listenMicFrame,450)}
-  catch(e){stopMic();$("micStatus").textContent="权限被拒: "+e.message;$("status").textContent="◈ 权限错误"}}
+    updateMicButton();setStatus("statusListening");listenMicFrame();S.micTimer=setInterval(listenMicFrame,450)}
+  catch(e){stopMic();$("micStatus").textContent=t("permissionDenied",{message:e.message});setStatus("statusPermission")}}
 
 function listenMicFrame(){
   if(!S.micListening||!S.micAnalyser||!S.micFrame)return;
   S.micAnalyser.getFloatTimeDomainData(S.micFrame);
   const rms=frameRms(S.micFrame);
-  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";$("status").textContent=rms<.0001?"◈ 等待声音":"◈ 输入偏低";$("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)}`;drawWaveform();return}
+  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";setStatus(rms<.0001?"statusWaitingSound":"statusLowInput");$("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)}`;drawWaveform();return}
   const chroma=chromaFromFrame(S.micFrame,S.ctx.sampleRate);
   const chord=detectChordMic(chroma),bass=detectBass(chroma),tn=topChromaNotes(chroma,5);
   const now=(performance.now()-S.micStartedAt)/1000;
   const seg={start:Math.max(0,now-.45),end:now,chroma,chord,bass,topNotes:tn,pcs:tn.map(t=>t.pc)};
   const stable=updateMicStability(seg);if(stable)appendMicSegment(stable);
   $("nowChord").textContent=stable?cnMic(stable.chord):cnMic(chord);
-  $("nowNoteCount").textContent=(stable?stable.pcs.length:tn.length)+" 个";$("status").textContent="◈ 正在监听";
+  $("nowNoteCount").textContent=t("noteUnits",{count:stable?stable.pcs.length:tn.length});setStatus("statusListening");
   $("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)} SR:${S.ctx.sampleRate}`;
   renderRes();drawWaveform()}
 
@@ -421,9 +459,9 @@ function stopMic(){
   if(S.micStream)S.micStream.getTracks().forEach(t=>t.stop());
   S.micStream=null;S.micSource=null;S.micAnalyser=null;S.micFrame=null;
   S.micListening=false;S.micCandidates=[];S.micStable=null;
-  $("micBtn").textContent="🎤 开始监听";$("micBtn").classList.remove("live");
+  updateMicButton();
   if(!S.buf){$("playBtn").disabled=true}
-  $("status").textContent=S.buf?"◈ 音频就绪":"◈ 等待操作";if(!S.buf)resizeCanvas();drawWaveform()}
+  setStatus(S.buf?"statusAudioReady":"statusWaiting");if(!S.buf)resizeCanvas();drawWaveform()}
 
 // ============ BASIC PITCH FILE ANALYSIS ============
 const CT_FILE=[{n:"",i:[0,4,7]},{n:"m",i:[0,3,7]},{n:"dim",i:[0,3,6]},{n:"aug",i:[0,4,8]},{n:"sus2",i:[0,2,7]},{n:"sus4",i:[0,5,7]},{n:"7",i:[0,4,7,10]},{n:"m7",i:[0,3,7,10]},{n:"maj7",i:[0,4,7,11]},{n:"dim7",i:[0,3,6,9]},{n:"m7b5",i:[0,3,6,10]}];
@@ -455,23 +493,23 @@ function cn(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]
 function chordExpected(chord){const t=CT_FILE.find(t=>t.n===chord.suffix);return t?t.i.map(iv=>(chord.root+iv)%12):[]}
 
 async function analyzeFile(){
-  if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").classList.add("analyzing");$("status").textContent="◈ 检测中...";
+  if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").classList.add("analyzing");setStatus("statusDetecting");
   showSkeleton();
-  $("status").textContent="◈ 预处理...";
+  setStatus("statusPreprocessing");
   const mono=mixMono(S.buf);const oc=new OfflineAudioContext(1,Math.ceil(mono.length*SR/S.buf.sampleRate),SR);
   const src=oc.createBufferSource();const b=oc.createBuffer(1,mono.length,S.buf.sampleRate);b.getChannelData(0).set(mono);src.buffer=b;src.connect(oc.destination);src.start();
-  const a22=(await oc.startRendering()).getChannelData(0);$("status").textContent="◈ AI 推理中...";
+  const a22=(await oc.startRendering()).getChannelData(0);setStatus("statusInference");
   const AW=SR*2-256,OL=30*256,HS=AW-OL,pl=Math.floor(OL/2)+a22.length;const pad=new Float32Array(pl);pad.set(a22,Math.floor(OL/2));
   const nF=Math.ceil((pl-AW)/HS)+1;const allN=[];
   for(let i=0;i<nF;i++){const st=i*HS,en=st+AW;const fr=pad.slice(st,Math.min(en,pl));if(fr.length<512)break;
     const inp=new Float32Array(AW);inp.set(fr.subarray(0,Math.min(AW,fr.length)));const t=tf.tensor(inp,[1,AW,1]);const res=S.model.execute(t,["Identity_1","Identity_2","Identity"]);const no=15;
     let uF=res[0].slice([0,no,0],[-1,res[0].shape[1]-2*no,-1]).reshape([-1,res[0].shape[2]]),uO=res[1].slice([0,no,0],[-1,res[1].shape[1]-2*no,-1]).reshape([-1,res[1].shape[2]]);
     const fA=await uF.array(),oA=await uO.array();t.dispose();res.forEach(t=>t.dispose());const ns=otnp(fA,oA,.5,.3,5,true),off=i*(HS/256);ns.forEach(n=>n.sf+=off);allN.push(...ns);
-    $("status").textContent="◈ AI推理 "+Math.round((i/nF)*100)+"%";updateSkeleton(Math.round((i/nF)*100));await zz(0)}
-  const tn=ntt(allN);$("status").textContent="◈ 和弦匹配...";
+    const pct=Math.round((i/nF)*100);setStatus("statusInferenceProgress",{pct});updateSkeleton(pct);await zz(0)}
+  const tn=ntt(allN);setStatus("statusMatching");
   const ws=.5,du=mono.length/S.buf.sampleRate,cs=[];
   for(let t=0;t<du;t+=ws){const te=t+ws,ap=new Set();for(const n of tn)if(n.st<te&&n.st+n.dur>t)ap.add(((n.pm%12)+12)%12);if(ap.size>0)cs.push({st:t,en:te,chord:dcpc(ap),pcs:[...ap]})}
-  S.res=mergeRes(cs);hideSkeleton();$("status").classList.remove("analyzing");$("status").textContent="◈ 完成";renderRes();drawWaveform();persistSong()}
+  S.res=mergeRes(cs);hideSkeleton();$("status").classList.remove("analyzing");setStatus("statusComplete");renderRes();drawWaveform();persistSong()}
 
 function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(p&&cn(p.chord)===cn(c.chord)){p.en=c.en;p._c=(p._c||[p.chord.confidence]).concat(c.chord.confidence)}else mg.push({...c,_c:[c.chord.confidence]})}
   mg.forEach(m=>m.chord.confidence=m._c.reduce((a,b)=>a+b,0)/m._c.length);return mg.filter(m=>m.en-m.st>=.3&&m.chord.confidence>.2)}
@@ -501,8 +539,8 @@ function renderRes(){
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
   const thresh=parseInt($("confRange").value)/100;
   const filtered=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
-  if(filtered.length===0){$("emptyState").textContent=thresh>0?`未检测到可信度≥${Math.round(thresh*100)}%的和弦`:"未检测到和弦";$("emptyState").style.display="block";$("resultCount").textContent=`0 / ${S.res.length} 段`;return}
-  $("emptyState").style.display="none";$("resultCount").textContent=filtered.length===S.res.length?`${S.res.length} 段`:`${filtered.length} / ${S.res.length} 段`;
+  if(filtered.length===0){$("emptyState").textContent=S.res.length?(thresh>0?t("noChordConfidence",{pct:Math.round(thresh*100)}):t("noChords")):t(S.mode==="mic"?"emptyMic":"emptyFile");$("emptyState").style.display="block";$("resultCount").textContent=t("filteredSegments",{shown:0,total:S.res.length});return}
+  $("emptyState").style.display="none";$("resultCount").textContent=filtered.length===S.res.length?t("segments",{count:S.res.length}):t("filteredSegments",{shown:filtered.length,total:S.res.length});
   for(const r of filtered){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
     trEl.setAttribute("data-st",st);trEl.setAttribute("data-en",en);
     const expected=chordExpected(r.chord),missing=expected.filter(ep=>!r.pcs.some(p=>((p%12)+12)%12===((ep%12)+12)%12));
@@ -510,24 +548,24 @@ function renderRes(){
     const matched=r.pcs.filter(isExpected),extra=r.pcs.filter(p=>!isExpected(p));
     trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${matched.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${extra.map(p=>`<span class="note-extra">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
     trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
-  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=f.pcs.length+" 个";$("keyGuess").textContent=f.pcs.length>=2?n[tr(f.pcs[0])]+" 调":"—"}
+  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=t("noteUnits",{count:f.pcs.length});$("keyGuess").textContent=f.pcs.length>=2?t("keyValue",{note:n[tr(f.pcs[0])] }):"—"}
   if(S.buf&&(S.playing||S.pa>0))syncActiveRow(S.playing?S.ctx.currentTime-S.sa:S.pa,!S.playing,false)}
 
 function drawWaveform(){
   const c=$("waveCanvas"),ctx=c.getContext("2d"),w=c.width,h=c.height;if(!w||!h)return;ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle="rgba(242,184,75,0.035)";ctx.lineWidth=.35;for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+  ctx.strokeStyle="rgba(35,84,72,0.10)";ctx.lineWidth=.35;for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
 
   // Mic mode: draw live waveform from mic time-domain frame
   if(S.mode==="mic"&&S.micFrame){
     const data=S.micFrame,len=data.length,step=Math.max(1,Math.floor(len/w));
-    ctx.lineWidth=1.3;ctx.shadowColor="#f2b84b";ctx.shadowBlur=6;
-    ctx.beginPath();ctx.strokeStyle="rgba(242,184,75,0.68)";
+    ctx.lineWidth=1.3;ctx.shadowColor="#235448";ctx.shadowBlur=6;
+    ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.85)";
     for(let x=0;x<w;x++){let mx=0;const st=x*step;for(let i=0;i<step&&st+i<len;i++)mx=Math.max(mx,Math.abs(data[st+i]));const y=h/2-mx*h/2*.9;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.shadowBlur=0;
-    ctx.beginPath();ctx.strokeStyle="rgba(255,255,255,0.03)";ctx.lineWidth=.5;ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+    ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.12)";ctx.lineWidth=.5;ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
     // Draw chord segments from mic results
     if(S.res.length){
       const totalDu=(S.res[S.res.length-1].en-S.res[0].st)+.5;
-      for(const r of S.res){const x1=((r.st-S.res[0].st)/totalDu)*w,x2=((r.en-S.res[0].st)/totalDu)*w;ctx.fillStyle="rgba(167,139,250,0.07)";ctx.fillRect(x1,0,Math.max(x2-x1,1),h)}
+      for(const r of S.res){const x1=((r.st-S.res[0].st)/totalDu)*w,x2=((r.en-S.res[0].st)/totalDu)*w;ctx.fillStyle="rgba(35,84,72,0.06)";ctx.fillRect(x1,0,Math.max(x2-x1,1),h)}
     }
     return;
   }
@@ -535,17 +573,17 @@ function drawWaveform(){
   const mono=S.buf?mixMono(S.buf):null;if(!mono)return;const du=mono.length/S.buf.sampleRate;
   const thresh=parseInt($("confRange").value)/100;
   const visible=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
-  for(const r of visible){const x1=(r.st/du)*w,x2=(r.en/du)*w;ctx.fillStyle="rgba(167,139,250,0.07)";ctx.fillRect(x1,0,x2-x1,h)}
-  for(const r of visible){const x1=(r.st/du)*w;ctx.beginPath();ctx.strokeStyle="rgba(167,139,250,0.2)";ctx.lineWidth=.8;ctx.setLineDash([4,10]);ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.stroke();ctx.setLineDash([])}
-  const step=Math.max(1,Math.floor(mono.length/w));ctx.lineWidth=1.3;ctx.shadowColor="#f2b84b";ctx.shadowBlur=6;
-  ctx.beginPath();ctx.strokeStyle="rgba(242,184,75,0.68)";for(let x=0;x<w;x++){let mx=0;const st=x*step;for(let i=0;i<step&&st+i<mono.length;i++)mx=Math.max(mx,mono[st+i]);const y=h/2-mx*h/2*.8;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.shadowBlur=0;
-  ctx.beginPath();ctx.strokeStyle="rgba(255,255,255,0.03)";ctx.lineWidth=.5;ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke()}
+  for(const r of visible){const x1=(r.st/du)*w,x2=(r.en/du)*w;ctx.fillStyle="rgba(35,84,72,0.06)";ctx.fillRect(x1,0,x2-x1,h)}
+  for(const r of visible){const x1=(r.st/du)*w;ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.20)";ctx.lineWidth=.8;ctx.setLineDash([4,10]);ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.stroke();ctx.setLineDash([])}
+  const step=Math.max(1,Math.floor(mono.length/w));ctx.lineWidth=1.3;ctx.shadowColor="#235448";ctx.shadowBlur=6;
+  ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.85)";for(let x=0;x<w;x++){let mx=0;const st=x*step;for(let i=0;i<step&&st+i<mono.length;i++)mx=Math.max(mx,mono[st+i]);const y=h/2-mx*h/2*.8;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.shadowBlur=0;
+  ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.12)";ctx.lineWidth=.5;ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke()}
 
 function seekTo(t){if(!S.buf)return;playAt(t)}
 function upPh(){const el=(S.playing?S.ctx.currentTime-S.sa:S.pa),du=S.buf.duration,pr=cl(el/du,0,1),box=$("canvasBox"),ph=$("playhead"),tt=$("timeTooltip");
   ph.style.left=pr*box.clientWidth+"px";ph.style.opacity="1";tt.textContent=ft(el);tt.style.left=ph.style.left;tt.style.opacity="1";
   let found=false;
-  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=n[tr(r.chord.root)]+(r.chord.suffix||"");$("nowNoteCount").textContent=r.pcs.length+" 个";found=true;break}}
+  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=n[tr(r.chord.root)]+(r.chord.suffix||"");$("nowNoteCount").textContent=t("noteUnits",{count:r.pcs.length});found=true;break}}
   syncActiveRow(el,!S.playing,true);
   if(S.playing){S.raf=requestAnimationFrame(upPh);$("liveDot").classList.add("on")}else{$("liveDot").classList.remove("on")}}
 function syncActiveRow(el,paused,autoScroll){const rows=$("resultBody").querySelectorAll("tr");let active=null,next=null;
@@ -555,7 +593,7 @@ function syncActiveRow(el,paused,autoScroll){const rows=$("resultBody").querySel
 async function playAt(t){if(!S.buf)return;stopPlay(false);S.ctx=S.ctx||new AudioContext();if(S.ctx.state==="suspended")await S.ctx.resume();
   const pos=cl(Number(t)||0,0,Math.max(0,S.buf.duration-.01)),src=S.ctx.createBufferSource();src.buffer=S.buf;src.connect(S.ctx.destination);S.src=src;S.playToken++;const token=S.playToken;
   src.start(0,pos);S.sa=S.ctx.currentTime-pos;S.pa=pos;S.playing=true;src.onended=()=>{if(token!==S.playToken||S.src!==src)return;S.src=null;S.playing=false;S.pa=0;S.activeSt=null;setPlayUi(false);syncActiveRow(-1,false,false);$("playhead").style.left="0px";$("timeTooltip").textContent="0:00";$("liveDot").classList.remove("on")};setPlayUi(true);upPh()}
-function setPlayUi(playing){$("playIcon").innerHTML=playing?'<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>':'<path d="M8 5v14l11-7z"></path>';$("playLabel").textContent=playing?"暂停":"播放音频";
+function setPlayUi(playing){$("playIcon").innerHTML=playing?'<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>':'<path d="M8 5v14l11-7z"></path>';$("playLabel").textContent=t(playing?"pause":"playAudio");
   $("floatIcon").innerHTML=playing?'<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>':'<path d="M8 5v14l11-7z"></path>';$("floatBtn").classList.toggle("playing",playing)}
 function stopPlay(reset=false){if(S.raf)cancelAnimationFrame(S.raf);S.raf=null;const pos=S.playing&&S.ctx?cl(S.ctx.currentTime-S.sa,0,S.buf?S.buf.duration:0):S.pa;const src=S.src;S.src=null;S.playToken++;if(src){try{src.stop()}catch(e){}try{src.disconnect()}catch(e){}}
   S.playing=false;S.pa=reset?0:pos;setPlayUi(false);if(S.buf&&!reset)upPh();if(reset){S.activeSt=null;syncActiveRow(-1,false,false)}}
@@ -568,17 +606,17 @@ function getSavedSongs(){return songStore("readonly",(store,resolve,reject)=>{co
 function getSavedSong(id){return songStore("readonly",(store,resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 function putSavedSong(song){return songStore("readwrite",(store,resolve,reject)=>{const req=store.put(song);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error)})}
 function removeSavedSong(id){return songStore("readwrite",(store,resolve,reject)=>{const req=store.delete(id);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error)})}
-async function refreshSavedSongs(selected=S.songId){try{const songs=(await getSavedSongs()).sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),select=$("savedSongs");select.innerHTML='<option value="">本地歌曲历史</option>';for(const song of songs){const opt=document.createElement("option");opt.value=song.id;opt.textContent=song.name;select.appendChild(opt)}select.value=selected||"";$("deleteSaved").disabled=!select.value}catch(e){console.warn("Saved-song history unavailable",e)}}
+async function refreshSavedSongs(selected=S.songId){try{const songs=(await getSavedSongs()).sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),select=$("savedSongs");select.innerHTML=`<option value="">${t("songHistory")}</option>`;for(const song of songs){const opt=document.createElement("option");opt.value=song.id;opt.textContent=song.name;select.appendChild(opt)}select.value=selected||"";$("deleteSaved").disabled=!select.value}catch(e){console.warn("Saved-song history unavailable",e)}}
 async function persistSong(){if(!S.songId||!S.audioData)return;try{await putSavedSong({id:S.songId,name:S.fn,size:S.fileSize,lastOpened:Date.now(),audioData:S.audioData.slice(0),results:S.res,vocalReduced:S.vocalReduced});await refreshSavedSongs(S.songId)}catch(e){console.warn("Could not save song",e)}}
 function setFileInfo(){const box=$("fileInfo");box.innerHTML="";const name=document.createElement("strong"),meta=document.createElement("span");name.textContent=S.fn;meta.textContent=`${S.buf.duration.toFixed(1)}s · ${S.buf.sampleRate}Hz · ${S.buf.numberOfChannels}ch`;box.append(name,meta)}
 function makeVocalReducedBuffer(source){if(source.numberOfChannels<2)return source;const ctx=S.ctx||new AudioContext(),out=ctx.createBuffer(2,source.length,source.sampleRate),left=source.getChannelData(0),right=source.getChannelData(1),outL=out.getChannelData(0),outR=out.getChannelData(1);for(let i=0;i<source.length;i++){const side=(left[i]-right[i])*.72;outL[i]=side;outR[i]=side}return out}
 async function loadSongRecord(song,save=true){if(!song||!song.audioData)return;stopPlay(true);stopMic();S.mode="file";S.fn=song.name;S.fileSize=song.size||song.audioData.byteLength;S.songId=song.id;S.audioData=song.audioData.slice(0);S.vocalReduced=!!song.vocalReduced;S.res=Array.isArray(song.results)?song.results:[];
   const actx=new AudioContext();S.origBuf=await actx.decodeAudioData(song.audioData.slice(0));await actx.close();S.buf=S.vocalReduced?makeVocalReducedBuffer(S.origBuf):S.origBuf;
-  $("vocalReduce").disabled=S.origBuf.numberOfChannels<2;$("vocalReduce").checked=S.vocalReduced;$("playBtn").disabled=false;$("floatBtn").style.display="flex";setFileInfo();resizeCanvas();renderRes();drawWaveform();$("status").textContent=S.res.length?"◈ 已恢复分析结果":"◈ 音频就绪";if(save)persistSong();if(!S.res.length&&S.ml){$("status").textContent="◈ 自动检测中...";analyzeFile()}setTimeout(resizeCanvas,100)}
+  $("vocalReduce").disabled=S.origBuf.numberOfChannels<2;$("vocalReduce").checked=S.vocalReduced;$("playBtn").disabled=false;$("floatBtn").style.display="flex";setFileInfo();resizeCanvas();renderRes();drawWaveform();setStatus(S.res.length?"statusRestored":"statusAudioReady");if(save)persistSong();if(!S.res.length&&S.ml){setStatus("statusAutoDetecting");analyzeFile()}setTimeout(resizeCanvas,100)}
 async function handleFile(file){const ab=await file.arrayBuffer(),id=`${file.name}:${file.size}:${file.lastModified}`;await loadSongRecord({id,name:file.name,size:file.size,lastOpened:Date.now(),audioData:ab,results:[],vocalReduced:false},true)}
-async function setVocalReduction(enabled){if(!S.origBuf)return;stopPlay(true);S.vocalReduced=enabled;S.buf=enabled?makeVocalReducedBuffer(S.origBuf):S.origBuf;S.res=[];S.activeSt=null;renderRes();resizeCanvas();$("status").textContent=enabled?"◈ 已降低中置人声，重新检测中...":"◈ 原始音频，重新检测中...";await persistSong();if(S.ml)analyzeFile()}
-async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent="加载中...";pb.querySelector("div").style.width="30%";
-  try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent="✓ 就绪";S.ml=true;$("status").textContent="◈ 模型就绪";$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf&&!S.res.length){$("playBtn").disabled=false;$("floatBtn").style.display="flex";$("status").textContent="◈ 自动检测中...";analyzeFile()}}catch(e){pt.textContent="失败: "+e.message;$("status").textContent="◈ 加载失败";btn.disabled=false}}
+async function setVocalReduction(enabled){if(!S.origBuf)return;stopPlay(true);S.vocalReduced=enabled;S.buf=enabled?makeVocalReducedBuffer(S.origBuf):S.origBuf;S.res=[];S.activeSt=null;renderRes();resizeCanvas();setStatus(enabled?"statusVocalReduced":"statusOriginalAudio");await persistSong();if(S.ml)analyzeFile()}
+async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent=t("loading");pb.querySelector("div").style.width="30%";
+  try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent=t("ready");S.ml=true;setStatus("statusModelReady");$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf&&!S.res.length){$("playBtn").disabled=false;$("floatBtn").style.display="flex";setStatus("statusAutoDetecting");analyzeFile()}}catch(e){pt.textContent=t("failed",{message:e.message});setStatus("statusLoadFailed");btn.disabled=false}}
 
 function showInputMode(mode,updateUrl=true){const tab=$("inputTabs").querySelector(`[data-mode="${mode}"]`);if(!tab||mode==="demucs")return;
   $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=mode;
@@ -599,7 +637,8 @@ $("notationSelect").addEventListener("change",renderRes);
 $("confRange").addEventListener("input",()=>{const pct=$("confRange").value;$("confVal").textContent=pct+"%";$("confRange").style.setProperty("--slider-pct",pct+"%");renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
-window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{const requestedMode=new URLSearchParams(location.search).get("mode");if(requestedMode==="file"||requestedMode==="mic")showInputMode(requestedMode,false);resizeCanvas();refreshSavedSongs();setTimeout(loadModel,400)});
+window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{const requestedMode=new URLSearchParams(location.search).get("mode");if(requestedMode==="file"||requestedMode==="mic")showInputMode(requestedMode,false);setStatus("statusWaiting");updateMicButton();setPlayUi(false);resizeCanvas();renderRes();refreshSavedSongs();setTimeout(loadModel,400)});
+window.addEventListener("chorddetective:languagechange",()=>{setStatus(S.statusKey,S.statusParams);setPlayUi(S.playing);updateMicButton();renderRes();refreshSavedSongs();if(S.micListening){$("fileInfo").innerHTML=`<strong>${t("micActive")}</strong><span>${t("playClearChord")}</span>`}});
 </script>
 </body>
 </html>
