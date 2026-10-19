@@ -22,7 +22,7 @@ main{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px;align-items
 @media(max-width:850px){main{grid-template-columns:1fr}.controls{position:static}.mode-nav{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.app{width:min(100vw - 20px,1180px);padding-top:16px}.topbar{display:grid;gap:14px}.brand img{width:44px;height:44px}.title{font-size:30px}.subtitle{font-size:13px}.top-actions{width:100%}.language-select,.home-link{flex:1;justify-content:center;min-width:0}.mode-nav{grid-template-columns:1fr}.mode-link{min-height:52px}.canvas-wrap{height:215px}.transport{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="cafe-theme.css">
+<link rel="stylesheet" href="cafe-theme.css?v=20261019-tools3">
 </head>
 <body>
 <div class="app">
@@ -39,6 +39,7 @@ main{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px;align-items
   </nav>
 
   <div class="privacy-band"><strong data-i18n="localOnly">仅在本机处理</strong><span data-i18n="privacyCopy">音频不会上传到服务器，关闭页面后不会保留。</span></div>
+  <p class="tool-notice" data-i18n="fileLimits">支持最大 64MB、15 分钟以内的音频。</p>
 
   <main>
     <aside class="panel controls">
@@ -76,7 +77,8 @@ main{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px;align-items
   </main>
 </div>
 
-<script src="i18n.js"></script>
+<script src="i18n.js?v=20261019-tools3"></script>
+<script src="tool-core.js?v=20261019-tools3"></script>
 <script type="module">
 import { processOffline } from 'https://esm.sh/@soundtouchjs/audio-worklet@2.1.1';
 
@@ -95,10 +97,28 @@ function outputFileName(){if(!state.file)return '—';const base=state.file.name
 function updateShiftUi(){state.shift=Number($('shiftSlider').value);$('shiftValue').textContent=state.shift>0?`+${state.shift}`:String(state.shift);const count=Math.abs(state.shift);$('shiftDescription').textContent=state.shift===0?t('originalKey'):t(state.shift>0?'shiftUp':'shiftDown',{count,plural:count===1?'':'s'});$('minusBtn').disabled=state.shift<=-12;$('plusBtn').disabled=state.shift>=12;$('resetBtn').disabled=state.shift===0;$('outputName').textContent=outputFileName();$('outputMeta').textContent=state.buffer?`${fmtTime(state.buffer.duration)} · WAV`:'WAV'}
 function invalidateRender(){stopPlayback();state.rendered=null;state.renderedShift=null;if(state.buffer)setStatus('statusReady');updateShiftUi();drawWaveform()}
 
-async function loadFile(file){stopPlayback();state.file=file;state.rendered=null;state.renderedShift=null;state.context=state.context||new AudioContext();try{const arrayBuffer=await file.arrayBuffer();state.buffer=await state.context.decodeAudioData(arrayBuffer.slice(0));$('fileInfo').innerHTML='';const name=document.createElement('strong'),meta=document.createElement('span');name.textContent=file.name;meta.textContent=t('fileMeta',{duration:fmtTime(state.buffer.duration),size:(file.size/1024/1024).toFixed(1),channels:state.buffer.numberOfChannels,rate:state.buffer.sampleRate});$('fileInfo').append(name,meta);$('trackTitle').textContent=file.name;$('playOriginal').disabled=false;$('playShifted').disabled=false;$('downloadBtn').disabled=false;setStatus('statusReady',{},'success');updateShiftUi();drawWaveform()}catch(error){state.file=null;state.buffer=null;$('playOriginal').disabled=true;$('playShifted').disabled=true;$('downloadBtn').disabled=true;setStatus('statusDecodeError',{message:error.message},'error');drawWaveform()}}
+const fileTasks=ToolCore.createTasks();
+let decoding=false;
+async function loadFile(file){
+  if(state.busy)return;
+  const token=fileTasks.next();stopPlayback();state.offset=0;decoding=true;
+  $('playOriginal').disabled=true;$('playShifted').disabled=true;$('downloadBtn').disabled=true;
+  try{
+    ToolCore.validateFile(file);
+    state.context=state.context||new AudioContext();
+    const arrayBuffer=await file.arrayBuffer(),buffer=await state.context.decodeAudioData(arrayBuffer);
+    if(!fileTasks.current(token))return;
+    ToolCore.validateDuration(buffer.duration);
+    state.file=file;state.buffer=buffer;state.rendered=null;state.renderedShift=null;
+    $('fileInfo').innerHTML='';const name=document.createElement('strong'),meta=document.createElement('span');name.textContent=file.name;meta.textContent=t('fileMeta',{duration:fmtTime(buffer.duration),size:(file.size/1024/1024).toFixed(1),channels:buffer.numberOfChannels,rate:buffer.sampleRate});$('fileInfo').append(name,meta);$('trackTitle').textContent=file.name;
+    $('playOriginal').disabled=false;$('playShifted').disabled=false;$('downloadBtn').disabled=false;
+    setStatus('statusReady',{},'success');updateShiftUi();drawWaveform();
+  }catch(error){if(!fileTasks.current(token))return;state.file=null;state.buffer=null;state.rendered=null;setStatus(['fileTooLarge','audioTooLong'].includes(error.message)?error.message:'statusDecodeError',{message:error.message},'error');drawWaveform()}
+  finally{if(fileTasks.current(token))decoding=false}
+}
 
 async function getRendered(){if(!state.buffer)throw new Error(t('statusWaiting'));if(state.rendered&&state.renderedShift===state.shift)return state.rendered;if(state.shift===0){state.rendered=state.buffer;state.renderedShift=0;return state.rendered}state.busy=true;setBusy(true);setStatus('statusRendering',{shift:state.shift});try{state.rendered=await processOffline({input:state.buffer,processorUrl:PROCESSOR_URL,pitchSemitones:state.shift});state.renderedShift=state.shift;setStatus('statusRendered',{},'success');return state.rendered}finally{state.busy=false;setBusy(false)}}
-function setBusy(busy){$('progress').classList.toggle('show',busy);$('playOriginal').disabled=busy||!state.buffer;$('playShifted').disabled=busy||!state.buffer;$('downloadBtn').disabled=busy||!state.buffer;$('minusBtn').disabled=busy||state.shift<=-12;$('plusBtn').disabled=busy||state.shift>=12;$('shiftSlider').disabled=busy;$('resetBtn').disabled=busy||state.shift===0}
+function setBusy(busy){$('fileInput').disabled=busy;$('progress').classList.toggle('show',busy);$('playOriginal').disabled=busy||!state.buffer;$('playShifted').disabled=busy||!state.buffer;$('downloadBtn').disabled=busy||!state.buffer;$('minusBtn').disabled=busy||state.shift<=-12;$('plusBtn').disabled=busy||state.shift>=12;$('shiftSlider').disabled=busy;$('resetBtn').disabled=busy||state.shift===0}
 
 async function togglePlayback(mode){if(state.playingMode===mode){stopPlayback();return}try{const buffer=mode==='original'?state.buffer:await getRendered();if(!buffer)return;playBuffer(buffer,mode)}catch(error){setStatus('statusProcessError',{message:error.message},'error')}}
 async function playBuffer(buffer,mode){stopPlayback();state.context=state.context||new AudioContext();if(state.context.state==='suspended')await state.context.resume();const source=state.context.createBufferSource();source.buffer=buffer;source.connect(state.context.destination);const offset=Math.min(state.offset,Math.max(0,buffer.duration-.01));source.start(0,offset);state.source=source;state.playingMode=mode;state.startedAt=state.context.currentTime-offset;source.onended=()=>{if(state.source!==source)return;state.source=null;state.playingMode=null;state.offset=0;updatePlaybackUi();updatePlayhead(0)};updatePlaybackUi();tick()}

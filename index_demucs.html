@@ -270,7 +270,7 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
   .canvas-wrap { height: 210px; min-height: 0; aspect-ratio: auto; }
 }
 </style>
-<link rel="stylesheet" href="cafe-theme.css">
+<link rel="stylesheet" href="cafe-theme.css?v=20261019-tools3">
 </head>
 <body>
 <div class="app">
@@ -297,6 +297,7 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
     <a class="mode-link" href="transpose.html"><span class="mode-icon">↕</span><span class="mode-copy"><strong data-i18n="audioTranspose">音频转调</strong><small data-i18n="transposeNote">转换 · 下载 WAV</small></span></a>
   </nav>
 
+  <details class="tool-details tool-comparison"><summary data-i18n="technicalDetails">技术说明与模式对比</summary>
   <section class="mode-compare" data-i18n-aria-label="comparisonLabel" aria-label="主页快速模式与 Demucs 音轨分离模式对比">
     <div class="compare-intro"><span data-i18n="modeComparison">模式对比</span><strong data-i18n="howToChoose">两种模式怎么选</strong></div>
     <div class="compare-choice">
@@ -309,6 +310,9 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
     </div>
     <div class="compare-tip" data-i18n="modeTip">弹奏乐器、需要实时反馈或快速扫歌，请用主页；人声和鼓声遮盖和声、需要指定音轨时，再使用当前页面。</div>
   </section>
+  </details>
+  <p class="tool-notice" data-i18n="separationNotice">音频仅在本机处理，不上传。首次使用需下载约 172MB，处理可能需要数分钟，手机较耗电。分离与识别结果仅供参考。</p>
+  <p class="tool-notice" data-i18n="separationLimits">支持最大 64MB、5 分钟以内的音频。结果不自动保存，请导出保留。</p>
 
   <main>
     <!-- ===== LEFT: Upload + Separation ===== -->
@@ -326,9 +330,10 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
       <!-- Model -->
       <div class="panel-section">
         <div class="section-label" data-i18n="loadStep">2. 加载 AI 模型</div>
-        <button class="btn btn-full" id="loadModelBtn" data-i18n="loadDemucs">下载并加载 Demucs 模型 (172MB)</button>
+        <button class="btn btn-full" id="loadModelBtn" data-i18n="loadDemucs" disabled>开始分离</button>
         <div class="progress-bar" id="modelProgressBar" style="display:none"><div style="width:0%"></div></div>
         <div class="progress-text" id="modelProgressText"></div>
+        <details class="tool-details"><summary data-i18n="processingLog">处理详情</summary><pre id="processingLog" class="processing-log"></pre></details>
       </div>
 
       <!-- Track selection -->
@@ -370,6 +375,7 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
       </section>
       <section class="panel">
         <div class="section-head"><h2 data-i18n="results">识别结果</h2><span id="resultCount">0 段</span></div>
+        <div id="resultTools"></div>
         <div style="overflow-x:auto">
           <table class="table">
             <thead><tr><th data-i18n="time">时间</th><th data-i18n="chord">和弦</th><th data-i18n="bass">低音</th><th data-i18n="pitchName">主音名</th><th data-i18n="possibleNotes">可能音</th><th data-i18n="confidence">可信度</th></tr></thead>
@@ -394,7 +400,9 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
 }
 </script>
 
-<script src="i18n.js"></script>
+<script src="i18n.js?v=20261019-tools3"></script>
+<script src="tool-core.js?v=20261019-tools3"></script>
+<script src="result-editor.js?v=20261019-tools3"></script>
 <script type="module">
 // ============================================================
 // Imports
@@ -448,14 +456,16 @@ const CHORD_TEMPLATES = [
 ];
 const state = {
   audioContext: null,
-  buffer: null, fileName: "", originalFileName: "", source: null,
+  buffer: null, originalBuffer: null, fileName: "", originalFileName: "", source: null,
   startedAt: 0, pausedAt: 0, playing: false,
   results: [], raf: null, currentTrack: null,
   // Demucs state
-  processor: null, modelLoaded: false,
+  processor: null, modelLoaded: false, busy: false,
   separatedTracks: null,
   statusKey: 'statusWaiting', statusParams: {}, progressKey: '', progressParams: {}, modelButtonKey: 'loadDemucs'
 };
+const analysisTasks=ToolCore.createTasks();
+let resultEditor;
 
 const els = {
   fileInput: byId('fileInput'), dropZone: byId('dropZone'), fileInfo: byId('fileInfo'),
@@ -491,12 +501,18 @@ function renderTrackList() {
 // Demucs Model Loading
 // ============================================================
 els.loadModelBtn.addEventListener('click', async () => {
+  if (!state.buffer || state.busy) return;
+  if (!state.modelLoaded && !window.confirm(t('confirmSeparation'))) return;
+  state.busy = true;
+  resultEditor?.reset();resultEditor?.busy(true);
   els.loadModelBtn.disabled = true;
-  setModelButton('downloadingModel');
-  els.modelProgressBar.style.display = 'block';
-  setProgress('connecting');
-
+  els.fileInput.disabled = true;
+  els.trackList.inert = true;
   try {
+    if (state.modelLoaded) { await runSeparation(); return; }
+    setModelButton('downloadingModel');
+    els.modelProgressBar.style.display = 'block';
+    setProgress('connecting');
     state.processor = new DemucsProcessor({
       ort,
       onProgress: (p) => {
@@ -509,7 +525,7 @@ els.loadModelBtn.addEventListener('click', async () => {
         }
       },
       onLog: (phase, msg) => {
-        els.modelProgressText.textContent = `[${phase}] ${msg}`;
+        byId('processingLog').textContent = `[${phase}] ${msg}`;
       }
     });
 
@@ -521,13 +537,20 @@ els.loadModelBtn.addEventListener('click', async () => {
     setProgress(state.buffer ? 'autoSeparating' : 'readyUpload');
     setStatus('statusModelReady');
     // Auto-separate if file already loaded
-    if (state.buffer) runSeparation();
+    if (state.buffer) await runSeparation();
   } catch (err) {
     setModelButton('retryLoad');
     els.loadModelBtn.disabled = false;
     setProgress('error', { message: err.message });
     setStatus('statusModelLoadFailed');
     console.error(err);
+  } finally {
+    state.busy = false;
+    resultEditor?.busy(false);
+    els.fileInput.disabled = false;
+    els.trackList.inert = false;
+    els.loadModelBtn.disabled = !state.buffer;
+    if (state.statusKey !== 'statusModelLoadFailed') setModelButton(state.separatedTracks ? 'separationAgain' : 'retryLoad');
   }
 });
 
@@ -541,6 +564,15 @@ els.fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(
 els.dropZone.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('audio/')) loadFile(f); });
 
 async function loadFile(file) {
+  if (state.busy) return;
+  try { ToolCore.validateFile(file); } catch(error) { setStatus(error.message); return; }
+  analysisTasks.next();resultEditor?.reset();resultEditor?.busy(true);
+  state.busy = true;
+  state.buffer = null;
+  state.originalBuffer = null;
+  els.loadModelBtn.disabled = true;
+  els.fileInput.disabled = true;
+  try {
   stopPlayback();
   state.fileName = file.name;
   state.originalFileName = file.name;
@@ -554,39 +586,51 @@ async function loadFile(file) {
   const ab = await file.arrayBuffer();
   state.audioContext = state.audioContext || new AudioContext();
   state.buffer = await state.audioContext.decodeAudioData(ab);
+  ToolCore.validateDuration(state.buffer.duration,true);
+  state.originalBuffer = state.buffer;
   els.fileInfo.innerHTML = `<strong>${esc(file.name)}</strong><span>${fmtTime(state.buffer.duration)} · ${(file.size/1024/1024).toFixed(1)} MB · ${state.buffer.numberOfChannels}ch ${state.buffer.sampleRate}Hz</span>`;
   els.playBtn.disabled = true;
-  if (state.modelLoaded) {
-    setStatus('statusAutoSeparating');
-    runSeparation();
-  } else {
-    setStatus('statusLoadedLoadModel');
-  }
+  setStatus('statusLoadedLoadModel');
+  setModelButton('loadDemucs');
+  setProgress('statusLoadedLoadModel');
   drawWaveform();
+  } catch (err) {
+    state.buffer = null;
+    const key=errorKey(err);
+    setStatus(key);
+    setProgress(key);
+    console.error(err);
+  } finally {
+    state.busy = false;
+    resultEditor?.busy(false);
+    els.fileInput.disabled = false;
+    els.loadModelBtn.disabled = !state.buffer;
+  }
 }
 
 // ============================================================
 // Separation (called automatically after upload if model ready)
 // ============================================================
 async function runSeparation() {
-  if (!state.buffer || !state.processor) return;
+  const input = state.originalBuffer;
+  if (!input || !state.processor) return;
   setProgress('aiSeparating');
   setStatus('statusAiSeparating');
 
   try {
     // Convert to mono or extract stereo channels
-    const ch0 = state.buffer.getChannelData(0);
-    const ch1 = state.buffer.numberOfChannels > 1 ? state.buffer.getChannelData(1) : ch0;
+    const ch0 = input.getChannelData(0);
+    const ch1 = input.numberOfChannels > 1 ? input.getChannelData(1) : ch0;
 
     // Resample to 44100 if needed
     let left = ch0, right = ch1;
-    if (state.buffer.sampleRate !== 44100) {
+    if (input.sampleRate !== 44100) {
       setProgress('resampling');
-      const numCh = Math.min(state.buffer.numberOfChannels, 2);
-      const targetLen = Math.ceil(state.buffer.duration * 44100);
+      const numCh = Math.min(input.numberOfChannels, 2);
+      const targetLen = Math.ceil(input.duration * 44100);
       const oc = new OfflineAudioContext(numCh, targetLen, 44100);
       const src = oc.createBufferSource();
-      src.buffer = state.buffer;
+      src.buffer = input;
       src.connect(oc.destination);
       src.start();
       const rb = await oc.startRendering();
@@ -627,7 +671,7 @@ async function runSeparation() {
     setStatus('statusSeparationComplete');
 
     // Auto-select "other"; selectTrack() starts analysis.
-    selectTrack('other');
+    await selectTrack('other',true);
   } catch (err) {
     setProgress('error', { message: err.message });
     setStatus('statusSeparationFailed');
@@ -636,8 +680,13 @@ async function runSeparation() {
 }
 
 // Track selection
-function selectTrack(trackName) {
-  if (!state.separatedTracks || !state.separatedTracks[trackName]) return;
+async function selectTrack(trackName,internal=false) {
+  if ((!internal&&state.busy)||!state.separatedTracks || !state.separatedTracks[trackName]) return;
+  const ownsBusy=!state.busy;
+  if(ownsBusy){state.busy=true;els.fileInput.disabled=true;els.loadModelBtn.disabled=true;els.trackList.inert=true}
+  resultEditor?.reset();resultEditor?.busy(true);
+  try{
+  stopPlayback();
 
   document.querySelectorAll('.track-item').forEach(el => el.classList.remove('selected'));
   document.querySelector(`[data-track="${trackName}"]`).classList.add('selected');
@@ -663,8 +712,11 @@ function selectTrack(trackName) {
   els.nowNote.textContent = '-';
   els.keyGuess.textContent = '-';
   setStatus('selectedAnalyzing', { track: localizedTrackName(trackName) });
-  analyze();
+  await analyze();
+  }catch(error){setStatus('analysisFailed');console.error(error)}
+  finally{if(ownsBusy){state.busy=false;els.fileInput.disabled=false;els.loadModelBtn.disabled=false;els.trackList.inert=false;resultEditor?.busy(false)}}
 };
+function errorKey(error){return ['fileTooLarge','separationTooLong'].includes(error.message)?error.message:'decodingFailed'}
 
 // ============================================================
 // Chord Analysis (same pipeline as original)
@@ -867,9 +919,12 @@ function avgChroma(a, b) { const o = new Float32Array(12); for (let i = 0; i < 1
 
 async function analyze() {
   if (!state.buffer) return;
+  const token=analysisTasks.next(),buffer=state.buffer;
+  const current=()=>analysisTasks.current(token)&&state.buffer===buffer;
   stopPlayback();
   setStatus('statusAnalyzing');
   await nextFrame();
+  if(!current())return;
 
   const mono = mixToMono(state.buffer);
   const sr = state.buffer.sampleRate;
@@ -879,6 +934,7 @@ async function analyze() {
   const results = [];
 
   for (let start = 0; start < mono.length; start += hopSize) {
+    if(!current())return;
     const slice = mono.subarray(start, Math.min(start + fftSize, mono.length));
     if (slice.length < 512) break;
     const chroma = chromaFromFrame(slice, sr);
@@ -890,6 +946,7 @@ async function analyze() {
     if (results.length % 16 === 0) { setStatus('analysisProgress', { pct: Math.min(99, Math.round(start/mono.length*100)) }); await nextFrame(); }
   }
 
+  if(!current())return;
   state.results = mergeSegments(smoothResults(results, 1));
   renderResults(); drawWaveform(); guessKey();
   setStatus('statusComplete');
@@ -912,12 +969,12 @@ function guessKey() {
 }
 
 function renderResults() {
-  const vt = visibleTime();
-  const filtered = vt > 0 ? state.results.filter(s => s.start <= vt) : state.results;
+  resultEditor?.update();
+  const filtered = state.results;
   els.resultBody.innerHTML = '';
-  els.resultCount.textContent = vt > 0 ? t('filteredSegments', { shown: filtered.length, total: state.results.length }) : t('segments', { count: state.results.length });
+  els.resultCount.textContent = t('segments', { count: state.results.length });
   els.emptyState.style.display = state.results.length ? 'none' : 'block';
-  [...filtered].reverse().forEach(s => {
+  filtered.forEach(s => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${fmtTime(s.start)} - ${fmtTime(s.end)}</td>
       <td><span class="chord-tag">${chordName(s.chord)}</span></td>
@@ -926,6 +983,7 @@ function renderResults() {
       <td><div class="notes">${s.topNotes.map(n => `<span class="note">${noteName(n.pc)}</span>`).join('')}</div></td>
       <td><div class="confidence" title="${Math.round(s.chord.confidence*100)}%"><div style="width:${Math.round(s.chord.confidence*100)}%"></div></div></td>`;
     tr.addEventListener('click', () => { if (state.buffer) playFrom(s.start); });
+    resultEditor?.row(tr,s,state.results.indexOf(s));
     els.resultBody.appendChild(tr);
   });
 }
@@ -1007,6 +1065,7 @@ async function playFrom(offset) {
   state.pausedAt = offset; state.playing = true;
   setPlayIcon(true);
   src.onended = () => {
+    if (state.source !== src) return;
     if (state.playing && getCurTime() >= state.buffer.duration - 0.05) {
       state.pausedAt = state.buffer.duration; stopPlayback(false); renderResults();
     }
@@ -1024,7 +1083,7 @@ function stopPlayback(reset = true) {
 }
 
 function tickPlayback() {
-  const cur = getCurTime(); updatePlayhead(cur); updateNow(cur); renderResults();
+  const cur = getCurTime(); updatePlayhead(cur); updateNow(cur);
   if (state.playing) state.raf = requestAnimationFrame(tickPlayback);
 }
 
@@ -1070,6 +1129,11 @@ function nextFrame() { return new Promise(r => requestAnimationFrame(r)); }
 function esc(v) { return v.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 
 // Init
+resultEditor=ToolEditor.mount(byId('resultTools'),{
+  get:()=>state.results,set:rows=>{state.results=rows},duration:()=>state.buffer?.duration??0,
+  name:()=>state.originalFileName,stop:()=>stopPlayback(false),render:renderResults,
+  changed:()=>{renderResults();drawWaveform();guessKey()}
+});
 setStatus('statusWaiting');
 setModelButton('loadDemucs');
 els.trackTitle.textContent = t('initialTrack');

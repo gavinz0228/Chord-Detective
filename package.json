@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test-tool-flow.mjs && node test-tool-core.mjs"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,8 @@
   "dependencies": {
     "demucs-web": "^1.0.2",
     "onnxruntime-web": "^1.26.0"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.6"
   }
 }

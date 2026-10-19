@@ -4,6 +4,9 @@ models/
 *.py
 generate_test_audio.py
 package*.json
+test-*.mjs
+test_audio/
+.DS_Store
 test_audio/real_song*
 test_audio/real_song_no_vocal*
 test_audio/yujian*

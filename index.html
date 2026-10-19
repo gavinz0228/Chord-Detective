@@ -240,7 +240,7 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
 .float-btn svg{fill:var(--cyan);filter:drop-shadow(0 0 5px rgba(242,184,75,.34))}.float-btn.playing svg{fill:var(--magenta)}
 @media(max-width:600px){h1{font-size:42px}.app{width:min(100vw - 20px,1280px)}.hero{padding-bottom:18px}.hero-actions{width:100%}.hero-status{flex:1;min-width:0}.language-select{flex:none;width:118px;min-width:118px}}
 </style>
-<link rel="stylesheet" href="cafe-theme.css">
+<link rel="stylesheet" href="cafe-theme.css?v=20261019-tools3">
 </head>
 <body>
 <div class="app">
@@ -261,18 +261,21 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
         <label class="dropzone" id="dropZone" for="fileInput"><input id="fileInput" type="file" accept="audio/*"><span><strong data-i18n="chooseAudio">⬆ 选择或拖入</strong><span>mp3 · wav · m4a · flac</span></span></label>
         <div class="meta" id="fileInfo"><strong>—</strong><span data-i18n="noFile">未选择文件</span></div>
         <div class="saved-row"><select id="savedSongs"><option value="" data-i18n="songHistory">本地歌曲历史</option></select><button class="mini-btn" id="deleteSaved" type="button" data-i18n-title="deleteRecord" title="删除记录" disabled>×</button></div>
+        <div class="storage-feedback"><span id="saveStatus" role="status" aria-live="polite"></span><button id="clearHistory" type="button" data-i18n="clearHistory">清空本地历史</button></div>
+        <p class="tool-notice" data-i18n="fileLimits">支持最大 64MB、15 分钟以内的音频。</p>
         <div class="vocal-tools"><label class="vocal-toggle"><input id="vocalReduce" type="checkbox" disabled><span data-i18n="reduceVocals">快速降低人声</span></label></div>
-        <div class="nested-row" id="fileCards">
-          <div class="nested-card" style="grid-column:1/-1">
-            <div class="card-num">02</div><div class="card-label" data-i18n="aiEngine">AI 引擎</div>
-            <button class="btn btn-full btn-model" id="loadModelBtn" data-i18n="loadModel">◆ 加载模型 (725KB)</button>
+        <div class="recognition-preparation" id="fileCards" role="status" aria-live="polite">
+          <div>
+            <button class="btn btn-full btn-model" id="loadModelBtn" data-i18n="loadModel" hidden>重试识别准备</button>
             <div class="progress" id="modelBar" style="display:none"><div style="width:0%"></div></div><div class="progress-label" id="modelText"></div>
-            <div class="model-ok" id="modelBadge" style="display:none"><span class="model-dot" id="modelDot"></span><span style="color:var(--green);font-size:12px;font-family:var(--mono)" data-i18n="modelReady">模型已就绪</span></div>
           </div>
         </div>
       </div>
       <div class="mic-zone show" id="micSection"><button class="mic-btn" id="micBtn">🎤 开始监听</button><div class="mic-info" id="micStatus" data-i18n="micHelp">点击按钮，弹奏和弦即可识别</div></div>
-      <div style="margin-top:12px"><select id="notationSelect"><option value="sharp" data-i18n="sharpNotation">升号 C C# D...</option><option value="flat" data-i18n="flatNotation">降号 C Db D...</option></select></div>
+      <details class="tool-details"><summary data-i18n="advancedSettings">高级设置</summary><select id="notationSelect"><option value="sharp" data-i18n="sharpNotation">升号 C C# D...</option><option value="flat" data-i18n="flatNotation">降号 C Db D...</option></select></details>
+      <p class="tool-notice" data-i18n="privacyNotice">音频在本机处理；歌曲和结果会保存在此浏览器，可在历史记录中删除。识别仅供参考，请试听校对。</p>
+      <p class="tool-hint"><a href="index_demucs.html" data-i18n="separationHint">人声干扰识别？试试分离伴奏后分析 →</a></p>
+      <details class="tool-details"><summary data-i18n="technicalDetails">技术说明</summary><p data-i18n="technicalCopy">文件识别使用 Basic Pitch；麦克风使用 FFT。首次文件识别需下载约 725KB 模型，另需加载运行库。</p></details>
     </div>
 
   <div class="metrics">
@@ -292,6 +295,7 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
   </div>
 
   <div class="results-panel">
+    <div id="resultTools"></div>
     <div class="res-hdr"><h2 data-i18n="results">识别结果</h2><span class="cnt" id="resultCount">0 段</span></div>
     <div class="transpose-bar" id="transposeBar"><span class="tx-label" data-i18n="transpose">变调</span><button class="tx-btn" data-d="-6">−6</button><button class="tx-btn" data-d="-5">−5</button><button class="tx-btn" data-d="-4">−4</button><button class="tx-btn" data-d="-3">−3</button><button class="tx-btn" data-d="-2">−2</button><button class="tx-btn" data-d="-1">−1</button><button class="tx-btn on" data-d="0">0</button><button class="tx-btn" data-d="1">+1</button><button class="tx-btn" data-d="2">+2</button><button class="tx-btn" data-d="3">+3</button><button class="tx-btn" data-d="4">+4</button><button class="tx-btn" data-d="5">+5</button><button class="tx-btn" data-d="6">+6</button><span class="tx-val" id="txVal">±0</span></div>
     <div class="conf-bar" id="confBar"><span class="conf-label" data-i18n="minimumConfidence">最低可信度</span><input type="range" id="confRange" min="0" max="100" value="0" step="5"><span class="conf-val" id="confVal">0%</span></div>
@@ -304,7 +308,9 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
 </button>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
-<script src="i18n.js"></script>
+<script src="i18n.js?v=20261019-tools3"></script>
+<script src="tool-core.js?v=20261019-tools3"></script>
+<script src="result-editor.js?v=20261019-tools3"></script>
 
 <script>
 ChordI18n.register({
@@ -345,10 +351,14 @@ const $=id=>document.getElementById(id);const ft=s=>Math.floor(s/60)+":"+String(
 const zz=ms=>new Promise(r=>setTimeout(r,ms));
 
 // STATE
-const S={ctx:null,buf:null,origBuf:null,audioData:null,fn:"",fileSize:0,songId:"",vocalReduced:false,model:null,ml:false,res:[],playing:false,sa:0,pa:0,raf:null,src:null,playToken:0,activeSt:null,
+const S={ctx:null,buf:null,origBuf:null,audioData:null,fn:"",fileSize:0,songId:"",vocalReduced:false,model:null,ml:false,res:[],resultsReady:false,playing:false,sa:0,pa:0,raf:null,src:null,playToken:0,activeSt:null,
   micStream:null,micSource:null,micAnalyser:null,micTimer:null,micListening:false,micStartedAt:0,micFrame:null,micCandidates:[],micStable:null,mode:"mic",transpose:0,statusKey:"statusWaiting",statusParams:{}};
 function setStatus(key,params={}){S.statusKey=key;S.statusParams=params;$("status").textContent=t(key,params)}
 function updateMicButton(){$("micBtn").textContent=t(S.micListening?"stopListening":"startListening");$("micBtn").classList.toggle("live",S.micListening)}
+const analysisTasks=ToolCore.createTasks(), fileTasks=ToolCore.createTasks();
+let resultEditor, saveMessage='', analysisRunning=false;
+function cancelAnalysis(){analysisTasks.next();hideSkeleton();$("status").classList.remove("analyzing");analysisRunning=false;resultEditor?.busy(false)}
+function saveFeedback(key){saveMessage=key;$("saveStatus").textContent=t(key)}
 
 // ============ FFT (for mic mode) ============
 function nearestPow2(v){return 2**Math.round(Math.log2(Math.max(2,v)))}
@@ -428,7 +438,7 @@ function listenMicFrame(){
   if(!S.micListening||!S.micAnalyser||!S.micFrame)return;
   S.micAnalyser.getFloatTimeDomainData(S.micFrame);
   const rms=frameRms(S.micFrame);
-  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";setStatus(rms<.0001?"statusWaitingSound":"statusLowInput");$("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)}`;drawWaveform();return}
+  if(rms<.0004){$("nowChord").textContent="—";$("nowNoteCount").textContent="—";setStatus(rms<.0001?"statusWaitingSound":"statusLowInput");$("micStatus").textContent=t("micQuiet");drawWaveform();return}
   const chroma=chromaFromFrame(S.micFrame,S.ctx.sampleRate);
   const chord=detectChordMic(chroma),bass=detectBass(chroma),tn=topChromaNotes(chroma,5);
   const now=(performance.now()-S.micStartedAt)/1000;
@@ -436,7 +446,7 @@ function listenMicFrame(){
   const stable=updateMicStability(seg);if(stable)appendMicSegment(stable);
   $("nowChord").textContent=stable?cnMic(stable.chord):cnMic(chord);
   $("nowNoteCount").textContent=t("noteUnits",{count:stable?stable.pcs.length:tn.length});setStatus("statusListening");
-  $("micStatus").textContent=`FFT:${S.micAnalyser.fftSize} RMS:${rms.toFixed(6)} SR:${S.ctx.sampleRate}`;
+  $("micStatus").textContent=t("playClearChord");
   renderRes();drawWaveform()}
 
 function cnMic(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]+c.suffix}
@@ -493,23 +503,34 @@ function cn(c){const n=$("notationSelect").value==="flat"?NF:NS;return n[c.root]
 function chordExpected(chord){const t=CT_FILE.find(t=>t.n===chord.suffix);return t?t.i.map(iv=>(chord.root+iv)%12):[]}
 
 async function analyzeFile(){
-  if(!S.buf||!S.ml)return;stopPlay();S.res=[];$("status").classList.add("analyzing");setStatus("statusDetecting");
-  showSkeleton();
+  if(!S.buf||!S.ml||fileDecoding)return;
+  const token=analysisTasks.next(),buffer=S.buf;
+  const current=()=>analysisTasks.current(token)&&S.buf===buffer&&S.mode==="file";
+  analysisRunning=true;resultEditor?.reset();resultEditor?.busy(true);stopPlay();S.res=[];S.resultsReady=false;
+  $("loadModelBtn").hidden=true;$("status").classList.add("analyzing");setStatus("statusDetecting");showSkeleton();
+  try{
   setStatus("statusPreprocessing");
-  const mono=mixMono(S.buf);const oc=new OfflineAudioContext(1,Math.ceil(mono.length*SR/S.buf.sampleRate),SR);
-  const src=oc.createBufferSource();const b=oc.createBuffer(1,mono.length,S.buf.sampleRate);b.getChannelData(0).set(mono);src.buffer=b;src.connect(oc.destination);src.start();
-  const a22=(await oc.startRendering()).getChannelData(0);setStatus("statusInference");
+  const mono=mixMono(buffer);const oc=new OfflineAudioContext(1,Math.ceil(mono.length*SR/buffer.sampleRate),SR);
+  const src=oc.createBufferSource();const b=oc.createBuffer(1,mono.length,buffer.sampleRate);b.getChannelData(0).set(mono);src.buffer=b;src.connect(oc.destination);src.start();
+  const a22=(await oc.startRendering()).getChannelData(0);if(!current())return;setStatus("statusInference");
   const AW=SR*2-256,OL=30*256,HS=AW-OL,pl=Math.floor(OL/2)+a22.length;const pad=new Float32Array(pl);pad.set(a22,Math.floor(OL/2));
-  const nF=Math.ceil((pl-AW)/HS)+1;const allN=[];
+  const nF=Math.max(1,Math.ceil((pl-AW)/HS)+1);const allN=[];
   for(let i=0;i<nF;i++){const st=i*HS,en=st+AW;const fr=pad.slice(st,Math.min(en,pl));if(fr.length<512)break;
-    const inp=new Float32Array(AW);inp.set(fr.subarray(0,Math.min(AW,fr.length)));const t=tf.tensor(inp,[1,AW,1]);const res=S.model.execute(t,["Identity_1","Identity_2","Identity"]);const no=15;
-    let uF=res[0].slice([0,no,0],[-1,res[0].shape[1]-2*no,-1]).reshape([-1,res[0].shape[2]]),uO=res[1].slice([0,no,0],[-1,res[1].shape[1]-2*no,-1]).reshape([-1,res[1].shape[2]]);
-    const fA=await uF.array(),oA=await uO.array();t.dispose();res.forEach(t=>t.dispose());const ns=otnp(fA,oA,.5,.3,5,true),off=i*(HS/256);ns.forEach(n=>n.sf+=off);allN.push(...ns);
+    if(!current())return;
+    const inp=new Float32Array(AW);inp.set(fr.subarray(0,Math.min(AW,fr.length)));
+    const tensors=tf.tidy(()=>{const tensor=tf.tensor(inp,[1,AW,1]);const res=S.model.execute(tensor,["Identity_1","Identity_2","Identity"]),no=15;
+      return [res[0].slice([0,no,0],[-1,res[0].shape[1]-2*no,-1]).reshape([-1,res[0].shape[2]]),res[1].slice([0,no,0],[-1,res[1].shape[1]-2*no,-1]).reshape([-1,res[1].shape[2]])]});
+    let fA,oA;try{[fA,oA]=await Promise.all(tensors.map(tensor=>tensor.array()))}finally{tf.dispose(tensors)}
+    if(!current())return;
+    const ns=otnp(fA,oA,.5,.3,5,true),off=i*(HS/256);ns.forEach(n=>n.sf+=off);allN.push(...ns);
     const pct=Math.round((i/nF)*100);setStatus("statusInferenceProgress",{pct});updateSkeleton(pct);await zz(0)}
   const tn=ntt(allN);setStatus("statusMatching");
-  const ws=.5,du=mono.length/S.buf.sampleRate,cs=[];
-  for(let t=0;t<du;t+=ws){const te=t+ws,ap=new Set();for(const n of tn)if(n.st<te&&n.st+n.dur>t)ap.add(((n.pm%12)+12)%12);if(ap.size>0)cs.push({st:t,en:te,chord:dcpc(ap),pcs:[...ap]})}
-  S.res=mergeRes(cs);hideSkeleton();$("status").classList.remove("analyzing");setStatus("statusComplete");renderRes();drawWaveform();persistSong()}
+  const ws=.5,du=buffer.duration,cs=[];
+  for(let pos=0;pos<du;pos+=ws){if(!current())return;const te=Math.min(pos+ws,du),ap=new Set();for(const n of tn)if(n.st<te&&n.st+n.dur>pos)ap.add(((n.pm%12)+12)%12);if(ap.size>0)cs.push({st:pos,en:te,chord:dcpc(ap),pcs:[...ap]});if(cs.length%64===0)await zz(0)}
+  if(!current())return;S.res=mergeRes(cs);S.resultsReady=true;setStatus("statusComplete");renderRes();drawWaveform();await persistSong();
+  }catch(error){if(current()){setStatus("analysisFailed");$("loadModelBtn").hidden=false;$("loadModelBtn").disabled=false;renderRes()}console.error(error)}
+  finally{if(analysisTasks.current(token)){hideSkeleton();$("status").classList.remove("analyzing");analysisRunning=false;resultEditor?.busy(false)}}
+}
 
 function mergeRes(cs){const mg=[];for(const c of cs){const p=mg[mg.length-1];if(p&&cn(p.chord)===cn(c.chord)){p.en=c.en;p._c=(p._c||[p.chord.confidence]).concat(c.chord.confidence)}else mg.push({...c,_c:[c.chord.confidence]})}
   mg.forEach(m=>m.chord.confidence=m._c.reduce((a,b)=>a+b,0)/m._c.length);return mg.filter(m=>m.en-m.st>=.3&&m.chord.confidence>.2)}
@@ -525,10 +546,10 @@ function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");
   const hasAudio=S.buf||S.micListening;
   box.style.display=hasAudio?"block":"none";
   c.width=box.clientWidth;
-  const h=hasAudio?Math.round(box.clientWidth*.18):0;
+  const h=hasAudio?Math.max(120,Math.round(box.clientWidth*.18)):0;
   c.height=h;c.style.height=h+'px';
   $("waveCtrls").style.display=(hasAudio&&!S.micListening)?"block":"none";
-  $("waveLeg").style.display=hasAudio?"block":"none";
+  $("waveLeg").style.display=hasAudio?"flex":"none";
   $("playhead").style.display=hasAudio?"block":"none";
   $("timeTooltip").style.display=hasAudio?"block":"none";
   // Compact header when idle
@@ -536,17 +557,19 @@ function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");
   drawWaveform()}
 function tr(pc){return((pc+S.transpose)%12+12)%12}
 function renderRes(){
+  resultEditor?.update();
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
   const thresh=parseInt($("confRange").value)/100;
-  const filtered=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
-  if(filtered.length===0){$("emptyState").textContent=S.res.length?(thresh>0?t("noChordConfidence",{pct:Math.round(thresh*100)}):t("noChords")):t(S.mode==="mic"?"emptyMic":"emptyFile");$("emptyState").style.display="block";$("resultCount").textContent=t("filteredSegments",{shown:0,total:S.res.length});return}
+  const filtered=S.res.filter(r=>(r.chord.confidence??0)>=thresh);
+  if(filtered.length===0){$("emptyState").textContent=S.res.length?(thresh>0?t("noChordConfidence",{pct:Math.round(thresh*100)}):t("noChords")):t(S.resultsReady?"noChords":S.mode==="mic"?"emptyMic":"emptyFile");$("emptyState").style.display="block";$("resultCount").textContent=t("filteredSegments",{shown:0,total:S.res.length});return}
   $("emptyState").style.display="none";$("resultCount").textContent=filtered.length===S.res.length?t("segments",{count:S.res.length}):t("filteredSegments",{shown:filtered.length,total:S.res.length});
   for(const r of filtered){const trEl=document.createElement("tr");const st=typeof r.st==="number"?r.st:(r.start||0),en=typeof r.en==="number"?r.en:(r.end||0);
     trEl.setAttribute("data-st",st);trEl.setAttribute("data-en",en);
     const expected=chordExpected(r.chord),missing=expected.filter(ep=>!r.pcs.some(p=>((p%12)+12)%12===((ep%12)+12)%12));
     const isExpected=p=>expected.some(ep=>((p%12)+12)%12===((ep%12)+12)%12);
     const matched=r.pcs.filter(isExpected),extra=r.pcs.filter(p=>!isExpected(p));
-    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${matched.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${extra.map(p=>`<span class="note-extra">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence||.7)*100)}%"></div></div></td>`;
+    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${matched.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${extra.map(p=>`<span class="note-extra">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence??0)*100)}%"></div></div></td>`;
+    resultEditor?.row(trEl,r,S.res.indexOf(r));
     trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
   const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=t("noteUnits",{count:f.pcs.length});$("keyGuess").textContent=f.pcs.length>=2?t("keyValue",{note:n[tr(f.pcs[0])] }):"—"}
   if(S.buf&&(S.playing||S.pa>0))syncActiveRow(S.playing?S.ctx.currentTime-S.sa:S.pa,!S.playing,false)}
@@ -572,7 +595,7 @@ function drawWaveform(){
 
   const mono=S.buf?mixMono(S.buf):null;if(!mono)return;const du=mono.length/S.buf.sampleRate;
   const thresh=parseInt($("confRange").value)/100;
-  const visible=S.res.filter(r=>(r.chord.confidence||.7)>=thresh);
+  const visible=S.res.filter(r=>(r.chord.confidence??0)>=thresh);
   for(const r of visible){const x1=(r.st/du)*w,x2=(r.en/du)*w;ctx.fillStyle="rgba(35,84,72,0.06)";ctx.fillRect(x1,0,x2-x1,h)}
   for(const r of visible){const x1=(r.st/du)*w;ctx.beginPath();ctx.strokeStyle="rgba(35,84,72,0.20)";ctx.lineWidth=.8;ctx.setLineDash([4,10]);ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.stroke();ctx.setLineDash([])}
   const step=Math.max(1,Math.floor(mono.length/w));ctx.lineWidth=1.3;ctx.shadowColor="#235448";ctx.shadowBlur=6;
@@ -599,45 +622,83 @@ function stopPlay(reset=false){if(S.raf)cancelAnimationFrame(S.raf);S.raf=null;c
   S.playing=false;S.pa=reset?0:pos;setPlayUi(false);if(S.buf&&!reset)upPh();if(reset){S.activeSt=null;syncActiveRow(-1,false,false)}}
 
 // ============ EVENTS ============
-const DB_NAME="chord-detective",DB_STORE="songs";
-function openSongDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(DB_STORE))req.result.createObjectStore(DB_STORE,{keyPath:"id"})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
-async function songStore(mode,work){const db=await openSongDb();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,mode),store=tx.objectStore(DB_STORE);work(store,resolve,reject);tx.oncomplete=()=>db.close();tx.onerror=()=>{db.close();reject(tx.error)}})}
-function getSavedSongs(){return songStore("readonly",(store,resolve,reject)=>{const req=store.getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
-function getSavedSong(id){return songStore("readonly",(store,resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
-function putSavedSong(song){return songStore("readwrite",(store,resolve,reject)=>{const req=store.put(song);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error)})}
-function removeSavedSong(id){return songStore("readwrite",(store,resolve,reject)=>{const req=store.delete(id);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error)})}
-async function refreshSavedSongs(selected=S.songId){try{const songs=(await getSavedSongs()).sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),select=$("savedSongs");select.innerHTML=`<option value="">${t("songHistory")}</option>`;for(const song of songs){const opt=document.createElement("option");opt.value=song.id;opt.textContent=song.name;select.appendChild(opt)}select.value=selected||"";$("deleteSaved").disabled=!select.value}catch(e){console.warn("Saved-song history unavailable",e)}}
-async function persistSong(){if(!S.songId||!S.audioData)return;try{await putSavedSong({id:S.songId,name:S.fn,size:S.fileSize,lastOpened:Date.now(),audioData:S.audioData.slice(0),results:S.res,vocalReduced:S.vocalReduced});await refreshSavedSongs(S.songId)}catch(e){console.warn("Could not save song",e)}}
+const songStorage=ToolCore.createStorage({open:(...args)=>window.indexedDB.open(...args)});
+let saveVersion=0,fileDecoding=false;
+async function refreshSavedSongs(){try{const songs=(await songStorage.list()).sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),select=$("savedSongs");select.innerHTML=`<option value="">${t("songHistory")}</option>`;for(const song of songs){const opt=document.createElement("option");opt.value=song.id;opt.textContent=song.name;select.appendChild(opt)}select.value=S.songId||"";$("deleteSaved").disabled=!select.value;$("clearHistory").disabled=!songs.length}catch(e){saveFeedback("saveFailed");console.warn(e)}}
+async function persistSong(){
+  if(!S.songId||!S.audioData)return;
+  const version=++saveVersion,id=S.songId;
+  // Capture the song and results before any asynchronous work; never read another song's state later.
+  const snapshot={id,name:S.fn,size:S.fileSize,lastOpened:Date.now(),audioData:S.audioData,results:structuredClone(S.res),resultsReady:S.resultsReady,vocalReduced:S.vocalReduced};
+  saveFeedback("savingLocal");
+  try{await songStorage.put(snapshot);if(version===saveVersion&&S.songId===id)saveFeedback("savedLocal");await refreshSavedSongs()}
+  catch(e){if(version===saveVersion&&S.songId===id)saveFeedback("saveFailed");console.warn(e)}
+}
 function setFileInfo(){const box=$("fileInfo");box.innerHTML="";const name=document.createElement("strong"),meta=document.createElement("span");name.textContent=S.fn;meta.textContent=`${S.buf.duration.toFixed(1)}s · ${S.buf.sampleRate}Hz · ${S.buf.numberOfChannels}ch`;box.append(name,meta)}
 function makeVocalReducedBuffer(source){if(source.numberOfChannels<2)return source;const ctx=S.ctx||new AudioContext(),out=ctx.createBuffer(2,source.length,source.sampleRate),left=source.getChannelData(0),right=source.getChannelData(1),outL=out.getChannelData(0),outR=out.getChannelData(1);for(let i=0;i<source.length;i++){const side=(left[i]-right[i])*.72;outL[i]=side;outR[i]=side}return out}
-async function loadSongRecord(song,save=true){if(!song||!song.audioData)return;stopPlay(true);stopMic();S.mode="file";S.fn=song.name;S.fileSize=song.size||song.audioData.byteLength;S.songId=song.id;S.audioData=song.audioData.slice(0);S.vocalReduced=!!song.vocalReduced;S.res=Array.isArray(song.results)?song.results:[];
-  const actx=new AudioContext();S.origBuf=await actx.decodeAudioData(song.audioData.slice(0));await actx.close();S.buf=S.vocalReduced?makeVocalReducedBuffer(S.origBuf):S.origBuf;
-  $("vocalReduce").disabled=S.origBuf.numberOfChannels<2;$("vocalReduce").checked=S.vocalReduced;$("playBtn").disabled=false;$("floatBtn").style.display="flex";setFileInfo();resizeCanvas();renderRes();drawWaveform();setStatus(S.res.length?"statusRestored":"statusAudioReady");if(save)persistSong();if(!S.res.length&&S.ml){setStatus("statusAutoDetecting");analyzeFile()}setTimeout(resizeCanvas,100)}
-async function handleFile(file){const ab=await file.arrayBuffer(),id=`${file.name}:${file.size}:${file.lastModified}`;await loadSongRecord({id,name:file.name,size:file.size,lastOpened:Date.now(),audioData:ab,results:[],vocalReduced:false},true)}
-async function setVocalReduction(enabled){if(!S.origBuf)return;stopPlay(true);S.vocalReduced=enabled;S.buf=enabled?makeVocalReducedBuffer(S.origBuf):S.origBuf;S.res=[];S.activeSt=null;renderRes();resizeCanvas();setStatus(enabled?"statusVocalReduced":"statusOriginalAudio");await persistSong();if(S.ml)analyzeFile()}
-async function loadModel(){const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");btn.disabled=true;pb.style.display="block";pt.textContent=t("loading");pb.querySelector("div").style.width="30%";
-  try{S.model=await tf.loadGraphModel(BP_URL);pb.querySelector("div").style.width="100%";pt.textContent=t("ready");S.ml=true;setStatus("statusModelReady");$("modelBadge").style.display="flex";$("modelDot").classList.add("ready");if(S.buf&&!S.res.length){$("playBtn").disabled=false;$("floatBtn").style.display="flex";setStatus("statusAutoDetecting");analyzeFile()}}catch(e){pt.textContent=t("failed",{message:e.message});setStatus("statusLoadFailed");btn.disabled=false}}
+function beginFileLoad(){const token=fileTasks.next();cancelAnalysis();resultEditor?.reset();resultEditor?.busy(true);fileDecoding=true;saveVersion++;saveFeedback("");stopPlay(true);stopMic();setStatus("statusDecoding");return token}
+function fileLoadFailed(error,token){if(!fileTasks.current(token))return;fileDecoding=false;resultEditor?.busy(false);setStatus(["fileTooLarge","audioTooLong"].includes(error.message)?error.message:"decodingFailed");console.warn(error)}
+async function loadSongRecord(song,save=true,token=beginFileLoad()){
+  if(!song?.audioData||!fileTasks.current(token))return;
+  let actx;
+  try{
+    ToolCore.validateFile({size:song.audioData.byteLength});
+    actx=new AudioContext();const decoded=await actx.decodeAudioData(song.audioData.slice(0));
+    if(!fileTasks.current(token))return;
+    ToolCore.validateDuration(decoded.duration);
+    S.mode="file";S.fn=song.name;S.fileSize=song.size||song.audioData.byteLength;S.songId=song.id;S.audioData=song.audioData;
+    S.vocalReduced=!!song.vocalReduced;S.res=Array.isArray(song.results)?song.results:[];S.resultsReady=!!song.resultsReady||S.res.length>0;S.origBuf=decoded;
+    S.buf=S.vocalReduced?makeVocalReducedBuffer(decoded):decoded;
+    fileDecoding=false;resultEditor?.busy(false);
+    $("vocalReduce").disabled=decoded.numberOfChannels<2;$("vocalReduce").checked=S.vocalReduced;$("playBtn").disabled=false;$("floatBtn").style.display="flex";
+    setFileInfo();resizeCanvas();renderRes();drawWaveform();setStatus(S.res.length?"statusRestored":"statusAudioReady");
+    if(save)persistSong();
+    if(!S.resultsReady){if(S.ml)analyzeFile();else loadModel()}
+  }catch(error){fileLoadFailed(error,token)}
+  finally{if(actx)await actx.close().catch(()=>{})}
+}
+async function handleFile(file){const token=beginFileLoad();try{ToolCore.validateFile(file);const audioData=await file.arrayBuffer();if(fileTasks.current(token))await loadSongRecord({id:`${file.name}:${file.size}:${file.lastModified}`,name:file.name,size:file.size,audioData,results:[],vocalReduced:false},true,token)}catch(error){fileLoadFailed(error,token)}}
+async function setVocalReduction(enabled){if(!S.origBuf||fileDecoding)return;cancelAnalysis();resultEditor?.reset();stopPlay(true);S.vocalReduced=enabled;S.buf=enabled?makeVocalReducedBuffer(S.origBuf):S.origBuf;S.res=[];S.resultsReady=false;S.activeSt=null;renderRes();resizeCanvas();setStatus(enabled?"statusVocalReduced":"statusOriginalAudio");persistSong();if(S.ml)analyzeFile();else loadModel()}
+let modelLoading = false;
+async function loadModel(){
+  if(modelLoading||S.ml)return;
+  modelLoading=true;
+  const btn=$("loadModelBtn"),pb=$("modelBar"),pt=$("modelText");
+  btn.disabled=true;btn.hidden=true;pb.style.display="block";pt.textContent=t("loading");pb.querySelector("div").style.width="30%";
+  try{S.model=await tf.loadGraphModel(BP_URL);S.ml=true;pb.style.display="none";pt.textContent="";
+  }catch(e){pb.style.display="none";pt.textContent=t("failed",{message:e.message});setStatus("statusLoadFailed");btn.disabled=false;btn.hidden=false;
+  }finally{modelLoading=false}
+  if(S.ml&&S.mode==="file"&&S.buf&&!S.resultsReady&&!fileDecoding)await analyzeFile();
+}
 
-function showInputMode(mode,updateUrl=true){const tab=$("inputTabs").querySelector(`[data-mode="${mode}"]`);if(!tab||mode==="demucs")return;
+function showInputMode(mode,updateUrl=true){const tab=$("inputTabs").querySelector(`[data-mode="${mode}"]`);if(!tab||!["mic","file"].includes(mode))return;
+  if(mode!==S.mode){fileTasks.next();fileDecoding=false;cancelAnalysis();resultEditor?.reset();stopPlay(true)}
   $("inputTabs").querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));tab.classList.add("on");S.mode=mode;
-  if(updateUrl){const url=new URL(location.href);if(mode==="file")url.searchParams.set("mode","file");else url.searchParams.delete("mode");history.replaceState(null,"",url)}
+  if(updateUrl){const url=new URL(location.href);url.searchParams.set("mode",mode);history.replaceState(null,"",url)}
   if(S.mode==="file"){$("fileSection").style.display="block";$("micSection").classList.remove("show");$("fileCards").style.display="";stopMic();if(S.buf)$("floatBtn").style.display="flex";resizeCanvas()}
   else{$("fileSection").style.display="none";$("micSection").classList.add("show");$("fileCards").style.display="none";S.buf=null;S.res=[];renderRes();$("floatBtn").style.display="none";resizeCanvas()}}
 $("inputTabs").addEventListener("click",e=>{const tab=e.target.closest(".tab");if(!tab)return;if(tab.dataset.mode==="demucs"){stopMic();return}showInputMode(tab.dataset.mode)});
 $("fileInput").addEventListener("change",e=>{if(e.target.files[0])handleFile(e.target.files[0])});
 const dz=$("dropZone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
 dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
-$("loadModelBtn").addEventListener("click",loadModel);
+$("loadModelBtn").addEventListener("click",()=>S.ml?analyzeFile():loadModel());
 $("playBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(S.pa||0)});$("micBtn").addEventListener("click",toggleMic);
 $("floatBtn").addEventListener("click",()=>{if(S.playing)stopPlay();else playAt(S.pa||0)});
-$("savedSongs").addEventListener("change",async e=>{const id=e.target.value;$("deleteSaved").disabled=!id;if(!id)return;const song=await getSavedSong(id);if(song)loadSongRecord(song,true)});
-$("deleteSaved").addEventListener("click",async()=>{const id=$("savedSongs").value;if(!id)return;await removeSavedSong(id);if(S.songId===id)S.songId="";await refreshSavedSongs()});
+$("savedSongs").addEventListener("change",async e=>{const id=e.target.value;$("deleteSaved").disabled=!id;if(!id)return;const token=beginFileLoad();try{const song=await songStorage.get(id);if(!fileTasks.current(token))return;if(song)await loadSongRecord(song,true,token);else throw Error("missingSong")}catch(error){fileLoadFailed(error,token)}});
+$("deleteSaved").addEventListener("click",async()=>{const id=$("savedSongs").value;if(!id||!confirm(t("confirmDeleteHistory")))return;try{saveVersion++;if(S.songId===id){S.songId="";saveFeedback("removedLocal")}await songStorage.remove(id);await refreshSavedSongs()}catch(error){saveFeedback("saveFailed")}});
+$("clearHistory").addEventListener("click",async()=>{if(!confirm(t("confirmClearHistory")))return;try{saveVersion++;S.songId="";await songStorage.clear();saveFeedback("removedLocal");await refreshSavedSongs()}catch(error){saveFeedback("saveFailed")}});
 $("vocalReduce").addEventListener("change",e=>setVocalReduction(e.target.checked));
 $("notationSelect").addEventListener("change",renderRes);
 $("confRange").addEventListener("input",()=>{const pct=$("confRange").value;$("confVal").textContent=pct+"%";$("confRange").style.setProperty("--slider-pct",pct+"%");renderRes();drawWaveform()});
 $("transposeBar").addEventListener("click",e=>{const btn=e.target.closest(".tx-btn");if(!btn)return;S.transpose=parseInt(btn.dataset.d);$("transposeBar").querySelectorAll(".tx-btn").forEach(b=>b.classList.toggle("on",b===btn));$("txVal").textContent=S.transpose===0?"±0":(S.transpose>0?"+"+S.transpose:S.transpose);renderRes();drawWaveform()});
 $("waveCanvas").addEventListener("click",e=>{if(!S.buf)return;const r=e.target.getBoundingClientRect();playAt((e.clientX-r.left)/r.width*S.buf.duration)});
-window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{const requestedMode=new URLSearchParams(location.search).get("mode");if(requestedMode==="file"||requestedMode==="mic")showInputMode(requestedMode,false);setStatus("statusWaiting");updateMicButton();setPlayUi(false);resizeCanvas();renderRes();refreshSavedSongs();setTimeout(loadModel,400)});
+resultEditor=ToolEditor.mount($("resultTools"),{
+  get:()=>S.res.map(row=>({...row,start:row.st??row.start??0,end:row.en??row.end??0})),
+  set:rows=>{S.res=rows.map(row=>({...row,st:row.start,en:row.end}));S.resultsReady=true},
+  duration:()=>S.buf?.duration??0,name:()=>S.fn,live:()=>S.mode==="mic",stop:()=>stopPlay(),render:renderRes,
+  changed:()=>{renderRes();drawWaveform();persistSong()}
+});
+window.addEventListener("resize",()=>{if(S.buf||S.micListening)resizeCanvas()});window.addEventListener("DOMContentLoaded",()=>{const requestedMode=new URLSearchParams(location.search).get("mode");showInputMode(requestedMode==="mic"?"mic":"file",false);setStatus("statusWaiting");updateMicButton();setPlayUi(false);resizeCanvas();renderRes();refreshSavedSongs();});
 window.addEventListener("chorddetective:languagechange",()=>{setStatus(S.statusKey,S.statusParams);setPlayUi(S.playing);updateMicButton();renderRes();refreshSavedSongs();if(S.micListening){$("fileInfo").innerHTML=`<strong>${t("micActive")}</strong><span>${t("playClearChord")}</span>`}});
 </script>
 </body>
