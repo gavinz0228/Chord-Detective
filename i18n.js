@@ -6,6 +6,7 @@
   // Shared task-oriented copy takes precedence over page-specific engine labels.
   const friendlyCopy = {
     en: {
+      visitCafe: "Explore Chord.Cafe ↗", cafeDescription: "Find chord charts. Practice guitar.",
       confidence: "Match score", minimumConfidence: "Minimum match score", noChordConfidence: "No segments above {pct}% match score", scoreMeaning: "About match scores & export",
       matchExplanation: "Match scores compare notes with chord templates; they are not accuracy percentages. Edited segments keep the original score. Editing and export use the original key and all segments, including hidden ones.",
       editResults: "Edit results", undoEdit: "Undo edit", exportResults: "Export results", exportFormat: "Export format", actions: "Actions",
@@ -34,6 +35,7 @@
       separationAgain: "Separate again", decodingFailed: "Could not read this audio file. Please choose another.", processingLog: "Processing details", micQuiet: "Play a chord, or move closer to the microphone."
     },
     "zh-CN": {
+      visitCafe: "逛逛 Chord.Cafe ↗", cafeDescription: "找曲谱，练吉他",
       confidence: "匹配度", minimumConfidence: "最低匹配度", noChordConfidence: "没有匹配度达到 {pct}% 的片段", scoreMeaning: "匹配度与导出说明",
       matchExplanation: "匹配度是音符与和弦模板的相似程度，不代表正确率。人工修改后保留原始分数。编辑与导出采用原调，导出包含被筛选隐藏的片段。",
       editResults: "编辑结果", undoEdit: "撤销修改", exportResults: "导出结果", exportFormat: "导出格式", actions: "操作",

@@ -147,3 +147,9 @@ input[type="range"], input[type="checkbox"] { accent-color: #235448; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+.cafe-discovery { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: -8px 0 22px; font-size: 13px; line-height: 1.6; }
+.cafe-discovery a { display: inline-flex; align-items: center; min-height: 44px; color: #235448; font-weight: 700; text-decoration: none; }
+.cafe-discovery a:hover { text-decoration: underline; }
+.cafe-discovery a:focus-visible { outline: 2px solid #235448; outline-offset: 4px; border-radius: 3px; }
+.cafe-discovery span { color: var(--dim); }
