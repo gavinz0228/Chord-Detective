@@ -13,6 +13,16 @@
     return { root: (natural[match[1]] + (match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0) + 12) % 12, suffix: match[3] };
   }
   const chordName = chord => NOTES[((chord.root % 12) + 12) % 12] + (chord.suffix || '');
+  function transposeChordName(chord, semitones = 0, flat = false) {
+    const notes = flat ? ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] : NOTES;
+    const wrap = pitch => ((pitch % 12) + 12) % 12;
+    const suffix = (chord.suffix || '').replace(/\/([A-G])([#b♯♭]?)$/, (_match, note, accidental) => {
+      const natural = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+      const pitch = natural[note] + (['#', '♯'].includes(accidental) ? 1 : ['b', '♭'].includes(accidental) ? -1 : 0);
+      return '/' + notes[wrap(pitch + semitones)];
+    });
+    return notes[wrap(chord.root + semitones)] + suffix;
+  }
   function validateSegment(segments, index, start, end, duration) {
     if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start || end > duration + .001) throw Error('invalidTime');
     if ((index > 0 && start < segments[index - 1].end - .001) ||
@@ -81,5 +91,5 @@
       clear: () => transaction(['songs', 'songMeta'], 'readwrite', tx => { for (const s of ['songs', 'songMeta']) tx.objectStore(s).clear(); })
     };
   }
-  root.ToolCore = { createTasks, parseChord, chordName, validateSegment, validateFile, validateDuration, exportData, createStorage };
+  root.ToolCore = { createTasks, parseChord, chordName, transposeChordName, validateSegment, validateFile, validateDuration, exportData, createStorage };
 })(globalThis);

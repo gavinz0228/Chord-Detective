@@ -10,6 +10,19 @@ const tasks = core.createTasks(), first = tasks.next(), second = tasks.next();
 assert.equal(tasks.current(first), false); assert.equal(tasks.current(second), true);
 assert.equal(core.chordName(core.parseChord('Bbmaj7')), 'A#maj7');
 assert.equal(core.chordName(core.parseChord('D/F#')), 'D/F#');
+const slashChord=core.parseChord('C/G');
+assert.equal(core.transposeChordName(slashChord,2),'D/A');
+assert.equal(core.transposeChordName(slashChord,-2,true),'Bb/F');
+assert.equal(core.transposeChordName(core.parseChord('D/F#'),-2),'C/E');
+assert.equal(core.transposeChordName(core.parseChord('B/F#'),1),'C/G');
+assert.equal(core.transposeChordName(core.parseChord('Bb/D'),2,true),'C/E');
+assert.equal(core.transposeChordName(core.parseChord('C7(b5)/Gb'),2),'D7(b5)/G#');
+assert.equal(core.transposeChordName({root:0,suffix:'/E♭'},2,true),'D/F');
+assert.equal(core.transposeChordName({root:0,suffix:'6/9'},2),'D6/9','Numeric chord extensions are not slash bass notes');
+assert.equal(core.transposeChordName({root:0,suffix:'m7'},-1),'Bm7');
+assert.equal(core.chordName(slashChord),'C/G','Display transposition must not mutate stored/exported chords');
+const slashExport=JSON.parse(core.exportData([{start:0,end:1,chord:slashChord}],'json','fixture'));
+assert.equal(slashExport.segments[0].chord,'C/G');
 assert.throws(() => core.parseChord('<img src=x>'), /invalidChord/);
 assert.throws(() => core.parseChord('=SUM(1)'), /invalidChord/);
 assert.throws(() => core.validateFile({ size: 65 * 1024 * 1024 }), /fileTooLarge/);
@@ -62,6 +75,11 @@ await assert.rejects(core.createStorage({ open() { throw Error('Storage disabled
 // Run the actual analysis function with controllable audio rendering to simulate
 // song switching and failures at await boundaries.
 const main = fs.readFileSync(new URL('index.html', import.meta.url), 'utf8');
+const displayContext=vm.createContext({ToolCore:core,S:{transpose:2},$:()=>({value:'sharp'})});
+vm.runInContext(main.match(/function displayChord\(chord\)\{[^\n]+/)[0],displayContext);
+assert.equal(displayContext.displayChord(slashChord),'D/A','Main-page display uses slash-aware transposition');
+assert.match(main,/\$\{displayChord\(r.chord\)\}/,'Table uses the shared formatter');
+assert.match(main,/textContent=displayChord\(r.chord\)/,'Playback readout uses the shared formatter');
 const source = main.slice(main.indexOf('async function analyzeFile(){'), main.indexOf('function mergeRes'));
 let renderResolve, renderReject, saved = 0, hidden = 0, status;
 const bufferA = { sampleRate: 48000, duration: 1 }, bufferB = { sampleRate: 48000, duration: 2 };

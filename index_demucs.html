@@ -284,7 +284,7 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
       </div>
     </div>
     <div class="header-actions">
-      <select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="en">English</option></select>
+      <select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="en">English</option></select>
       <a class="back-link" href="index.html" data-i18n="home">← 主页</a>
       <div class="status-pill" id="status">等待操作</div>
     </div>
@@ -404,8 +404,8 @@ main { grid-template-columns: 360px minmax(0,1fr); gap: 16px; }
 }
 </script>
 
-<script src="i18n.js?v=20261019-cafe"></script>
-<script src="tool-core.js?v=20261019-tools3"></script>
+<script src="i18n.js?v=20261021-locales"></script>
+<script src="tool-core.js?v=20261020-fixes"></script>
 <script src="result-editor.js?v=20261019-tools3"></script>
 <script type="module">
 // ============================================================
@@ -438,6 +438,18 @@ ChordI18n.register({
     statusWaiting:"等待操作", downloadingModel:"正在下载模型...", connecting:"连接 HuggingFace...", downloadProgress:"下载中 {pct}%", separationProgress:"分离中 {pct}%", modelLoaded:"模型已加载 ✓", autoSeparating:"正在自动分离...", readyUpload:"就绪，上传歌曲即可自动分离", statusModelReady:"模型就绪", retryLoad:"加载失败，重试", error:"错误: {message}", statusModelLoadFailed:"模型加载失败",
     waitingSeparation:"等待音轨分离", statusDecoding:"解码中", statusAutoSeparating:"自动分离中", statusLoadedLoadModel:"已载入（请先加载模型）", aiSeparating:"AI 分离中...", statusAiSeparating:"AI 分离中", resampling:"重采样到 44100Hz...", demucsInference:"Demucs 推理中... (可能需要 1-5 分钟)",
     trackDrums:"🥁 鼓组", trackBass:"🎸 贝斯", trackOther:"🎹 其他乐器", trackVocals:"🎤 人声", analyzeChord:"→ 分析和弦", separationComplete:"分离完成 → 自动分析和弦...", statusSeparationComplete:"分离完成 → 自动分析", statusSeparationFailed:"分离失败", selectedAnalyzing:"已选: {track} → 分析中", statusAnalyzing:"分析中", analysisProgress:"分析 {pct}%", statusComplete:"识别完成", major:"大调", minor:"小调", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", waveformPlaceholder:"音频波形会显示在这里", initialTrack:"等待上传与分离"
+  },
+  "zh-TW": {
+    pageTitle:"ChordDetective + Demucs / 和弦偵查員", backHomeLabel:"返回 ChordDetective 主頁", pageHeading:"AI 音軌分離", subhead:"當前頁會先把完整歌曲分離成獨立音軌，再從你選擇的音軌識別和弦。基於 Meta HTDemucs + ONNX Runtime Web。", languageLabel:"語言", home:"← 主頁",
+    modeNavLabel:"音頻工具", microphone:"麥克風", micNote:"實時識別 · 默認", quickFile:"快速文件分析", fileNote:"直接分析 · 低資源", stemSeparation:"AI 音軌分離", currentMode:"Demucs · 當前模式", audioTranspose:"音頻轉調", transposeNote:"轉換 · 下載 WAV",
+    comparisonLabel:"主頁快速模式與 Demucs 音軌分離模式對比", modeComparison:"模式對比", howToChoose:"兩種模式怎麼選", mainQuickMode:"主頁快速模式", directAnalysis:"直接分析", quickDescription:"支持麥克風實時識別或上傳歌曲。Basic Pitch / FFT 直接分析完整混音；“快速降低人聲”僅做立體聲中置抵消，不會生成獨立音軌。模型約 725KB，啟動更快。",
+    currentDemucsPage:"當前 Demucs 頁面", separateFirst:"先分離", demucsDescription:"僅分析上傳文件。先用 172MB HTDemucs 分離鼓組、貝斯、其他樂器和人聲，再從當前選擇的音軌識別；默認使用“其他樂器”。更耗時和內存，但複雜混音通常更乾淨。", modeTip:"彈奏樂器、需要實時反饋或快速掃歌，請用主頁；人聲和鼓聲遮蓋和聲、需要指定音軌時，再使用當前頁面。",
+    uploadStep:"1. 上傳音頻", chooseAudio:"選擇或拖入音頻", notLoaded:"未載入", uploadToStart:"上傳一首歌曲開始", loadStep:"2. 加載 AI 模型", loadDemucs:"下載並加載 Demucs 模型 (172MB)", separatedTracks:"分離音軌", playPause:"播放/暫停",
+    currentChord:"當前和弦", pitchName:"主音名", keySense:"調性感", disclaimer:"首次使用需下載約 172MB 模型，之後由瀏覽器緩存。WebGPU 約 30-60 秒/首；CPU WASM 約 3-8 分鐘。分離完成後默認分析其他樂器；點擊鼓組、貝斯或人聲會清空當前結果，並改用所選音軌重新識別。",
+    currentTrack:"當前分析音軌", localProcessing:"本地處理", waveform:"波形", playPosition:"播放位置", chordSegments:"和弦段落", results:"識別結果", time:"時間", chord:"和弦", bass:"低音", possibleNotes:"可能音", confidence:"可信度", emptyWorkflow:"上傳音頻 → 加載模型 → 自動分離 + 分析和弦",
+    statusWaiting:"等待操作", downloadingModel:"正在下載模型...", connecting:"連接 HuggingFace...", downloadProgress:"下載中 {pct}%", separationProgress:"分離中 {pct}%", modelLoaded:"模型已加載 ✓", autoSeparating:"正在自動分離...", readyUpload:"就緒，上傳歌曲即可自動分離", statusModelReady:"模型就緒", retryLoad:"加載失敗，重試", error:"錯誤: {message}", statusModelLoadFailed:"模型加載失敗",
+    waitingSeparation:"等待音軌分離", statusDecoding:"解碼中", statusAutoSeparating:"自動分離中", statusLoadedLoadModel:"已載入（請先加載模型）", aiSeparating:"AI 分離中...", statusAiSeparating:"AI 分離中", resampling:"重採樣到 44100Hz...", demucsInference:"Demucs 推理中... (可能需要 1-5 分鐘)",
+    trackDrums:"🥁 鼓組", trackBass:"🎸 貝斯", trackOther:"🎹 其他樂器", trackVocals:"🎤 人聲", analyzeChord:"→ 分析和弦", separationComplete:"分離完成 → 自動分析和弦...", statusSeparationComplete:"分離完成 → 自動分析", statusSeparationFailed:"分離失敗", selectedAnalyzing:"已選: {track} → 分析中", statusAnalyzing:"分析中", analysisProgress:"分析 {pct}%", statusComplete:"識別完成", major:"大調", minor:"小調", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", waveformPlaceholder:"音頻波形會顯示在這裡", initialTrack:"等待上傳與分離"
   }
 });
 const t = (key, params) => ChordI18n.t(key, params);

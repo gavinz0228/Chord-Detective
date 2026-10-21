@@ -100,4 +100,71 @@ translations.window.ChordI18n.register({ 'zh-CN': { fileUpload: 'old technical l
 assert.equal(translations.window.ChordI18n.t('fileUpload'), '歌曲和弦识别');
 assert.match(translations.window.ChordI18n.t('confirmSeparation'), /172MB/);
 assert.match(translations.window.ChordI18n.t('privacyNotice'), /保存在此浏览器/);
+const i18nSource=fs.readFileSync(new URL('i18n.js',import.meta.url),'utf8');
+for(const storageMode of ['read-denied','write-denied','getter-denied']){
+  let changes=0;
+  const translatedNode={dataset:{i18n:'fileUpload'},textContent:''};
+  const environment={
+    document:{documentElement:{},querySelectorAll:selector=>selector==='[data-i18n]'?[translatedNode]:[],addEventListener(){}},
+    navigator:{language:'zh-TW'},window:{dispatchEvent(){changes++}},CustomEvent:class{}
+  };
+  if(storageMode==='getter-denied')Object.defineProperty(environment,'localStorage',{get(){throw Error('SecurityError')}});
+  else environment.localStorage={getItem(){if(storageMode==='read-denied')throw Error('SecurityError');return null},setItem(){throw Error('QuotaExceededError')}};
+  const restricted=vm.createContext(environment);
+  vm.runInContext(i18nSource,restricted);
+  const api=restricted.window.ChordI18n;
+  api.register({});
+  assert.equal(api.getLanguage(),'zh-TW',storageMode+' falls back to traditional browser language');
+  api.setLanguage('en');
+  assert.equal(api.getLanguage(),'en',storageMode+' keeps the selection in memory');
+  assert.equal(translatedNode.textContent,'Song chords');
+  assert.equal(environment.document.documentElement.lang,'en');
+  assert.equal(changes,1,storageMode+' still notifies the page after a language change');
+}
+// Browser preference, explicit scripts, regional variants and saved choices.
+for (const [browserLanguage, saved, expected, languages] of [
+  ['zh-TW', null, 'zh-TW'], ['zh-HK', null, 'zh-TW'], ['zh-MO', null, 'zh-TW'],
+  ['zh-Hant', null, 'zh-TW'], ['zh-Hant-US', null, 'zh-TW'],
+  ['zh-CN', null, 'zh-CN'], ['zh-SG', null, 'zh-CN'], ['zh', null, 'zh-CN'],
+  ['zh-Hans-HK', null, 'zh-CN'], ['zh-Hant-CN', null, 'zh-TW'],
+  ['en-US', null, 'en'], ['ja-JP', null, 'en'], ['fr', null, 'en'],
+  ['zh-TW', null, 'en', ['en-US', 'zh-TW']],
+  ['en-US', null, 'zh-TW', ['zh-HK', 'en-US']],
+  ['en-US', 'zh-TW', 'zh-TW'], ['zh-TW', 'en', 'en'],
+  ['zh-TW', 'zh-CN', 'zh-CN'], ['ja', 'invalid', 'en'],
+  [undefined, null, 'en']
+]) {
+  let persisted;
+  const env = vm.createContext({
+    document: { documentElement: {}, querySelectorAll: () => [], addEventListener() {} },
+    navigator: { language: browserLanguage, languages },
+    localStorage: { getItem: () => saved, setItem: (_key, value) => { persisted = value; } },
+    window: { dispatchEvent() {} }, CustomEvent: class {}
+  });
+  vm.runInContext(i18nSource, env);
+  const api = env.window.ChordI18n;
+  assert.equal(api.getLanguage(), expected, JSON.stringify({browserLanguage,saved,languages}));
+  api.setLanguage(expected === 'zh-TW' ? 'en' : 'zh-TW');
+  assert.equal(persisted, api.getLanguage(), 'Manual choice is persisted');
+}
+for (const file of ['index.html', 'index_demucs.html', 'transpose.html']) {
+  const html = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
+  assert.match(html, /<option value="zh-TW">繁體中文<\/option>/);
+  const register = html.slice(html.indexOf('ChordI18n.register('), html.indexOf('const t', html.indexOf('ChordI18n.register(')));
+  let copy;
+  vm.runInNewContext(register, { ChordI18n: { register(value) { copy = value; } } });
+  assert.deepEqual(Object.keys(copy['zh-TW']).sort(), Object.keys(copy['zh-CN']).sort(), file+' traditional copy is complete');
+  for (const key of Object.keys(copy['zh-CN'])) {
+    assert.deepEqual(copy['zh-TW'][key].match(/\{\w+\}/g), copy['zh-CN'][key].match(/\{\w+\}/g), file+': '+key+' placeholders');
+  }
+  const env = vm.createContext({
+    document: { documentElement: {}, querySelectorAll: () => [], addEventListener() {} },
+    navigator: { language: 'zh-TW' }, localStorage: { getItem: () => null }, window: {}
+  });
+  vm.runInContext(i18nSource, env);
+  env.window.ChordI18n.register(copy);
+  assert.equal(env.window.ChordI18n.t('fileUpload'), '歌曲和弦識別');
+  assert.match(env.window.ChordI18n.t('privacyNotice'), /瀏覽器/);
+  assert.notEqual(env.window.ChordI18n.t('pageTitle'), 'pageTitle');
+}
 console.log('PASS: script syntax, automatic preparation/retry, separation consent/retry/busy guard, original audio, default mode, shared copy');

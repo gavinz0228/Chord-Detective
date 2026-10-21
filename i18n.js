@@ -2,7 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "chord-detective-language";
-  const dictionaries = { en: {}, "zh-CN": {} };
+  const dictionaries = { en: {}, "zh-CN": {}, "zh-TW": {} };
   // Shared task-oriented copy takes precedence over page-specific engine labels.
   const friendlyCopy = {
     en: {
@@ -62,14 +62,50 @@
       confirmSeparation: "首次使用需下载约 172MB，另需加载运行库。处理可能需要数分钟，手机较耗电。是否继续？",
       downloadingModel: "正在准备分离…", connecting: "正在下载所需文件…", modelLoaded: "已就绪", statusLoadedLoadModel: "歌曲已就绪，点击开始分离", retryLoad: "重试分离", statusModelLoadFailed: "准备失败，请重试", resampling: "正在准备音频…", demucsInference: "正在分离人声与乐器…可能需要数分钟。",
       separationAgain: "重新分离", decodingFailed: "无法读取此音频文件，请换一个文件重试。", processingLog: "处理详情", micQuiet: "请弹奏和弦，或靠近一点麦克风。"
+    },
+  "zh-TW": {
+      visitCafe: "逛逛 Chord.Cafe ↗", cafeDescription: "找曲譜，練吉他",
+      confidence: "匹配度", minimumConfidence: "最低匹配度", noChordConfidence: "沒有匹配度達到 {pct}% 的片段", scoreMeaning: "匹配度與導出說明",
+      matchExplanation: "匹配度是音符與和弦模板的相似程度，不代表正確率。人工修改後保留原始分數。編輯與導出採用原調，導出包含被篩選隱藏的片段。",
+      editResults: "編輯結果", undoEdit: "撤銷修改", exportResults: "導出結果", exportFormat: "導出格式", actions: "操作",
+      editSegment: "編輯", chordLabel: "和弦", startSeconds: "開始時間（秒）", endSeconds: "結束時間（秒）", originalKeyNotice: "按原調編輯；時間段不能與相鄰片段重疊。",
+      applyEdit: "應用修改", cancelEdit: "取消", deleteSegment: "刪除此段", mergeNext: "合併下一段（保留當前和弦）", manuallyEdited: "已修改",
+      invalidChord: "請輸入 C、Am7、D/F# 等和弦名稱。", invalidTime: "請輸入音頻範圍內有效的開始和結束時間。", overlapTime: "時間段與相鄰片段重疊，請調整。",
+      analysisFailed: "識別失敗，可以重試；音頻仍保留在當前頁面。", statusDecoding: "正在讀取音頻…",
+      savingLocal: "正在保存到本機…", savedLocal: "已保存到本機", saveFailed: "本地存儲不可用或空間不足，結果未可靠保存，請導出保留。", removedLocal: "已移除本地歷史，當前音頻仍保持打開。",
+      clearHistory: "清空本地歷史", confirmClearHistory: "清除本機保存的所有歌曲、音頻和結果？此操作不可撤銷。當前音頻保持打開，但不再自動保存。", confirmDeleteHistory: "刪除此歌曲的本地音頻和結果？此操作不可撤銷。",
+      fileLimits: "支持最大 64MB、15 分鐘以內的音頻。", separationLimits: "分離支持最大 64MB、5 分鐘以內的音頻。結果不自動保存，請導出保留。",
+      fileTooLarge: "請選擇不超過 64MB 的非空音頻文件。", audioTooLong: "音頻不能超過 15 分鐘，請裁剪後重試。", separationTooLong: "音軌分離僅支持 5 分鐘以內的音頻，請裁剪後重試。",
+      heroSub: "選擇歌曲，識別和弦，邊聽邊校對。", inputSource: "選擇工具",
+      microphone: "彈奏識別", micNote: "邊彈邊識別", fileUpload: "歌曲和弦識別", quickFile: "歌曲和弦識別", quickAnalysis: "歌曲和弦識別", fileNote: "選擇歌曲開始分析", analysisNote: "邊聽邊校對和弦",
+      stemSeparation: "分離人聲與伴奏", demucsNote: "分離後識別和弦", currentMode: "當前工具",
+      pageHeading: "分離人聲與伴奏", subhead: "將歌曲分成人聲與樂器音軌，再從伴奏中識別和弦。",
+      loadModel: "重試識別", loading: "正在準備識別…", failed: "識別準備失敗，請重試。（{message}）",
+      engineSummary: "識別僅供參考，請試聽校對", statusModelReady: "已就緒", statusLoadFailed: "識別準備失敗，請點擊下方重試",
+      statusPreprocessing: "正在讀取音頻…", statusInference: "正在識別和弦…", statusInferenceProgress: "正在識別和弦 {pct}%", statusMatching: "正在整理和弦…",
+      advancedSettings: "高級設置", technicalDetails: "技術說明", technicalCopy: "文件識別使用 Basic Pitch；麥克風使用 FFT。首次文件識別需下載約 725KB 模型，另需加載運行庫。",
+      privacyNotice: "音頻在本機處理；歌曲和結果會保存在此瀏覽器，可在歷史記錄中刪除。識別僅供參考，請試聽校對。",
+      separationHint: "人聲干擾識別？試試分離伴奏後分析 →",
+      loadStep: "2. 分離並識別和弦", loadDemucs: "開始分離", emptyWorkflow: "選擇歌曲 → 開始分離 → 試聽校對", disclaimer: "分離完成後默認分析伴奏；切換音軌會重新識別和弦。",
+      separationNotice: "音頻僅在本機處理，不上傳。首次使用需下載約 172MB，處理可能需要數分鐘，手機較耗電。分離與識別結果僅供參考。",
+      confirmSeparation: "首次使用需下載約 172MB，另需加載運行庫。處理可能需要數分鐘，手機較耗電。是否繼續？",
+      downloadingModel: "正在準備分離…", connecting: "正在下載所需文件…", modelLoaded: "已就緒", statusLoadedLoadModel: "歌曲已就緒，點擊開始分離", retryLoad: "重試分離", statusModelLoadFailed: "準備失敗，請重試", resampling: "正在準備音頻…", demucsInference: "正在分離人聲與樂器…可能需要數分鐘。",
+      separationAgain: "重新分離", decodingFailed: "無法讀取此音頻文件，請換一個文件重試。", processingLog: "處理詳情", micQuiet: "請彈奏和弦，或靠近一點麥克風。"
     }
   };
   let language = getInitialLanguage();
 
   function getInitialLanguage() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "en" || saved === "zh-CN") return saved;
-    return navigator.language && navigator.language.toLowerCase().startsWith("zh") ? "zh-CN" : "en";
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (Object.hasOwn(dictionaries, saved)) return saved;
+    } catch (_) { /* Storage can be blocked; use the browser language instead. */ }
+    // Respect the browser's first preference, not any lower-priority Chinese locale.
+    const locale = (navigator.languages?.[0] || navigator.language || "en").toLowerCase().replace(/_/g, "-");
+    if (!/^zh(?:-|$)/.test(locale)) return "en";
+    if (locale.includes("-hant")) return "zh-TW";
+    if (locale.includes("-hans")) return "zh-CN";
+    return /^zh-(tw|hk|mo)(?:-|$)/.test(locale) ? "zh-TW" : "zh-CN";
   }
 
   function interpolate(value, params) {
@@ -97,7 +133,8 @@
   function setLanguage(nextLanguage) {
     if (!dictionaries[nextLanguage] || nextLanguage === language) return;
     language = nextLanguage;
-    localStorage.setItem(STORAGE_KEY, language);
+    try { localStorage.setItem(STORAGE_KEY, language); }
+    catch (_) { /* Keep this session's selection even if it cannot be persisted. */ }
     apply();
     window.dispatchEvent(new CustomEvent("chorddetective:languagechange", { detail: { language } }));
   }

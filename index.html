@@ -246,7 +246,7 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
 <div class="app">
   <header class="hero">
       <div class="hero-left"><div class="hero-badge"><span class="dot"></span>CHORDDETECTIVE</div><h1><img class="hero-logo" src="favicon.svg" alt="" width="48" height="48"><span data-i18n="brandName">和弦侦查员</span></h1></div>
-    <div class="hero-actions"><select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="en">English</option></select><div class="hero-status" id="status">◈ 等待操作</div></div>
+    <div class="hero-actions"><select class="language-select" data-language-select data-i18n-aria-label="languageLabel"><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="en">English</option></select><div class="hero-status" id="status">◈ 等待操作</div></div>
   </header>
   <div class="cafe-discovery">
     <a href="https://chord.cafe" target="_blank" rel="noopener noreferrer" data-i18n="visitCafe">逛逛 Chord.Cafe ↗</a>
@@ -312,8 +312,8 @@ tbody tr.paused-row{background:rgba(167,139,250,.12);border-left-color:var(--pur
 </button>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
-<script src="i18n.js?v=20261019-cafe"></script>
-<script src="tool-core.js?v=20261019-tools3"></script>
+<script src="i18n.js?v=20261021-locales"></script>
+<script src="tool-core.js?v=20261020-fixes"></script>
 <script src="result-editor.js?v=20261019-tools3"></script>
 
 <script>
@@ -345,6 +345,20 @@ ChordI18n.register({
     micActive:"麦克风监听中", playClearChord:"请弹奏清晰的和弦声音", waitingMicInput:"等待麦克风和弦输入...", stopListening:"⏹ 停止监听", startListening:"🎤 开始监听", permissionDenied:"权限被拒: {message}",
     noChordConfidence:"未检测到可信度≥{pct}%的和弦", noChords:"未检测到和弦", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", noteUnits:"{count} 个", keyValue:"{note} 调",
     loading:"加载中...", ready:"✓ 就绪", failed:"失败: {message}", emptyMic:"点击开始监听 → 弹奏和弦", emptyFile:"上传歌曲开始分析"
+  },
+  "zh-TW": {
+    pageTitle:"ChordDetective / 和弦偵查員", brandName:"和弦偵查員", heroSub:"上傳歌曲或麥克風實時檢測和弦。Spotify Basic Pitch + FFT chroma 雙引擎。", languageLabel:"語言",
+    inputSource:"輸入源", microphone:"麥克風", micNote:"實時 · 默認", fileUpload:"文件上傳", fileNote:"快速分析 · 低資源", stemSeparation:"AI 音軌分離", demucsNote:"Demucs · 高資源", audioTranspose:"音頻轉調", transposeNote:"轉換 · 下載 WAV",
+    chooseAudio:"⬆ 選擇或拖入", noFile:"未選擇文件", songHistory:"本地歌曲歷史", deleteRecord:"刪除記錄", reduceVocals:"快速降低人聲", aiEngine:"AI 引擎", loadModel:"◆ 加載模型 (725KB)", modelReady:"模型已就緒",
+    micHelp:"點擊按鈕，彈奏和弦即可識別", sharpNotation:"升號 C C# D...", flatNotation:"降號 C Db D...", currentChord:"當前和弦", noteCount:"音符數", key:"調性", engineSummary:"⚡ 725KB · 本地推理 · 雙引擎",
+    waveformMap:"聲波圖譜", playAudio:"播放音頻", pause:"暫停", waveform:"波形", position:"位置", chordSegments:"和弦段", results:"識別結果", transpose:"變調", minimumConfidence:"最低可信度",
+    time:"時間", chord:"和弦", root:"根音", notes:"音符", confidence:"可信度", playPause:"播放/暫停",
+    statusWaiting:"◈ 等待操作", statusListening:"◈ 正在監聽", statusPermission:"◈ 權限錯誤", statusWaitingSound:"◈ 等待聲音", statusLowInput:"◈ 輸入偏低", statusAudioReady:"◈ 音頻就緒",
+    statusDetecting:"◈ 檢測中...", statusPreprocessing:"◈ 預處理...", statusInference:"◈ AI 推理中...", statusInferenceProgress:"◈ AI推理 {pct}%", statusMatching:"◈ 和弦匹配...", statusComplete:"◈ 完成",
+    statusRestored:"◈ 已恢復分析結果", statusAutoDetecting:"◈ 自動檢測中...", statusVocalReduced:"◈ 已降低中置人聲，重新檢測中...", statusOriginalAudio:"◈ 原始音頻，重新檢測中...", statusModelReady:"◈ 模型就緒", statusLoadFailed:"◈ 加載失敗",
+    micActive:"麥克風監聽中", playClearChord:"請彈奏清晰的和弦聲音", waitingMicInput:"等待麥克風和弦輸入...", stopListening:"⏹ 停止監聽", startListening:"🎤 開始監聽", permissionDenied:"權限被拒: {message}",
+    noChordConfidence:"未檢測到可信度≥{pct}%的和弦", noChords:"未檢測到和弦", segments:"{count} 段", filteredSegments:"{shown} / {total} 段", noteUnits:"{count} 個", keyValue:"{note} 調",
+    loading:"加載中...", ready:"✓ 就緒", failed:"失敗: {message}", emptyMic:"點擊開始監聽 → 彈奏和弦", emptyFile:"上傳歌曲開始分析"
   }
 });
 const t=(key,params)=>ChordI18n.t(key,params);
@@ -448,7 +462,7 @@ function listenMicFrame(){
   const now=(performance.now()-S.micStartedAt)/1000;
   const seg={start:Math.max(0,now-.45),end:now,chroma,chord,bass,topNotes:tn,pcs:tn.map(t=>t.pc)};
   const stable=updateMicStability(seg);if(stable)appendMicSegment(stable);
-  $("nowChord").textContent=stable?cnMic(stable.chord):cnMic(chord);
+  $("nowChord").textContent=displayChord(stable?stable.chord:chord);
   $("nowNoteCount").textContent=t("noteUnits",{count:stable?stable.pcs.length:tn.length});setStatus("statusListening");
   $("micStatus").textContent=t("playClearChord");
   renderRes();drawWaveform()}
@@ -560,6 +574,7 @@ function resizeCanvas(){const box=$("canvasBox"),c=$("waveCanvas");
   $("waveHdr").style.padding=hasAudio?"16px 20px 0":"8px 20px 8px";
   drawWaveform()}
 function tr(pc){return((pc+S.transpose)%12+12)%12}
+function displayChord(chord){return ToolCore.transposeChordName(chord,S.transpose,$("notationSelect").value==="flat")}
 function renderRes(){
   resultEditor?.update();
   const tb=$("resultBody"),n=$("notationSelect").value==="flat"?NF:NS;tb.innerHTML="";
@@ -572,10 +587,10 @@ function renderRes(){
     const expected=chordExpected(r.chord),missing=expected.filter(ep=>!r.pcs.some(p=>((p%12)+12)%12===((ep%12)+12)%12));
     const isExpected=p=>expected.some(ep=>((p%12)+12)%12===((ep%12)+12)%12);
     const matched=r.pcs.filter(isExpected),extra=r.pcs.filter(p=>!isExpected(p));
-    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${n[tr(r.chord.root)]}${r.chord.suffix||""}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${matched.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${extra.map(p=>`<span class="note-extra">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence??0)*100)}%"></div></div></td>`;
+    trEl.innerHTML=`<td>${ft(st)} – ${ft(en)}</td><td><span class="chord">${displayChord(r.chord)}</span></td><td>${n[tr(r.chord.root)]}</td><td><div class="notes">${matched.map(p=>`<span class="note">${n[tr(p)]}</span>`).join("")}${extra.map(p=>`<span class="note-extra">${n[tr(p)]}</span>`).join("")}${missing.map(p=>`<span class="note-miss">${n[tr(p)]}</span>`).join("")}</div></td><td><div class="cbar"><div class="cbar-fill" style="width:${Math.round((r.chord.confidence??0)*100)}%"></div></div></td>`;
     resultEditor?.row(trEl,r,S.res.indexOf(r));
     trEl.addEventListener("click",()=>{if(S.buf)seekTo(st)});tb.appendChild(trEl)}
-  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=n[tr(f.chord.root)]+(f.chord.suffix||"");$("nowNoteCount").textContent=t("noteUnits",{count:f.pcs.length});$("keyGuess").textContent=f.pcs.length>=2?t("keyValue",{note:n[tr(f.pcs[0])] }):"—"}
+  const f=S.res[S.res.length-1];if(f){$("nowChord").textContent=displayChord(f.chord);$("nowNoteCount").textContent=t("noteUnits",{count:f.pcs.length});$("keyGuess").textContent=f.pcs.length>=2?t("keyValue",{note:n[tr(f.pcs[0])] }):"—"}
   if(S.buf&&(S.playing||S.pa>0))syncActiveRow(S.playing?S.ctx.currentTime-S.sa:S.pa,!S.playing,false)}
 
 function drawWaveform(){
@@ -610,7 +625,7 @@ function seekTo(t){if(!S.buf)return;playAt(t)}
 function upPh(){const el=(S.playing?S.ctx.currentTime-S.sa:S.pa),du=S.buf.duration,pr=cl(el/du,0,1),box=$("canvasBox"),ph=$("playhead"),tt=$("timeTooltip");
   ph.style.left=pr*box.clientWidth+"px";ph.style.opacity="1";tt.textContent=ft(el);tt.style.left=ph.style.left;tt.style.opacity="1";
   let found=false;
-  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=n[tr(r.chord.root)]+(r.chord.suffix||"");$("nowNoteCount").textContent=t("noteUnits",{count:r.pcs.length});found=true;break}}
+  for(const r of S.res){if(el>=r.st&&el<r.en){const n=$("notationSelect").value==="flat"?NF:NS;$("nowChord").textContent=displayChord(r.chord);$("nowNoteCount").textContent=t("noteUnits",{count:r.pcs.length});found=true;break}}
   syncActiveRow(el,!S.playing,true);
   if(S.playing){S.raf=requestAnimationFrame(upPh);$("liveDot").classList.add("on")}else{$("liveDot").classList.remove("on")}}
 function syncActiveRow(el,paused,autoScroll){const rows=$("resultBody").querySelectorAll("tr");let active=null,next=null;
